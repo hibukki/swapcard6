@@ -30,45 +30,49 @@ function RootComponent() {
         <InitializeUser />
         <div className="min-h-screen flex flex-col">
           <Authenticated>
-            <header className="sticky top-0 z-10 bg-light dark:bg-dark p-4 border-b-2 border-slate-200 dark:border-slate-800 flex flex-row justify-between items-center">
-              <div className="flex items-center space-x-4">
+            <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
+              <div className="navbar-start">
                 <h1 className="text-xl font-bold">Arbiter Convex</h1>
-                <nav className="flex space-x-4">
+              </div>
+              <div className="navbar-center">
+                <nav className="flex">
                   <Link
                     to="/"
-                    className="px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                    className="btn btn-ghost"
                     activeProps={{
-                      className: "font-bold bg-gray-200 dark:bg-gray-700",
+                      className: "btn btn-ghost btn-active",
                     }}
                   >
                     Home
                   </Link>
                   <Link
                     to="/send"
-                    className="px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                    className="btn btn-ghost"
                     activeProps={{
-                      className: "font-bold bg-gray-200 dark:bg-gray-700",
+                      className: "btn btn-ghost btn-active",
                     }}
                   >
                     Send Clips
                   </Link>
                   <Link
                     to="/transactions"
-                    className="px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                    className="btn btn-ghost"
                     activeProps={{
-                      className: "font-bold bg-gray-200 dark:bg-gray-700",
+                      className: "btn btn-ghost btn-active",
                     }}
                   >
                     Transactions
                   </Link>
                 </nav>
               </div>
-              <UserButton />
+              <div className="navbar-end">
+                <UserButton />
+              </div>
             </header>
             <main className="flex-1 p-4">
               <Outlet />
             </main>
-            <footer className="p-4 text-center text-sm text-gray-500">
+            <footer className="footer footer-center p-4 text-base-content">
               © {new Date().getFullYear()} Arbiter Convex
             </footer>
           </Authenticated>
@@ -84,20 +88,20 @@ function RootComponent() {
 
 function SignInForm() {
   return (
-    <div className="flex flex-col gap-8 min-h-screen justify-center items-center">
-      <h1 className="text-4xl font-bold text-center">Arbiter Convex</h1>
-      <div className="flex flex-col gap-8 w-96 mx-auto">
-        <p>Sign in to access the exchange</p>
-        <SignInButton mode="modal">
-          <button className="bg-dark dark:bg-light text-light dark:text-dark text-sm px-4 py-2 rounded-md border-2">
-            Sign in
-          </button>
-        </SignInButton>
-        <SignUpButton mode="modal">
-          <button className="bg-dark dark:bg-light text-light dark:text-dark text-sm px-4 py-2 rounded-md border-2">
-            Sign up
-          </button>
-        </SignUpButton>
+    <div className="hero min-h-screen">
+      <div className="hero-content text-center">
+        <div className="max-w-md">
+          <h1 className="text-4xl font-bold">Arbiter Convex</h1>
+          <p className="py-6">Sign in to access the exchange</p>
+          <div className="flex flex-col gap-4">
+            <SignInButton mode="modal">
+              <button className="btn btn-primary">Sign in</button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button className="btn btn-outline">Sign up</button>
+            </SignUpButton>
+          </div>
+        </div>
       </div>
     </div>
   );

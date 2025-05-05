@@ -53,104 +53,126 @@ function SendPage() {
   });
 
   return (
-    <div className="max-w-md mx-auto space-y-4">
-      <h2 className="text-2xl font-bold text-center">Send Clips</h2>
-      {currentUser && (
-        <p className="text-center">
-          Your balance:{" "}
-          <span className="font-semibold">{currentUser.balance}</span>
-        </p>
-      )}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          form.handleSubmit();
-        }}
-        className="space-y-4"
-      >
-        <form.Field
-          name="to"
-          children={(field) => (
-            <div>
-              <label className="block mb-1 font-medium">Recipient</label>
-              <select
-                name={field.name}
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                onBlur={field.handleBlur}
-                className="w-full border p-2 rounded"
+    <div className="max-w-md mx-auto">
+      <div className="card">
+        <div className="card-body">
+          <h2 className="card-title justify-center">Send Clips</h2>
+          {currentUser && (
+            <div className="text-center mb-4">
+              Your balance:{" "}
+              <span className="badge badge-lg">{currentUser.balance}</span>
+            </div>
+          )}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              form.handleSubmit();
+            }}
+            className="space-y-4"
+          >
+            <form.Field
+              name="to"
+              children={(field) => (
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Recipient</span>
+                  </label>
+                  <select
+                    name={field.name}
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    className="select select-bordered w-full"
+                  >
+                    <option value="" disabled>
+                      Select recipient
+                    </option>
+                    {recipients.map((r) => (
+                      <option key={r._id} value={r._id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                  {!field.state.meta.isValid && (
+                    <label className="label">
+                      <span className="label-text-alt text-error">
+                        {field.state.meta.errors
+                          .map((error) => error?.message)
+                          .join(", ")}
+                      </span>
+                    </label>
+                  )}
+                </div>
+              )}
+            />
+
+            <form.Field
+              name="amount"
+              children={(field) => (
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Amount</span>
+                  </label>
+                  <input
+                    name={field.name}
+                    value={field.state.value || ""}
+                    onChange={(e) => field.handleChange(Number(e.target.value))}
+                    onBlur={field.handleBlur}
+                    type="number"
+                    min="1"
+                    className="input input-bordered w-full"
+                  />
+                  {!field.state.meta.isValid && (
+                    <label className="label">
+                      <span className="label-text-alt text-error">
+                        {field.state.meta.errors
+                          .map((error) => error?.message)
+                          .join(", ")}
+                      </span>
+                    </label>
+                  )}
+                </div>
+              )}
+            />
+
+            <form.Field
+              name="note"
+              children={(field) => (
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Note</span>
+                  </label>
+                  <input
+                    name={field.name}
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    type="text"
+                    className="input input-bordered w-full"
+                  />
+                </div>
+              )}
+            />
+
+            <div className="form-control mt-6">
+              <button
+                type="submit"
+                disabled={!form.state.canSubmit}
+                className="btn btn-primary w-full"
               >
-                <option value="" disabled>
-                  Select recipient
-                </option>
-                {recipients.map((r) => (
-                  <option key={r._id} value={r._id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-              {!field.state.meta.isValid && (
-                <div className="text-red-500 text-sm mt-1">
-                  {field.state.meta.errors
-                    .map((error) => error?.message)
-                    .join(", ")}
-                </div>
-              )}
+                Send
+              </button>
+            </div>
+          </form>
+          {status && (
+            <div
+              className={`alert ${status === "Sent!" ? "alert-success" : "alert-error"} mt-4`}
+            >
+              <span>{status}</span>
             </div>
           )}
-        />
-
-        <form.Field
-          name="amount"
-          children={(field) => (
-            <div>
-              <label className="block mb-1 font-medium">Amount</label>
-              <input
-                name={field.name}
-                value={field.state.value || ""}
-                onChange={(e) => field.handleChange(Number(e.target.value))}
-                onBlur={field.handleBlur}
-                type="number"
-                min="1"
-                className="w-full border p-2 rounded"
-              />
-              {!field.state.meta.isValid && (
-                <div className="text-red-500 text-sm mt-1">
-                  {field.state.meta.errors
-                    .map((error) => error?.message)
-                    .join(", ")}
-                </div>
-              )}
-            </div>
-          )}
-        />
-
-        <form.Field
-          name="note"
-          children={(field) => (
-            <div>
-              <label className="block mb-1 font-medium">Note</label>
-              <input
-                name={field.name}
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                onBlur={field.handleBlur}
-                type="text"
-                className="w-full border p-2 rounded"
-              />
-            </div>
-          )}
-        />
-
-        <button
-          type="submit"
-          disabled={!form.state.canSubmit}
-          className="w-full bg-blue-600 text-white py-2 rounded disabled:bg-blue-300"
-        >
-          Send
-        </button>
-      </form>
-      {status && <p className="text-center mt-2">{status}</p>}
+        </div>
+      </div>
     </div>
   );
 }
