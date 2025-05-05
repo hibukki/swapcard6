@@ -14,11 +14,13 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.25.0",
+    "@tanstack/react-form": "^1.9.0",
     "@tanstack/react-router": "^1.119.0",
     "@tanstack/react-router-devtools": "^1.119.1",
     "convex": "^1.23.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
