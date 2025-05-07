@@ -1,0 +1,9 @@
+[build]
+  command = "pnpx convex deploy --cmd 'pnpm run build'"
+  publish = "dist"
+
+[context.production]
+  # Set CONVEX_DEPLOY_KEY and VITE_CLERK_PUBLISHABLE_KEY in Netlify UI
+
+[context.deploy-preview]
+  command = "pnpx convex deploy --cmd 'pnpm run build'" 

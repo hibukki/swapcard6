@@ -108,6 +108,18 @@ Brief overview and links to official documentation for core technologies. Useful
   - [DaisyUI](https://daisyui.com/): Tailwind CSS components.
   - [TypeScript](https://www.typescriptlang.org/): Static typing.
 
+## Deployment
+
+### Netlify
+
+This template includes a `netlify.toml` file configured for Convex deployments. To deploy:
+
+1. Connect your repository to Netlify via their GitHub integration
+2. Set `CONVEX_DEPLOY_KEY` in Netlify environment variables (generate in Convex dashboard)
+3. Set `VITE_CLERK_PUBLISHABLE_KEY` for your production environment
+
+For detailed instructions, see [Convex Netlify Deployment Guide](https://docs.convex.dev/production/hosting/netlify).
+
 ## License
 
 MIT
