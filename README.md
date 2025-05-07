@@ -1,49 +1,113 @@
-# Welcome to your Convex + React (Vite) + Clerkapp
+# Full-Stack Web Application Starter Template
 
-This is a [Convex](https://convex.dev/) project created with [`npm create convex`](https://www.npmjs.com/package/create-convex).
+This starter template accelerates full-stack web app development, emphasizing an excellent Developer Experience (DX), especially for LLM-assisted coding. It integrates Convex, TanStack Router, Clerk, Vite, React, and Tailwind CSS to provide a robust foundation.
 
-After the initial setup (<2 minutes) you'll have a working full-stack app using:
+## Quick Start for Humans
 
-- Convex as your backend (database, server logic)
-- [React](https://react.dev/) as your frontend (web page interactivity)
-- [Vite](https://vitest.dev/) for optimized web hosting
-- [Tailwind](https://tailwindcss.com/) for building great looking accessible UI
-- [Clerk](https://clerk.com/) for authentication
+Follow these steps to get your development environment set up:
 
-## Get started
+1.  **Install pnpm:**
 
-If you just cloned this codebase and didn't use `npm create convex`, run:
+    ```bash
+    curl -fsSL https://get.pnpm.io/install.sh | sh -
+    ```
+
+    _Restart your terminal after installation for `pnpm` to be available._
+
+2.  **Install/Manage Node.js:**
+
+    ```bash
+    pnpm env use --global lts
+    ```
+
+3.  **Clone Template with `degit`:**
+
+    ```bash
+    pnpx degit crazytieguy/fullstack-vibe-coding-template
+    ```
+
+4.  **Install Dependencies and run the app:**
+
+    ```bash
+    pnpm install
+    pnpm dev
+    ```
+
+5.  **Clerk Configuration (Critical):**
+
+    - Follow steps 1 to 3 in the [Clerk onboarding guide](https://docs.convex.dev/auth/clerk#get-started)
+    - Paste the Issuer URL as `CLERK_JWT_ISSUER_DOMAIN` to your dev deployment environment variable settings on the Convex dashboard (see [docs](https://docs.convex.dev/auth/clerk#configuring-dev-and-prod-instances))
+    - Paste your publishable key as `VITE_CLERK_PUBLISHABLE_KEY="<your publishable key>"` to the `.env.local` file in this directory.
+
+## Tech Stack
+
+- **Backend:** [Convex](https://convex.dev/) (Real-time DB, Serverless Functions)
+- **Frontend:** [React](https://react.dev/) with [Vite](https://vitejs.dev/)
+- **Routing:** [TanStack Router](https://tanstack.com/router/latest) (Type-safe, File-based)
+- **Authentication:** [Clerk](https://clerk.com/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/) + [DaisyUI](https://daisyui.com/)
+- **Validation:** [Zod](https://zod.dev/)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Package Manager:** [pnpm](https://pnpm.io/)
+
+## Project Structure Overview
 
 ```
-npm install
-npm run dev
+.
+├── convex/                   # Backend: Schema, queries, mutations, actions
+│   ├── schema.ts             # Database schema
+│   └── (e.g., messages.ts)   # Backend functions
+├── public/                   # Static assets (served directly)
+├── src/                      # Frontend (React + Vite)
+│   ├── routes/               # TanStack file-based routing
+│   │   ├── __root.tsx        # Root layout
+│   │   └── index.tsx         # Home page route (/)
+│   │   └── (e.g., chat.tsx)  # Other routes
+│   ├── index.css             # Tailwind CSS entry point
+│   └── main.tsx              # React app entry point
+├── .env.local                # Frontend env vars (VITE_CLERK_PUBLISHABLE_KEY, gitignored)
+├── .vscode/                  # VSCode editor settings & recommended extensions
+├── index.html                # Vite entry HTML
+├── vite.config.ts            # Vite configuration
+└── package.json              # Dependencies & pnpm scripts
 ```
 
-If you're reading this README on GitHub and want to use this template, run:
+## Key Dependencies & Further Reading
 
-```
-npm create convex@latest -- -t react-vite-clerk
-```
+Brief overview and links to official documentation for core technologies. Useful for understanding roles and for LLM context.
 
-Then:
+- **Convex:**
 
-1. Follow steps 1 to 3 in the [Clerk onboarding guide](https://docs.convex.dev/auth/clerk#get-started)
-2. Paste the Issuer URL as `CLERK_JWT_ISSUER_DOMAIN` to your dev deployment environment variable settings on the Convex dashboard (see [docs](https://docs.convex.dev/auth/clerk#configuring-dev-and-prod-instances))
-3. Paste your publishable key as `VITE_CLERK_PUBLISHABLE_KEY="<your publishable key>"` to the `.env.local` file in this directory.
+  - **Role:** Backend platform (real-time DB, serverless TypeScript functions, file storage).
+  - **Docs:** [Convex Docs](https://docs.convex.dev/), [Schema](https://docs.convex.dev/database/schemas), [Queries](https://docs.convex.dev/functions/queries), [Mutations](https://docs.convex.dev/functions/mutations), [Actions](https://docs.convex.dev/functions/actions), [Auth w/ Clerk](https://docs.convex.dev/auth/clerk)
 
-If you want to sync Clerk user data via webhooks, check out this [example repo](https://github.com/thomasballinger/convex-clerk-users-table/).
+- **TanStack Router:**
 
-## Learn more
+  - **Role:** Type-safe, file-based routing for React (`src/routes/`).
+  - **Docs:** [TanStack Router Docs](https://tanstack.com/router/latest), [File-Based Routing Guide](https://tanstack.com/router/latest/docs/framework/react/file-based-routing)
 
-To learn more about developing your project with Convex, check out:
+- **TanStack Form:**
 
-- The [Tour of Convex](https://docs.convex.dev/get-started) for a thorough introduction to Convex principles.
-- The rest of [Convex docs](https://docs.convex.dev/) to learn about all Convex features.
-- [Stack](https://stack.convex.dev/) for in-depth articles on advanced topics.
+  - **Role:** (Recommended) For managing form state, validation (with Zod), and submission.
+  - **Docs:** [TanStack Form Docs](https://tanstack.com/form/latest)
 
-## Join the community
+- **Clerk:**
 
-Join thousands of developers building full-stack apps with Convex:
+  - **Role:** User authentication and management, with UI components and Convex backend integration.
+  - **Docs:** [Clerk Documentation](https://clerk.com/docs), [Convex + Clerk Guide](https://docs.convex.dev/auth/clerk)
 
-- Join the [Convex Discord community](https://convex.dev/community) to get help in real-time.
-- Follow [Convex on GitHub](https://github.com/get-convex/), star and contribute to the open-source implementation of Convex.
+- **Zod:**
+
+  - **Role:** TypeScript-first schema declaration and validation (API args, form inputs).
+  - **Docs:** [Zod GitHub & Docs](https://zod.dev/)
+
+- **Core Frontend & Build:**
+  - [React](https://react.dev/): UI library.
+  - [Vite](https://vitejs.dev/): Frontend tooling (dev server, build).
+  - [Tailwind CSS](https://tailwindcss.com/): Utility-first CSS.
+  - [DaisyUI](https://daisyui.com/): Tailwind CSS components.
+  - [TypeScript](https://www.typescriptlang.org/): Static typing.
+
+## License
+
+MIT
