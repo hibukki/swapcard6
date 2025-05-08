@@ -7,15 +7,10 @@ export default defineSchema({
   users: defineTable({
     clerkId: v.string(),
     name: v.string(),
-    balance: v.number(),
   }).index("by_clerkId", ["clerkId"]),
 
-  transactions: defineTable({
-    from: v.id("users"),
-    to: v.id("users"),
-    amount: v.number(),
-    note: v.string(),
-  })
-    .index("by_from", ["from"])
-    .index("by_to", ["to"]),
+  messages: defineTable({
+    userId: v.id("users"),
+    body: v.string(),
+  }).index("by_userId", ["userId"]),
 });

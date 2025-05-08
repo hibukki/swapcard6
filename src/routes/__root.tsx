@@ -14,7 +14,7 @@ import {
   useMutation,
 } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -24,60 +24,165 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   return (
     <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
       <ConvexProviderWithClerk client={convex} useAuth={useClerkAuth}>
         <InitializeUser />
         <div className="min-h-screen flex flex-col">
           <Authenticated>
-            <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
-              <div className="navbar-start">
-                <h1 className="text-xl font-bold">Arbiter Convex</h1>
+            {/* Mobile sidebar drawer */}
+            <div className="drawer min-h-screen">
+              <input
+                id="drawer-toggle"
+                type="checkbox"
+                className="drawer-toggle"
+                checked={isSidebarOpen}
+                onChange={toggleSidebar}
+              />
+              <div className="drawer-content container mx-auto flex flex-col h-full">
+                {/* Navbar */}
+                <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
+                  <div className="navbar-start">
+                    <label
+                      htmlFor="drawer-toggle"
+                      className="btn btn-square btn-ghost drawer-button lg:hidden mr-2"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        className="inline-block w-5 h-5 stroke-current"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M4 6h16M4 12h16M4 18h16"
+                        ></path>
+                      </svg>
+                    </label>
+                    <Link to="/" className="btn btn-ghost text-xl">
+                      Fullstack Vibe Coding
+                    </Link>
+                  </div>
+                  <div className="navbar-center hidden lg:flex">
+                    <nav className="flex">
+                      <Link
+                        to="/"
+                        className="btn btn-ghost"
+                        activeProps={{
+                          className: "btn btn-ghost btn-active",
+                        }}
+                        onClick={() => setIsSidebarOpen(false)}
+                      >
+                        Home
+                      </Link>
+                      <Link
+                        to="/chat"
+                        className="btn btn-ghost"
+                        activeProps={{
+                          className: "btn btn-ghost btn-active",
+                        }}
+                        onClick={() => setIsSidebarOpen(false)}
+                      >
+                        Chat
+                      </Link>
+                    </nav>
+                  </div>
+                  <div className="navbar-end">
+                    <UserButton />
+                  </div>
+                </header>
+                {/* Main content */}
+                <main className="flex-1 p-4">
+                  <div className="mx-auto">
+                    <Outlet />
+                  </div>
+                </main>
+                <footer className="footer footer-center p-4 text-base-content">
+                  <div className="mx-auto">
+                    © {new Date().getFullYear()} Fullstack Vibe Coding
+                  </div>
+                </footer>
               </div>
-              <div className="navbar-center">
-                <nav className="flex">
-                  <Link
-                    to="/"
-                    className="btn btn-ghost"
-                    activeProps={{
-                      className: "btn btn-ghost btn-active",
-                    }}
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    to="/send"
-                    className="btn btn-ghost"
-                    activeProps={{
-                      className: "btn btn-ghost btn-active",
-                    }}
-                  >
-                    Send Clips
-                  </Link>
-                  <Link
-                    to="/transactions"
-                    className="btn btn-ghost"
-                    activeProps={{
-                      className: "btn btn-ghost btn-active",
-                    }}
-                  >
-                    Transactions
-                  </Link>
-                </nav>
+              {/* Sidebar content for mobile */}
+              <div className="drawer-side z-10">
+                <label
+                  htmlFor="drawer-toggle"
+                  aria-label="close sidebar"
+                  className="drawer-overlay"
+                ></label>
+                <div className="menu p-4 w-64 min-h-full bg-base-200 text-base-content flex flex-col">
+                  <div className="flex-1">
+                    <div className="menu-title mb-4">Menu</div>
+                    <ul className="space-y-2">
+                      <li>
+                        <Link
+                          to="/"
+                          onClick={() => setIsSidebarOpen(false)}
+                          activeProps={{
+                            className: "active",
+                          }}
+                          className="flex items-center p-2"
+                        >
+                          Home
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/chat"
+                          onClick={() => setIsSidebarOpen(false)}
+                          activeProps={{
+                            className: "active",
+                          }}
+                          className="flex items-center p-2"
+                        >
+                          Chat
+                        </Link>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="mt-auto py-4 border-t border-base-300 flex justify-center items-center">
+                    <UserButton afterSignOutUrl="/" />
+                  </div>
+                </div>
               </div>
-              <div className="navbar-end">
-                <UserButton />
-              </div>
-            </header>
-            <main className="flex-1 p-4">
-              <Outlet />
-            </main>
-            <footer className="footer footer-center p-4 text-base-content">
-              © {new Date().getFullYear()} Arbiter Convex
-            </footer>
+            </div>
           </Authenticated>
           <Unauthenticated>
-            <SignInForm />
+            <div className="min-h-screen flex flex-col">
+              <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
+                <div className="navbar-start">
+                  <h1 className="text-xl font-bold">Fullstack Vibe Coding</h1>
+                </div>
+                <div className="navbar-end">
+                  <SignInButton mode="modal">
+                    <button className="btn btn-primary btn-sm">Sign in</button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button className="btn btn-ghost btn-sm ml-2">
+                      Sign up
+                    </button>
+                  </SignUpButton>
+                </div>
+              </header>
+              <main className="flex-1">
+                <div className="mx-auto p-4">
+                  <Outlet />
+                </div>
+              </main>
+              <footer className="footer footer-center p-4 text-base-content">
+                <div className="mx-auto">
+                  © {new Date().getFullYear()} Fullstack Vibe Coding
+                </div>
+              </footer>
+            </div>
           </Unauthenticated>
         </div>
         {import.meta.env.DEV && <TanStackRouterDevtools />}
@@ -86,36 +191,16 @@ function RootComponent() {
   );
 }
 
-function SignInForm() {
-  return (
-    <div className="hero min-h-screen">
-      <div className="hero-content text-center">
-        <div className="max-w-md">
-          <h1 className="text-4xl font-bold">Arbiter Convex</h1>
-          <p className="py-6">Sign in to access the exchange</p>
-          <div className="flex flex-col gap-4">
-            <SignInButton mode="modal">
-              <button className="btn btn-primary">Sign in</button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <button className="btn btn-outline">Sign up</button>
-            </SignUpButton>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function InitializeUser() {
-  const { isSignedIn } = useClerkAuth();
-  const initUser = useMutation(api.exchange.getOrCreateUser);
+  const { isSignedIn, userId } = useClerkAuth();
+  const getOrCreateUser = useMutation(api.users.getOrCreateUser);
 
   useEffect(() => {
-    if (isSignedIn) {
-      void initUser({});
+    if (isSignedIn && userId) {
+      // Initialize user in Convex when signed in
+      void getOrCreateUser();
     }
-  }, [isSignedIn, initUser]);
+  }, [isSignedIn, userId, getOrCreateUser]);
 
   return null;
 }

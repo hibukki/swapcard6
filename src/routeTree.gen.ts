@@ -11,21 +11,21 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as TransactionsImport } from './routes/transactions'
 import { Route as SendImport } from './routes/send'
+import { Route as ChatImport } from './routes/chat'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
 
-const TransactionsRoute = TransactionsImport.update({
-  id: '/transactions',
-  path: '/transactions',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const SendRoute = SendImport.update({
   id: '/send',
   path: '/send',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ChatRoute = ChatImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -46,18 +46,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatImport
+      parentRoute: typeof rootRoute
+    }
     '/send': {
       id: '/send'
       path: '/send'
       fullPath: '/send'
       preLoaderRoute: typeof SendImport
-      parentRoute: typeof rootRoute
-    }
-    '/transactions': {
-      id: '/transactions'
-      path: '/transactions'
-      fullPath: '/transactions'
-      preLoaderRoute: typeof TransactionsImport
       parentRoute: typeof rootRoute
     }
   }
@@ -67,42 +67,42 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/chat': typeof ChatRoute
   '/send': typeof SendRoute
-  '/transactions': typeof TransactionsRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/chat': typeof ChatRoute
   '/send': typeof SendRoute
-  '/transactions': typeof TransactionsRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/chat': typeof ChatRoute
   '/send': typeof SendRoute
-  '/transactions': typeof TransactionsRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/send' | '/transactions'
+  fullPaths: '/' | '/chat' | '/send'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/send' | '/transactions'
-  id: '__root__' | '/' | '/send' | '/transactions'
+  to: '/' | '/chat' | '/send'
+  id: '__root__' | '/' | '/chat' | '/send'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ChatRoute: typeof ChatRoute
   SendRoute: typeof SendRoute
-  TransactionsRoute: typeof TransactionsRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ChatRoute: ChatRoute,
   SendRoute: SendRoute,
-  TransactionsRoute: TransactionsRoute,
 }
 
 export const routeTree = rootRoute
@@ -116,18 +116,18 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/send",
-        "/transactions"
+        "/chat",
+        "/send"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
+    "/chat": {
+      "filePath": "chat.tsx"
+    },
     "/send": {
       "filePath": "send.tsx"
-    },
-    "/transactions": {
-      "filePath": "transactions.tsx"
     }
   }
 }
