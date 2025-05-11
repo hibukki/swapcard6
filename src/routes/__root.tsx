@@ -158,22 +158,26 @@ function RootComponent() {
           <Unauthenticated>
             <div className="min-h-screen flex flex-col">
               <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
-                <div className="navbar-start">
-                  <h1 className="text-xl font-bold">Fullstack Vibe Coding</h1>
-                </div>
-                <div className="navbar-end">
-                  <SignInButton mode="modal">
-                    <button className="btn btn-primary btn-sm">Sign in</button>
-                  </SignInButton>
-                  <SignUpButton mode="modal">
-                    <button className="btn btn-ghost btn-sm ml-2">
-                      Sign up
-                    </button>
-                  </SignUpButton>
+                <div className="container mx-auto flex justify-between w-full">
+                  <div className="navbar-start">
+                    <h1 className="text-xl font-bold">Fullstack Vibe Coding</h1>
+                  </div>
+                  <div className="navbar-end">
+                    <SignInButton mode="modal">
+                      <button className="btn btn-primary btn-sm">
+                        Sign in
+                      </button>
+                    </SignInButton>
+                    <SignUpButton mode="modal">
+                      <button className="btn btn-ghost btn-sm ml-2">
+                        Sign up
+                      </button>
+                    </SignUpButton>
+                  </div>
                 </div>
               </header>
               <main className="flex-1">
-                <div className="mx-auto p-4">
+                <div className="container mx-auto p-4">
                   <Outlet />
                 </div>
               </main>
