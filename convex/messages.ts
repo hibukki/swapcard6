@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { api } from "./_generated/api";
+import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 
@@ -9,7 +9,7 @@ export const sendMessage = mutation({
   },
   handler: async (ctx, args) => {
     const userId: Id<"users"> = await ctx.runMutation(
-      api.users.getOrCreateUser,
+      internal.users.getOrCreateAuthedUser,
       {},
     );
 

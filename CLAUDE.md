@@ -81,8 +81,8 @@ This is a TypeScript full-stack application using:
 const identity = await ctx.auth.getUserIdentity();
 if (!identity) throw new Error("Not authenticated");
 
-// Auto-create user pattern (common in this codebase)
-const userId = await ctx.runMutation(api.users.getOrCreateUser, {});
+// Auto-create user pattern
+const userId = await ctx.runMutation(api.users.getOrCreateAuthedUser, {});
 ```
 
 ### Function Organization

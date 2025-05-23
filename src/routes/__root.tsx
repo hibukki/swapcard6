@@ -11,11 +11,9 @@ import {
   Authenticated,
   ConvexReactClient,
   Unauthenticated,
-  useMutation,
 } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { useEffect, useState } from "react";
-import { api } from "../../convex/_generated/api";
+import { useState } from "react";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
@@ -33,7 +31,6 @@ function RootComponent() {
   return (
     <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
       <ConvexProviderWithClerk client={convex} useAuth={useClerkAuth}>
-        <InitializeUser />
         <div className="min-h-screen flex flex-col">
           <Authenticated>
             {/* Mobile sidebar drawer */}
@@ -195,16 +192,3 @@ function RootComponent() {
   );
 }
 
-function InitializeUser() {
-  const { isSignedIn, userId } = useClerkAuth();
-  const getOrCreateUser = useMutation(api.users.getOrCreateUser);
-
-  useEffect(() => {
-    if (isSignedIn && userId) {
-      // Initialize user in Convex when signed in
-      void getOrCreateUser();
-    }
-  }, [isSignedIn, userId, getOrCreateUser]);
-
-  return null;
-}

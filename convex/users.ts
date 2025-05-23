@@ -1,6 +1,6 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 
-export const getOrCreateUser = mutation({
+export const getOrCreateAuthedUser = internalMutation({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -25,22 +25,5 @@ export const getOrCreateUser = mutation({
     });
 
     return userId;
-  },
-});
-
-export const currentUser = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
-    return user;
   },
 });
