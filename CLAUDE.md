@@ -5,11 +5,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Main Development Commands
 
 - `pnpm run init` - First-time setup: installs dependencies and initializes Convex
-- `pnpm dev` - Starts both frontend (Vite) and backend (Convex) in parallel
+- `pnpm dev` - Starts both frontend (Vite) and backend (Convex) in parallel. Never run this yourself, since it's an interactive command
 - `pnpm run lint` - Run TypeScript compilation and ESLint with strict settings
 - `pnpm convex dev --once` - **Required for validation**: Run after any backend changes to update local backend and verify deployment compatibility
 
 **Note**: Some commands, including `convex dev --once`, may fail due to being interactive. If this happens, You should ask the user to run the command manually in their terminal, and then continue with the next steps.
+
+## Testing and Validation Workflow
+
+- Run linting and convex dev --once
+- Use the Puppeteer MCP server to verify the application looks and works as expected (ask the user to run `pnpm dev` for you if needed)
 
 ## Architecture Overview
 
@@ -350,4 +355,4 @@ const form = useForm({
 - `loading loading-spinner loading-xs` for spinners
 - `btn` with `disabled` attribute for form submission states
 
-📖 **DaisyUI Documentation**: https://daisyui.com/llms.txt
+📖 **DaisyUI Documentation**: https://daisyui.com/

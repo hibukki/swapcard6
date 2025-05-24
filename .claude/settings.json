@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:daisyui.com)",
+      "WebFetch(domain:docs.convex.dev)",
+      "WebFetch(domain:tanstack.com)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm convex dev:*)",
+      "mcp__ide__getDiagnostics",
+      "mcp__puppeteer__puppeteer_navigate",
+      "mcp__puppeteer__puppeteer_screenshot"
+    ],
+    "deny": []
+  }
+}
