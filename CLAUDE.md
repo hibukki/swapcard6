@@ -2,16 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Development Commands
+## Main Development Commands
 
 - `pnpm run init` - First-time setup: installs dependencies and initializes Convex
 - `pnpm dev` - Starts both frontend (Vite) and backend (Convex) in parallel
-- `pnpm run dev:frontend` - Start only frontend development server (opens browser)
-- `pnpm run dev:backend` - Start only Convex backend in development mode
-- `pnpm run predev` - Run before dev to ensure Convex is ready and open dashboard
-- `pnpm run build` - Type check and build for production
 - `pnpm run lint` - Run TypeScript compilation and ESLint with strict settings
-- `pnpm run preview` - Preview production build locally
+- `pnpm convex dev --once` - **Required for validation**: Run after any backend changes to update local backend and verify deployment compatibility
+
+**Note**: Some commands, including `convex dev --once`, may fail due to being interactive. If this happens, You should ask the user to run the command manually in their terminal, and then continue with the next steps.
 
 ## Architecture Overview
 
