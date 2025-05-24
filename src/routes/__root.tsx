@@ -29,7 +29,10 @@ function RootComponent() {
   };
 
   return (
-    <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
+    <ClerkProvider
+      publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
+      afterSignOutUrl="/"
+    >
       <ConvexProviderWithClerk client={convex} useAuth={useClerkAuth}>
         <div className="min-h-screen flex flex-col">
           <Authenticated>
@@ -146,7 +149,7 @@ function RootComponent() {
                     </ul>
                   </div>
                   <div className="mt-auto py-4 border-t border-base-300 flex justify-center items-center">
-                    <UserButton afterSignOutUrl="/" />
+                    <UserButton />
                   </div>
                 </div>
               </div>
@@ -191,4 +194,3 @@ function RootComponent() {
     </ClerkProvider>
   );
 }
-
