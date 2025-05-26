@@ -9,11 +9,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm run lint` - Run TypeScript compilation and ESLint with strict settings
 - `pnpm convex dev --once` - **Required for validation**: Run after any backend changes to update local backend and verify deployment compatibility
 
-**Note**: Some commands, including `convex dev --once`, may fail due to being interactive. If this happens, You should ask the user to run the command manually in their terminal, and then continue with the next steps.
+**Important**: Always attempt to run `pnpm convex dev --once` yourself first. Only delegate to the user if the command fails due to interactive prompts (such as asking to update the local Convex version). Most of the time this command will run successfully without user interaction.
 
 ## Testing and Validation Workflow
 
-- Run linting and convex dev --once
+- Run linting and `pnpm convex dev --once` (attempt yourself first)
 - Use the Puppeteer MCP server to verify the application looks and works as expected (ask the user to run `pnpm dev` for you if needed)
 
 ## Architecture Overview
@@ -68,6 +68,16 @@ This is a TypeScript full-stack application using:
 ### Import Aliases
 
 - `@/` maps to `src/` directory (configured in `vite.config.ts`)
+
+### Styling Configuration
+
+**Tailwind CSS 4**: This project uses Tailwind CSS 4 with configuration in `src/index.css` (not `tailwind.config.js`). All theme customization, plugins, and configuration should be done in the CSS file using the new CSS-first configuration syntax.
+
+- Configuration: All styling config in `src/index.css`
+- Plugin integration: DaisyUI configured via `@plugin "daisyui"` directive
+- No separate config file needed
+
+📖 **Documentation**: [Tailwind CSS 4 Documentation](https://tailwindcss.com/docs/v4-beta)
 
 ## Convex Backend Patterns
 
