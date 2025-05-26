@@ -16,6 +16,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Run linting and `pnpm convex dev --once` (attempt yourself first)
 - Use the Puppeteer MCP server to verify the application looks and works as expected (ask the user to run `pnpm dev` for you if needed)
 
+### Puppeteer Setup
+
+For optimal viewing, detect screen size first with `puppeteer_evaluate`, then launch with matching viewport dimensions using `screen.width` and `screen.height` in the `defaultViewport` launchOptions.
+
 ## Architecture Overview
 
 ### Full-Stack Structure
