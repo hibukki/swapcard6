@@ -20,6 +20,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 For optimal viewing, detect screen size first with `puppeteer_evaluate`, then launch with matching viewport dimensions using `screen.width` and `screen.height` in the `defaultViewport` launchOptions.
 
+**Screenshots**: Always specify viewport dimensions in `puppeteer_screenshot`. Use detected screen dimensions by default. For mobile testing, also take screenshots at typical mobile dimensions (375x667) to verify responsive design.
+
 ## Architecture Overview
 
 ### Full-Stack Structure
