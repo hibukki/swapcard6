@@ -1,12 +1,19 @@
 import { useAuth } from "@clerk/clerk-react";
+import { convexQuery } from "@convex-dev/react-query";
 import { useForm } from "@tanstack/react-form";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Authenticated, useMutation, useQuery } from "convex/react";
+import { Authenticated, useMutation } from "convex/react";
 import { useEffect, useRef } from "react";
 import { z } from "zod";
 import { api } from "../../convex/_generated/api";
 
+const messagesQueryOptions = convexQuery(api.messages.listMessages, {});
+
 export const Route = createFileRoute("/chat")({
+  loader: async ({ context: { queryClient } }) =>
+    await queryClient.ensureQueryData(messagesQueryOptions),
+
   component: ChatPage,
 });
 
@@ -37,7 +44,7 @@ function ChatPage() {
 }
 
 function MessagesDisplay() {
-  const messages = useQuery(api.messages.listMessages);
+  const { data: messages } = useSuspenseQuery(messagesQueryOptions);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { userId } = useAuth();
 
@@ -51,7 +58,7 @@ function MessagesDisplay() {
   return (
     <div className="flex-1 overflow-y-auto bg-base-200 rounded-lg p-4">
       <div className="flex flex-col gap-3">
-        {messages?.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-base-content/70 py-8">
             <div className="text-center">
               <p className="text-lg">No messages yet</p>
@@ -59,7 +66,7 @@ function MessagesDisplay() {
             </div>
           </div>
         ) : (
-          messages?.map((message) => {
+          messages.map((message) => {
             const isCurrentUser = message.user.clerkId === userId;
             const chatAlignment = isCurrentUser ? "chat-end" : "chat-start";
 

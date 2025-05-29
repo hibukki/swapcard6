@@ -5,23 +5,27 @@ import {
   UserButton,
   useAuth as useClerkAuth,
 } from "@clerk/clerk-react";
-import { Link, Outlet, createRootRoute } from "@tanstack/react-router";
+import { Link, Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import type { QueryClient } from "@tanstack/react-query";
 import {
   Authenticated,
   ConvexReactClient,
   Unauthenticated,
 } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
-
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient;
+  convexClient: ConvexReactClient;
+}>()({
   component: RootComponent,
 });
 
 function RootComponent() {
+  const { queryClient, convexClient: convex } = Route.useRouteContext();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -34,7 +38,8 @@ function RootComponent() {
       afterSignOutUrl="/"
     >
       <ConvexProviderWithClerk client={convex} useAuth={useClerkAuth}>
-        <div className="min-h-screen flex flex-col">
+        <QueryClientProvider client={queryClient}>
+          <div className="min-h-screen flex flex-col">
           <Authenticated>
             {/* Mobile sidebar drawer */}
             <div className="drawer min-h-screen">
@@ -190,6 +195,7 @@ function RootComponent() {
           </Unauthenticated>
         </div>
         {import.meta.env.DEV && <TanStackRouterDevtools />}
+        </QueryClientProvider>
       </ConvexProviderWithClerk>
     </ClerkProvider>
   );

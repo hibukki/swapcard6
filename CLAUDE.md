@@ -103,6 +103,13 @@
 - Navigate programmatically: `const navigate = useNavigate()` then `navigate({ to: '/path' })`
 - Type-safe links: always use `<Link to="/path">` not `<a href>`
 
+## TanStack Query + Convex Integration
+
+- Use `convexQuery()` from `@convex-dev/react-query` to create query options: `const queryOptions = convexQuery(api.module.function, { status: "active" })`
+- Preload in route loaders: `loader: async ({ context: { queryClient } }) => await queryClient.ensureQueryData(queryOptions)`
+- Use `useSuspenseQuery` in components: `const { data } = useSuspenseQuery(queryOptions)`
+- For mutations, continue using Convex's `useMutation` directly
+
 ## TanStack Form
 
 - Field validation can override form validation - design hierarchy carefully

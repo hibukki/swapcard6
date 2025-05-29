@@ -63,7 +63,7 @@ class ProcessManager extends EventEmitter {
       const lines = data
         .toString()
         .split("\n")
-        .filter((line) => line.length > 0);
+        .filter((line: string) => line.length > 0);
       processData.stdout.push(...lines);
 
       // Trim buffer if too large
@@ -77,7 +77,7 @@ class ProcessManager extends EventEmitter {
       const lines = data
         .toString()
         .split("\n")
-        .filter((line) => line.length > 0);
+        .filter((line: string) => line.length > 0);
       processData.stderr.push(...lines);
 
       // Trim buffer if too large
