@@ -29,13 +29,13 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.1.0(react@19.1.0)
-      zod:
-        specifier: ^3.24.4
-        version: 3.24.4
     devDependencies:
       '@eslint/js':
         specifier: ^9.21.0
         version: 9.26.0
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.12.1
+        version: 1.12.1
       '@tailwindcss/vite':
         specifier: ^4.0.14
         version: 4.1.5(vite@6.3.4(@types/node@22.15.3)(jiti@2.4.2)(lightningcss@1.29.2)(tsx@4.19.4))
@@ -78,6 +78,9 @@ importers:
       tailwindcss:
         specifier: ^4.0.14
         version: 4.1.5
+      tsx:
+        specifier: ^4.19.4
+        version: 4.19.4
       typescript:
         specifier: ~5.7.2
         version: 5.7.3
@@ -87,6 +90,9 @@ importers:
       vite:
         specifier: ^6.2.0
         version: 6.3.4(@types/node@22.15.3)(jiti@2.4.2)(lightningcss@1.29.2)(tsx@4.19.4)
+      zod:
+        specifier: ^3.24.4
+        version: 3.24.4
 
 packages:
 
@@ -584,8 +590,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
-  '@modelcontextprotocol/sdk@1.11.0':
-    resolution: {integrity: sha512-k/1pb70eD638anoi0e8wUGAlbMJXyvdV4p62Ko+EZ7eBe1xMx8Uhak1R5DgfoofsK5IBBnRwsYGTaLZl+6/+RQ==}
+  '@modelcontextprotocol/sdk@1.12.1':
+    resolution: {integrity: sha512-KG1CZhZfWg+u8pxeM/mByJDScJSrjjxLc8fwQqbsS8xCjBmQfMNEBTotYdNanKekepnfRI85GtgQlctLFpcYPw==}
     engines: {node: '>=18'}
 
   '@nodelib/fs.scandir@2.1.5':
@@ -2808,8 +2814,9 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@modelcontextprotocol/sdk@1.11.0':
+  '@modelcontextprotocol/sdk@1.12.1':
     dependencies:
+      ajv: 6.12.6
       content-type: 1.0.5
       cors: 2.8.5
       cross-spawn: 7.0.6
@@ -3639,7 +3646,7 @@ snapshots:
       '@humanfs/node': 0.16.6
       '@humanwhocodes/module-importer': 1.0.1
       '@humanwhocodes/retry': 0.4.2
-      '@modelcontextprotocol/sdk': 1.11.0
+      '@modelcontextprotocol/sdk': 1.12.1
       '@types/estree': 1.0.7
       '@types/json-schema': 7.0.15
       ajv: 6.12.6

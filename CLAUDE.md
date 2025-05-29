@@ -1,8 +1,7 @@
 ## Project Overview
 
 - Full-stack TypeScript app: React + Vite + TanStack Router (frontend), Convex (backend), Clerk (auth)
-- Main command: `pnpm dev` starts both frontend and backend (user must run this)
-- Validation: Run `pnpm run lint` and `pnpm convex dev --once` after backend changes
+- Development: Use `mcp__shell-commands__launch-dev-all` to start servers, then monitor output streams for validation
 - Import alias: `@/` maps to `src/` directory
 - Tailwind CSS 4: All config in `src/index.css` via CSS syntax, NOT tailwind.config.js
 - Environment variables: Client vars need `VITE_` prefix, Convex vars set in dashboard
@@ -22,12 +21,11 @@
 
 ## Testing & Validation
 
-- Always run `pnpm convex dev --once` after Convex changes (attempt first, ask user if interactive)
+- Validation: Monitor MCP output streams for TypeScript/compilation errors
 - Test UI with Puppeteer MCP: detect screen size first with `puppeteer_evaluate`
 - Puppeteer limitations: text selection unreliable, no console access via MCP
 - Ask user to navigate browser to relevant state before screenshots
 - Request console logs from user when debugging: "Can you check the browser console?"
-- Check Network tab for WebSocket issues: "Can you check if Convex is connected in Network tab?"
 - Take screenshots at detected dimensions AND mobile (375x667) for responsive testing
 
 ## Convex
