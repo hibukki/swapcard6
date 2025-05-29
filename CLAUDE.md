@@ -1,374 +1,128 @@
-# CLAUDE.md
+## Project Overview
+
+- Full-stack TypeScript app: React + Vite + TanStack Router (frontend), Convex (backend), Clerk (auth)
+- Main command: `pnpm dev` starts both frontend and backend (user must run this)
+- Validation: Run `pnpm run lint` and `pnpm convex dev --once` after backend changes
+- Import alias: `@/` maps to `src/` directory
+- Tailwind CSS 4: All config in `src/index.css` via CSS syntax, NOT tailwind.config.js
+- Environment variables: Client vars need `VITE_` prefix, Convex vars set in dashboard
+
+## Git Workflow
+
+- Create frequent small commits for each unit of work: `git add -A && git commit -m "[action]: [specific description]"`
+- Maintain `.claude-notes.md` with current context, progress, and next steps - commit this file with each checkpoint
+- When feature complete and user approves: `git reset --soft [first-commit-of-feature]` then `git commit -m "feat: [complete feature description]"`
+- Never push without user confirmation
+- Before major feature work: Tell user "Starting [feature], will make frequent small commits then squash when complete"
+- Claude Code notes file should include:
+  - Current feature being worked on
+  - Progress status and next steps
+  - Important context or decisions made
+  - Relevant file locations or dependencies
+
+## Testing & Validation
+
+- Always run `pnpm convex dev --once` after Convex changes (attempt first, ask user if interactive)
+- Test UI with Puppeteer MCP: detect screen size first with `puppeteer_evaluate`
+- Puppeteer limitations: text selection unreliable, no console access via MCP
+- Ask user to navigate browser to relevant state before screenshots
+- Request console logs from user when debugging: "Can you check the browser console?"
+- Check Network tab for WebSocket issues: "Can you check if Convex is connected in Network tab?"
+- Take screenshots at detected dimensions AND mobile (375x667) for responsive testing
+
+## Convex
+
+- `_creationTime` and `_id` are automatically added to all documents.
+- Adding required fields breaks existing data - if early in development, ask the user to clear the database. Otherwise, plan migration.
+- Use `ConvexError` for client-friendly errors, not generic Error
+- Queries have 16MB/10s limits - always use indexes, never full table scans
+- Paginated queries: use `.paginate(paginationOpts)` with `paginationOptsValidator`
+- Scheduled tasks: `ctx.scheduler.runAfter(delay, internal.module.function, args)` or `ctx.scheduler.runAt(timestamp, ...)`
+- Unique fields: enforce in mutation logic, indexes don't guarantee uniqueness
+- Soft delete: add `deletedAt: v.optional(v.number())` field instead of `.delete()`
+- System tables: access `_scheduled_functions` and `_storage` with `ctx.db.system.get` and `ctx.db.system.query`
+- Default query order is ascending by `_creationTime`
+- Transactions are per-mutation - can't span multiple mutations. Calling multiple queries/mutation in a single action may introduce race conditions.
+- Hot reload issues: Restart if schema changes don't apply or types are stuck
+- Use `import { Doc, Id } from "./_generated/dataModel";` and `v.id("table")` for type safety.
+- Always add `"use node";` to the top of files containing actions that use Node.js built-in modules.
+
+### Function guidelines
+
+- Import `query`, `internalQuery`, `mutation`, `internalMutation`, `action`, `internalAction` from `./_generated/server` and call to register functions.
+- Use `ctx.runQuery`, `ctx.runMutation`, `ctx.runAction` to call functions from other functions. e.g.: `import { api, internal } from "./_generated/api";` and then `ctx.runQuery(internal.module.function, { arg })`.
+- If calling functions causes unexpected type errors, try adding a type annotation (helps circularity): `const result: string = await ctx.runQuery(api.module.function, { arg });`
+- Actions can't directly access DB - use `ctx.runQuery` / `ctx.runMutation`
+
+### Validator guidelines
+
+- Always use an args validator for functions
+- `v.bigint()` is deprecated for representing signed 64-bit integers. Use `v.int64()` instead.
+- Use `v.record()` for defining a record type. `v.map()` and `v.set()` are not supported.
+
+### Query guidelines
+
+- Do NOT use `filter` in queries. Instead, define an index in the schema and use `withIndex` instead.
+- Convex queries do NOT support `.delete()`. Instead, `.collect()` the results, iterate over them, and call `ctx.db.delete(row._id)` on each result.
+- Use `.unique()` to get a single document from a query. This method will throw an error if there are multiple documents that match the query.
+- When using async iteration, don't use `.collect()` or `.take(n)` on the result of a query. Instead, use the `for await (const row of query)` syntax.
+
+### Mutation guidelines
+
+- Use `ctx.db.replace` to fully replace an existing document.
+- Use `ctx.db.patch` to shallow merge updates into an existing document.
+
+### File uploads
+
+- generate upload URL in mutation (`ctx.storage.generateUploadUrl()`)
+- POST from client
+- store ID (take `v.id("_storage")`)
+- serve with `ctx.storage.getUrl(fileId)` in queries
+
+### Other Convex Features (refer to docs as necessary)
+
+- Text search: docs.convex.dev/search/text-search
+- Crons: docs.convex.dev/scheduling/cron-jobs
+- Durable long-running code flows with retries and delays: convex.dev/components/workflow
+- Organize AI workflows with message history and vector search: convex.dev/components/ai-agent
+- Prioritize tasks with separate customizable queues: convex.dev/components/workpool
+- Sync engine for ProseMirror-based editors: convex.dev/components/collaborative-text-editor-sync
+- Send and receive SMS with queryable status: convex.dev/components/twilio-sms
+- Add subscriptions and billing integration: convex.dev/components/polar
+- Stream text to browser while storing to database (good for LLM calls): convex.dev/components/persistent-text-streaming
+- Type-safe application-layer rate limits with sharding: convex.dev/components/rate-limiter
+- Framework for long-running data migrations: convex.dev/components/migrations
+- Distributed counter for high-throughput operations: convex.dev/components/sharded-counter
+- Cache action results to improve performance: convex.dev/components/action-cache
+- Data aggregation and denormalization operations: convex.dev/components/aggregate
+- Register and manage cron jobs at runtime: convex.dev/components/crons
+
+## TanStack Router
+
+- Avoid `const search = useSearch()` - use `select` option instead
+- Route params update quirks - preserve location when updating
+- Search params as filters: validate with zod schema in route definition
+- Navigate programmatically: `const navigate = useNavigate()` then `navigate({ to: '/path' })`
+- Type-safe links: always use `<Link to="/path">` not `<a href>`
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## TanStack Form
 
-## Main Development Commands
+- Field validation can override form validation - design hierarchy carefully
+- Submit handler: `onSubmit: async ({ value }) => { await mutate(value); form.reset(); }`
+- Field errors: `{field.state.meta.errors && <span>{field.state.meta.errors}</span>}`
+- Disable during submit: `<button disabled={!form.state.canSubmit || form.state.isSubmitting}>`
+- Async validation: use `onChangeAsync` for server-side checks
 
-- `pnpm run init` - First-time setup: installs dependencies and initializes Convex
-- `pnpm dev` - Starts both frontend (Vite) and backend (Convex) in parallel. Never run this yourself, since it's an interactive command
-- `pnpm run lint` - Run TypeScript compilation and ESLint with strict settings
-- `pnpm convex dev --once` - **Required for validation**: Run after any backend changes to update local backend and verify deployment compatibility
+## DaisyUI
 
-**Important**: Always attempt to run `pnpm convex dev --once` yourself first. Only delegate to the user if the command fails due to interactive prompts (such as asking to update the local Convex version). Most of the time this command will run successfully without user interaction.
+- Always use idiomatic DaisyUI when possible, with semantic component classes: `btn`, `card`, `alert`, etc.
+- Combine with modifiers: `btn-primary`, `card-bordered`
+- Join components: wrap in `<div className="join">`
+- Loading states: `loading loading-spinner loading-xs`
 
-## Testing and Validation Workflow
+## Important Rules
 
-- Run linting and `pnpm convex dev --once` (attempt yourself first)
-- Use the Puppeteer MCP server to verify the application looks and works as expected (ask the user to run `pnpm dev` for you if needed)
-
-### Puppeteer Setup
-
-For optimal viewing, detect screen size first with `puppeteer_evaluate`, then launch with matching viewport dimensions using `screen.width` and `screen.height` in the `defaultViewport` launchOptions.
-
-**Screenshots**: Always specify viewport dimensions in `puppeteer_screenshot`. Use detected screen dimensions by default. For mobile testing, also take screenshots at typical mobile dimensions (375x667) to verify responsive design.
-
-## Architecture Overview
-
-### Full-Stack Structure
-
-This is a TypeScript full-stack application using:
-
-- **Frontend**: React + Vite + TanStack Router (file-based routing)
-- **Backend**: Convex (real-time database + serverless functions)
-- **Authentication**: Clerk with Convex integration
-- **Styling**: Tailwind CSS + DaisyUI components
-
-### Key Patterns
-
-**Convex Functions**: Located in `convex/` directory
-
-- Schema definitions in `convex/schema.ts`
-- Queries, mutations, and actions in separate files (e.g., `messages.ts`, `users.ts`)
-- Authentication config in `convex/auth.config.ts`
-
-**Frontend Routing**: File-based routing in `src/routes/`
-
-- `__root.tsx` - Root layout with authentication states and navigation
-- Route files define pages (e.g., `index.tsx` for `/`)
-- Uses TanStack Router with type-safe navigation
-
-**Authentication Flow**:
-
-- Clerk handles authentication UI and tokens
-- `InitializeUser` component in root automatically creates Convex user records
-- Two distinct layouts: authenticated (with sidebar/navbar) vs unauthenticated
-- Uses `<Authenticated>` and `<Unauthenticated>` components for conditional rendering
-
-**State Management**:
-
-- Convex handles backend state with real-time subscriptions
-- React hooks (`useQuery`, `useMutation`) for Convex integration
-- Local component state for UI interactions
-
-### Database Schema
-
-- `users` table: `clerkId` (string), `name` (string) with index on `clerkId`
-- Additional tables defined as needed for your application
-
-### Environment Variables
-
-- `VITE_CONVEX_URL` - Convex deployment URL
-- `VITE_CLERK_PUBLISHABLE_KEY` - Clerk authentication key
-- `CLERK_JWT_ISSUER_DOMAIN` - Server-side Clerk configuration
-
-### Import Aliases
-
-- `@/` maps to `src/` directory (configured in `vite.config.ts`)
-
-### Styling Configuration
-
-**Tailwind CSS 4**: This project uses Tailwind CSS 4 with configuration in `src/index.css` (not `tailwind.config.js`). All theme customization, plugins, and configuration should be done in the CSS file using the new CSS-first configuration syntax.
-
-- Configuration: All styling config in `src/index.css`
-- Plugin integration: DaisyUI configured via `@plugin "daisyui"` directive
-- No separate config file needed
-
-📖 **Documentation**: [Tailwind CSS 4 Documentation](https://tailwindcss.com/docs/v4-beta)
-
-## Convex Backend Patterns
-
-### Function Types
-
-- **Queries**: Read-only database operations with automatic caching and real-time updates
-- **Mutations**: Transactional database writes, cannot call external APIs
-- **Actions**: Can call external services (no direct DB access, use via `ctx.runQuery`/`ctx.runMutation`)
-
-### Authentication Patterns
-
-```typescript
-// Get authenticated user identity
-const identity = await ctx.auth.getUserIdentity();
-if (!identity) throw new Error("Not authenticated");
-
-// Auto-create user pattern
-const userId = await ctx.runMutation(api.users.getOrCreateAuthedUser, {});
-```
-
-### Function Organization
-
-- **Public functions**: Use `query`, `mutation`, `action` for client-accessible APIs
-- **Internal functions**: Use `internalQuery`, `internalMutation`, `internalAction` for private logic
-- **File-based routing**: Function in `convex/users.ts` named `getUser` → `api.users.getUser`
-
-### Function References & Calling
-
-```typescript
-// Call functions using references, not direct imports
-const result = await ctx.runQuery(api.users.getUser, { id: userId });
-const data = await ctx.runMutation(internal.helpers.processData, { input });
-
-// TypeScript: Add type annotation for same-file calls
-const result: string = await ctx.runQuery(api.example.myFunction, { args });
-```
-
-### TypeScript Patterns
-
-```typescript
-import { Id } from "./_generated/dataModel";
-
-// Use specific Id types, not generic strings
-args: { userId: v.id("users") }, // Results in Id<"users"> type
-
-// Type-safe record mapping
-const userMap: Record<Id<"users">, string> = {};
-```
-
-### Database Query Patterns
-
-```typescript
-// Index-based queries (preferred for performance)
-const user = await ctx.db
-  .query("users")
-  .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-  .unique();
-
-// Collection queries
-const records = await ctx.db.query("tableName").collect();
-
-// Filtered queries with ordering
-const results = await ctx.db
-  .query("tableName")
-  .withIndex("by_field", (q) => q.eq("field", value))
-  .order("desc")
-  .take(50);
-```
-
-### Schema & System Fields
-
-```typescript
-// Schema definition with indexes
-defineTable({
-  field: v.string(),
-  userId: v.id("users"),
-  // Note: _id and _creationTime are automatically added to all tables
-})
-  .index("by_user", ["userId"])
-  .index("by_user_and_field", ["userId", "field"]); // Include all fields in index name
-```
-
-**Important**: All tables automatically include:
-
-- `_id: Id<"tableName">` - Unique document identifier
-- `_creationTime: number` - Creation timestamp
-- Default index on `_creationTime` for ordering
-
-### Validation Patterns
-
-```typescript
-// Argument validation
-args: {
-  name: v.string(),
-  userId: v.id("users"),
-  optional: v.optional(v.string()),
-  data: v.object({ field: v.string() })
-}
-```
-
-### Query Performance Guidelines
-
-- **Default ordering**: Documents return in ascending `_creationTime` order by default
-- **Prefer indexes over filters**: Use `withIndex` instead of `filter` for performance
-- **Index naming**: Include all fields in index name (e.g., `"by_status_and_priority"`)
-
-```typescript
-// Pagination with validator
-import { paginationOptsValidator } from "convex/server";
-
-args: { paginationOpts: paginationOptsValidator },
-handler: async (ctx, args) => {
-  return await ctx.db
-    .query("table")
-    .order("desc")
-    .paginate(args.paginationOpts);
-}
-
-// Efficient filtering with indexes (preferred)
-const results = await ctx.db
-  .query("table")
-  .withIndex("by_status_and_priority", (q) =>
-    q.eq("status", "active").eq("priority", "high")
-  )
-  .collect();
-
-// Avoid: using filter without index (slower)
-// const results = await ctx.db.query("table").filter(q => ...).collect();
-```
-
-📖 **Documentation Links**:
-
-- [Functions](https://docs.convex.dev/functions) - Queries, mutations, actions
-- [Database](https://docs.convex.dev/database) - Schema, indexing, queries
-- [Authentication](https://docs.convex.dev/auth) - Auth integration patterns
-- [File Storage](https://docs.convex.dev/file-storage) - File uploads and management
-- [Pagination](https://docs.convex.dev/database/pagination) - Efficient large dataset handling
-- [Indexes](https://docs.convex.dev/database/indexes) - Query optimization
-- [Search](https://docs.convex.dev/text-search) - Full-text search with search indexes
-- [Scheduling](https://docs.convex.dev/scheduling) - Cron jobs and delayed function execution
-- [Components](https://docs.convex.dev/components) - Reusable backend modules (install as needed)
-
-### Useful Components (Install Only If Needed)
-
-- `@convex-dev/aggregate` - Real-time aggregations and counters
-- `@convex-dev/rate-limiter` - Rate limiting for API endpoints
-- `@convex-dev/migrations` - Database migration utilities
-
-## TanStack Router Patterns
-
-### File-Based Routing Conventions
-
-- Routes defined in `src/routes/` directory
-- `__root.tsx` - Root layout component (wraps all routes)
-- Route files export `createFileRoute("/path")` with component
-- Use `<Link>` for navigation with type-safe routes
-
-### Route Creation Pattern
-
-```typescript
-export const Route = createFileRoute("/path")({
-  component: PageComponent,
-});
-```
-
-### Navigation Patterns
-
-```typescript
-// Type-safe navigation with activeProps
-<Link
-  to="/path"
-  activeProps={{ className: "btn btn-ghost btn-active" }}
->
-  Navigation
-</Link>
-
-// Navigation with search parameters
-<Link
-  to="/path"
-  search={{ page: 1, filter: "active" }}
->
-  With Params
-</Link>
-```
-
-📖 **Documentation Links**:
-
-- [File-Based Routing](https://tanstack.com/router/latest/docs/framework/react/guide/file-based-routing)
-- [Search Parameters](https://tanstack.com/router/latest/docs/framework/react/guide/search-params) - Type-safe URL state
-- [Route Context](https://tanstack.com/router/latest/docs/framework/react/guide/route-context) - Data loading patterns
-- [Authentication](https://tanstack.com/router/latest/docs/framework/react/guide/authenticated-routes) - Protected routes
-
-## TanStack Form Patterns
-
-### Form Setup with Validation
-
-```typescript
-const form = useForm({
-  defaultValues: { field: "" },
-  validators: {
-    onChange: formSchema, // Zod schema
-  },
-  onSubmit: async ({ value }) => {
-    await submitData(value);
-    form.reset();
-  },
-});
-```
-
-### Field Patterns
-
-```typescript
-<form.Field
-  name="fieldName"
-  validators={{
-    onChange: ({ value }) => !value ? "Required" : undefined
-  }}
->
-  {(field) => (
-    <input
-      value={field.state.value}
-      onChange={(e) => field.handleChange(e.target.value)}
-      onBlur={field.handleBlur}
-    />
-  )}
-</form.Field>
-```
-
-### Form State Management
-
-- `form.state.canSubmit` - Form validation state
-- `form.state.isSubmitting` - Async submission state
-- `field.state.meta.errors` - Field-level errors
-
-📖 **Documentation Links**:
-
-- [Quick Start](https://tanstack.com/form/latest/docs/framework/react/quick-start) - Basic form setup
-- [Validation](https://tanstack.com/form/latest/docs/framework/react/guides/validation) - Schema and field validation
-- [Form State](https://tanstack.com/form/latest/docs/framework/react/reference/useForm) - State management reference
-
-## DaisyUI Component Patterns
-
-### Component Structure
-
-- Base classes: `btn`, `card`, `input`, `chat`, `alert`
-- Modifiers: `btn-primary`, `card-body`, `input-bordered`
-- Sizes: `btn-sm`, `btn-lg`, `input-xs`
-
-### Common Component Patterns
-
-```typescript
-// Cards
-<div className="card">
-  <div className="card-body">
-    <h2 className="card-title">Title</h2>
-    <p>Content</p>
-    <div className="card-actions justify-end">
-      <button className="btn btn-primary">Action</button>
-    </div>
-  </div>
-</div>
-
-// Form controls
-<div className="form-control">
-  <label className="label">
-    <span className="label-text">Field Label</span>
-  </label>
-  <input className="input input-bordered" />
-</div>
-
-// Joined components
-<div className="join">
-  <input className="input input-bordered join-item" />
-  <button className="btn join-item">Submit</button>
-</div>
-
-// Alerts
-<div className="alert alert-success">
-  <span>Success message</span>
-</div>
-```
-
-### Loading States
-
-- `loading loading-spinner loading-xs` for spinners
-- `btn` with `disabled` attribute for form submission states
-
-📖 **DaisyUI Documentation**: https://daisyui.com/
+- When stuck: check official docs first (docs.convex.dev, tanstack.com)
+- Ask before installing new dependencies
+- Verify responsive design at multiple breakpoints
+- Document non-obvious implementation choices in this file
