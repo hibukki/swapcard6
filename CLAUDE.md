@@ -1,3 +1,5 @@
+- Always follow the guidelines in this file, unless explicitly told otherwise by the user or overided in the CLAUDE.local.md file.
+
 ## Project Overview
 
 - Full-stack TypeScript app: React + Vite + TanStack Router (frontend), Convex (backend), Clerk (auth)
@@ -9,8 +11,8 @@
 ## Git Workflow
 
 - Create frequent small commits for each unit of work: `git add -A && git commit -m "[action]: [specific description]"`
-- Maintain `.claude-notes.md` with current context, progress, and next steps - commit this file with each checkpoint
-- When feature complete and user approves: `git reset --soft [first-commit-of-feature]` then `git commit -m "feat: [complete feature description]"`
+- Maintain @claude-notes.md with current context, progress, and next steps - commit this file with each checkpoint
+- When feature complete and user approves: `git reset --soft [first-commit-of-feature]` then clear the claude-notes file and `git commit -m "feat: [complete feature description]"`
 - Never push without user confirmation
 - Before major feature work: Tell user "Starting [feature], will make frequent small commits then squash when complete"
 - Claude Code notes file should include:
@@ -125,7 +127,7 @@
 - Join components: wrap in `<div className="join">`
 - Loading states: `loading loading-spinner loading-xs`
 
-## Important Rules
+## Other Guidelines
 
 - When stuck: check official docs first (docs.convex.dev, tanstack.com)
 - Ask before installing new dependencies
