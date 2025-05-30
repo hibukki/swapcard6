@@ -5,7 +5,7 @@
 - Full-stack TypeScript app: React + Vite + TanStack Router (frontend), Convex (backend), Clerk (auth)
 - Development: Use `mcp__shell-commands__launch-dev-all` to start servers, then monitor output streams for validation
 - Import alias: `@/` maps to `src/` directory
-- Tailwind CSS 4: All config in `src/index.css` via CSS syntax, NOT tailwind.config.js
+- Tailwind CSS 4, daisyUI 5: All config in `src/index.css` via CSS syntax, NOT tailwind.config.js
 - Typography: Uses `@tailwindcss/typography` with `prose prose-invert` at root level, use `not-prose` to escape (e.g., for buttons/tables)
 - Environment variables: Client vars need `VITE_` prefix, Convex vars set in dashboard
 
@@ -121,12 +121,46 @@
 - Disable during submit: `<button disabled={!form.state.canSubmit || form.state.isSubmitting}>`
 - Async validation: use `onChangeAsync` for server-side checks
 
-## DaisyUI
+## Styling with DaisyUI
 
-- Always use idiomatic DaisyUI when possible, with semantic component classes: `btn`, `card`, `alert`, etc.
-- Combine with modifiers: `btn-primary`, `card-bordered`
-- Join components: wrap in `<div className="join">`
-- Loading states: `loading loading-spinner loading-xs`
+### Class Organization
+
+- `component`: Main class (btn), `part`: Child elements (card-title), `style`: Visual variants (btn-outline)
+- `behavior`: State (btn-active), `color`: Colors (btn-primary), `size`: Sizes (btn-lg)
+- `placement`: Position (dropdown-top), `direction`: Orientation (menu-horizontal), `modifier`: Special (btn-wide)
+
+### Key or Unfamiliar Components Reference
+
+- When using a component you aren't familiar with, always check its docs page.
+- `dock`: Bottom navigation bar with `dock-label` parts, see [docs](https://daisyui.com/components/dock/)
+- `filter`: Radio button groups with `filter-reset` for clearing selection, see [docs](https://daisyui.com/components/filter/)
+- `list`: Vertical layout for data rows using `list-row` class for each item
+- `fieldset`: Form grouping with `fieldset-legend` for titles and `label` for descriptions
+- `floating-label`: Labels that float above inputs when focused, use as parent wrapper
+- `status`: Tiny status indicators (`status-success`, `status-error`, etc.)
+- `validator`: Automatic form validation styling with `validator-hint` for error messages
+- `theme-controller`: Controls page theme via checkbox/radio with `value="{theme-name}"`
+- `diff`: Side-by-side comparison with `diff-item-1`, `diff-item-2`, `diff-resizer` parts
+- `calendar`: Apply `cally`, `pika-single`, or `react-day-picker` classes to respective libraries
+- `swap`: Toggle visibility of elements using `swap-on`/`swap-off` with checkbox or `swap-active` class
+- [Modal](https://daisyui.com/components/modal/): use with HTML dialog
+- [Drawer](https://daisyui.com/components/drawer/): Grid layout with sidebar toggle using `drawer-toggle` checkbox
+- [Dropdown](https://daisyui.com/components/dropdown/): Details/summary, popover API, or CSS focus methods
+- [Accordion](https://daisyui.com/components/accordion/): Radio inputs for exclusive opening using `collapse` class
+
+### Usage Rules
+
+- Use `!` suffix for forced overrides: `btn bg-red-500!`
+- Responsive patterns: `lg:menu-horizontal`, `sm:card-horizontal`
+- Prefer daisyUI colors (`bg-primary`) over Tailwind colors (`bg-blue-500`) for theme consistency
+- Use `*-content` colors for text on colored backgrounds
+
+### Color System
+
+- Semantic colors: `primary`, `secondary`, `accent`, `neutral`, `base-100/200/300`
+- Status colors: `info`, `success`, `warning`, `error`
+- Each color has matching `-content` variant for contrasting text
+- Custom themes use OKLCH format, create at [theme generator](https://daisyui.com/theme-generator/)
 
 ## Other Guidelines
 
