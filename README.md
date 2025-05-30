@@ -63,15 +63,15 @@ Follow these steps to get your development environment set up:
 
 ## Deployment
 
-### Netlify
+### Vercel
 
-This template includes a `netlify.toml` file configured for Convex deployments. To deploy:
+This template includes a `vercel.json` file configured for Convex deployments. To deploy:
 
-1. Connect your repository to Netlify via their GitHub integration
-2. Set `CONVEX_DEPLOY_KEY` in Netlify environment variables (generate in Convex dashboard)
+1. Connect your repository to Vercel via their GitHub integration
+2. Set `CONVEX_DEPLOY_KEY` in Vercel environment variables (generate in Convex dashboard)
 3. Set `VITE_CLERK_PUBLISHABLE_KEY` for your production environment
 
-For detailed instructions, see [Convex Netlify Deployment Guide](https://docs.convex.dev/production/hosting/netlify).
+For detailed instructions, see [Convex Vercel Deployment Guide](https://docs.convex.dev/production/hosting/vercel).
 
 ## License
 
