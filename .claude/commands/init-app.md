@@ -8,7 +8,7 @@ Help a user initialize their new application using this template. Track progress
 - Start @claude-notes.md with current step (including instruction to reread this file if starting from a fresh session)
 - Ask what they want to build
 - Clarify key aspects: target users, main problem, core features
-- Document responses and commit
+- Document responses and commit. Delete the first line of CLAUDE.md to remove the template instructions.
 
 ## Step 2: MVP Definition
 
