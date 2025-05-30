@@ -4,6 +4,7 @@ import {
   SignUpButton,
   UserButton,
   useAuth as useClerkAuth,
+  useUser,
 } from "@clerk/clerk-react";
 import { Link, Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
@@ -12,10 +13,12 @@ import {
   Authenticated,
   ConvexReactClient,
   Unauthenticated,
+  useMutation,
 } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "../../convex/_generated/api";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -41,6 +44,7 @@ function RootComponent() {
         <QueryClientProvider client={queryClient}>
           <div className="min-h-screen flex flex-col">
           <Authenticated>
+            <EnsureUser />
             {/* Mobile sidebar drawer */}
             <div className="drawer min-h-screen">
               <input
@@ -88,16 +92,6 @@ function RootComponent() {
                       >
                         Home
                       </Link>
-                      <Link
-                        to="/chat"
-                        className="btn btn-ghost"
-                        activeProps={{
-                          className: "btn btn-ghost btn-active",
-                        }}
-                        onClick={() => setIsSidebarOpen(false)}
-                      >
-                        Chat
-                      </Link>
                     </nav>
                   </div>
                   <div className="navbar-end">
@@ -137,18 +131,6 @@ function RootComponent() {
                           className="flex items-center p-2"
                         >
                           Home
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="/chat"
-                          onClick={() => setIsSidebarOpen(false)}
-                          activeProps={{
-                            className: "active",
-                          }}
-                          className="flex items-center p-2"
-                        >
-                          Chat
                         </Link>
                       </li>
                     </ul>
@@ -199,4 +181,17 @@ function RootComponent() {
       </ConvexProviderWithClerk>
     </ClerkProvider>
   );
+}
+
+function EnsureUser() {
+  const { isLoaded, isSignedIn } = useUser();
+  const ensureUser = useMutation(api.users.ensureUser);
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      void ensureUser();
+    }
+  }, [isLoaded, isSignedIn, ensureUser]);
+
+  return null;
 }

@@ -8,9 +8,4 @@ export default defineSchema({
     clerkId: v.string(),
     name: v.string(),
   }).index("by_clerkId", ["clerkId"]),
-
-  messages: defineTable({
-    userId: v.id("users"),
-    body: v.string(),
-  }).index("by_userId", ["userId"]),
 });
