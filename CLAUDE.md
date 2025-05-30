@@ -6,6 +6,7 @@
 - Development: Use `mcp__shell-commands__launch-dev-all` to start servers, then monitor output streams for validation
 - Import alias: `@/` maps to `src/` directory
 - Tailwind CSS 4: All config in `src/index.css` via CSS syntax, NOT tailwind.config.js
+- Typography: Uses `@tailwindcss/typography` with `prose prose-invert` at root level, use `not-prose` to escape (e.g., for buttons/tables)
 - Environment variables: Client vars need `VITE_` prefix, Convex vars set in dashboard
 
 ## Git Workflow

@@ -15,12 +15,12 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   return (
-    <div className="flex flex-col gap-8 w-full py-8">
-      <h1 className="text-4xl font-bold text-center">Fullstack Vibe Coding</h1>
+    <div className="text-center">
+      <h1>Fullstack Vibe Coding</h1>
 
       <Unauthenticated>
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-lg text-center">Sign in to see the list of users.</p>
+        <p>Sign in to see the list of users.</p>
+        <div className="not-prose mt-4">
           <SignInButton mode="modal">
             <button className="btn btn-primary btn-lg">Get Started</button>
           </SignInButton>
@@ -38,15 +38,17 @@ function UsersList() {
   const { data: users } = useSuspenseQuery(usersQueryOptions);
 
   return (
-    <div className="max-w-4xl mx-auto w-full">
-      <h2 className="text-2xl font-bold mb-4">Users</h2>
-      
+    <>
+      <h2>Users</h2>
+
       {users.length === 0 ? (
-        <div className="text-center p-8 bg-base-200 rounded-lg">
-          <p className="text-lg">No users yet. You're the first!</p>
+        <div className="not-prose">
+          <div className="p-8 bg-base-200 rounded-lg">
+            <p className="opacity-70">No users yet. You're the first!</p>
+          </div>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="not-prose overflow-x-auto">
           <table className="table">
             <thead>
               <tr>
@@ -65,6 +67,6 @@ function UsersList() {
           </table>
         </div>
       )}
-    </div>
+    </>
   );
 }
