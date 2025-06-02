@@ -1,6 +1,6 @@
 # Deploy to Vercel
 
-Guide a user through deploying their application to Vercel. Track progress using TodoWrite and @claude-notes.md throughout.
+Guide a user through deploying their application to Vercel
 
 ## Step 1: Prepare Repository
 
