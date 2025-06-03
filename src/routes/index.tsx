@@ -3,6 +3,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Authenticated, Unauthenticated } from "convex/react";
+import { Zap } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 
 const usersQueryOptions = convexQuery(api.users.listUsers, {});
@@ -16,6 +17,9 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   return (
     <div className="text-center">
+      <div className="not-prose flex justify-center mb-4">
+        <Zap className="w-16 h-16 text-primary" />
+      </div>
       <h1>Fullstack Vibe Coding</h1>
 
       <Unauthenticated>

@@ -81,7 +81,7 @@
 - store ID (take `v.id("_storage")`)
 - serve with `ctx.storage.getUrl(fileId)` in queries
 
-### Other Convex Features (refer to docs as necessary)
+### Other Convex Features (refer to docs and install as necessary)
 
 - Text search: docs.convex.dev/search/text-search
 - Crons: docs.convex.dev/scheduling/cron-jobs
@@ -169,3 +169,4 @@
 - Ask before installing new dependencies
 - Verify responsive design at multiple breakpoints
 - Document non-obvious implementation choices in this file
+- Import icons from `lucide-react`
