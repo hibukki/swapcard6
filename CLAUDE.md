@@ -9,12 +9,13 @@
 - Tailwind CSS 4, daisyUI 5: All config in `src/index.css` via CSS syntax, NOT tailwind.config.js
 - Typography: Uses `@tailwindcss/typography` with `prose prose-invert` at root level, use `not-prose` to escape (e.g., for buttons/tables)
 - Environment variables: Client vars need `VITE_` prefix, Convex vars set in dashboard
+- Package manager: Always use `pnpm`, not npm
 
 ## Git Workflow
 
+- Maintain @claude-notes.md with current context, progress, and next steps — include in commits
 - Create frequent small commits for each unit of work: `git add -A && git commit -m "[action]: [specific description]"`
-- Maintain @claude-notes.md with current context, progress, and next steps - commit this file with each checkpoint
-- When feature complete and user approves: `git reset --soft [first-commit-of-feature]` then clear the claude-notes file and `git commit -m "feat: [complete feature description]"`
+- When feature complete and user approves perform a squash: run linting first, then `git reset --soft [first-commit-of-feature]` then clear the claude-notes file and `git commit -m "feat: [complete feature description]"`
 - Never push without user confirmation
 - Before major feature work: Tell user "Starting [feature], will make frequent small commits then squash when complete"
 - Claude Code notes file should include:
@@ -30,6 +31,7 @@
 - Responsive testing: Use `mcp__playwright__browser_resize` to test mobile (375x667), tablet (768x1024), desktop (1200x800)
 - Clerk verification: Type all 6 digits at once in first field - UI auto-distributes to separate inputs
 - Debug with `mcp__playwright__browser_console_messages` to view all browser console output
+- If you run into an issue you don't know how to fix, look for relevant documentation or a reference implementation
 
 ## Convex
 
