@@ -15,6 +15,12 @@ export const ensureUser = mutation({
       .unique();
 
     if (existingUser) {
+      // Update name if it has changed in Clerk
+      const clerkName = identity.name ?? "Anonymous";
+      if (existingUser.name !== clerkName) {
+        await ctx.db.patch(existingUser._id, { name: clerkName });
+        return await ctx.db.get(existingUser._id);
+      }
       return existingUser;
     }
 
