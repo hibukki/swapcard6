@@ -166,8 +166,9 @@
 
 ## Other Guidelines
 
-- When stuck: check official docs first (docs.convex.dev, tanstack.com)
+- When stuck: check official docs first (docs.convex.dev, tanstack.com, daisyui.com)
 - Ask before installing new dependencies
 - Verify responsive design at multiple breakpoints
 - Document non-obvious implementation choices in this file
 - Import icons from `lucide-react`
+- When making identical changes to multiple occurrences, use Edit with `replace_all: true` instead of MultiEdit
