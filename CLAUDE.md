@@ -13,9 +13,12 @@
 
 ## Git Workflow
 
-- Maintain @claude-notes.md with current context, progress, and next steps — include in commits
-- Create frequent small commits for each unit of work: `git add -A && git commit -m "[action]: [specific description]"`
-- When feature complete and user approves perform a squash: run linting first, then `git reset --soft [first-commit-of-feature]` then clear the claude-notes file and `git commit -m "feat: [complete feature description]"`
+- **COMMIT AFTER EACH USER REQUEST**: When completing what the user asked for, immediately commit: `git add -A && git commit -m "[action]: [what was accomplished]"`
+- Commits should happen WITHOUT asking - they're for checkpoints, not cleanliness (will be squashed later)
+- Commits are restore points - if user says something like "let's go back to before X" or "Lets undo that", find the appropriate commit and run `git reset --hard [commit-hash]` to restore the state.
+- **ALWAYS update claude-notes.md and include it in EVERY commit** - this preserves context so future Claude Code sessions can continue from any restore point
+- When feature complete and user approves or asks to push perform a squash: run linting first, then `git reset --soft [first-commit-of-feature]` then clear the claude-notes file and `git commit -m "feat: [complete feature description]"`
+- Before major feature work: Tell user "Starting [feature], will make frequent commits as checkpoints then squash when complete"
 - Never push without user confirmation
 - Before major feature work: Tell user "Starting [feature], will make frequent small commits then squash when complete"
 - Claude Code notes file should include:
@@ -107,6 +110,7 @@
 - Search params as filters: validate with zod schema in route definition
 - Navigate programmatically: `const navigate = useNavigate()` then `navigate({ to: '/path' })`
 - Type-safe links: always use `<Link to="/path">` not `<a href>`
+- Nested routes require parent to have `<Outlet />`, use `.index.tsx` files to show content at parent paths
 
 ## TanStack Query + Convex Integration
 
@@ -156,6 +160,7 @@
 - Responsive patterns: `lg:menu-horizontal`, `sm:card-horizontal`
 - Prefer daisyUI colors (`bg-primary`) over Tailwind colors (`bg-blue-500`) for theme consistency
 - Use `*-content` colors for text on colored backgrounds
+- Typography plugin adds default margins to headings (h1, h2, h3, etc.) - use `mt-0` to override when precise spacing is needed
 
 ### Color System
 
