@@ -47,6 +47,8 @@ class ProcessManager extends EventEmitter {
       cwd: config.cwd,
       shell: true,
       env: process.env,
+      // Create new process group on Unix for better cleanup
+      detached: process.platform !== "win32",
     });
 
     const processData = {
@@ -104,14 +106,30 @@ class ProcessManager extends EventEmitter {
     const processData = this.processes.get(id);
     if (!processData) return false;
 
-    processData.process.kill("SIGTERM");
+    const { process } = processData;
+    
+    try {
+      // Kill the entire process group on Unix
+      if (process.pid && global.process.platform !== "win32") {
+        // Use negative PID to kill the entire process group
+        global.process.kill(-process.pid, "SIGTERM");
+      } else {
+        process.kill("SIGTERM");
+      }
 
-    // Give it time to terminate gracefully
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Give it time to terminate gracefully
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Force kill if still running
-    if (!processData.process.killed) {
-      processData.process.kill("SIGKILL");
+      // Force kill if still running
+      if (!process.killed) {
+        if (process.pid && global.process.platform !== "win32") {
+          global.process.kill(-process.pid, "SIGKILL");
+        } else {
+          process.kill("SIGKILL");
+        }
+      }
+    } catch (error) {
+      console.error(`Error killing process ${id}:`, error);
     }
 
     this.processes.delete(id);
@@ -426,19 +444,34 @@ server.tool(
   },
 );
 
-// Clean up on exit
-process.on("SIGINT", () => {
-  console.log("Shutting down...");
-  const processes = processManager.list();
-  Promise.all(processes.map((p) => processManager.kill(p.id)))
-    .then(() => {
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error("Error during shutdown:", error);
-      process.exit(1);
-    });
-});
+// Setup exit watchdog (based on Playwright MCP server approach)
+function setupExitWatchdog() {
+  let isExiting = false;
+  
+  const handleExit = async () => {
+    if (isExiting) return;
+    isExiting = true;
+    
+    console.error("Shutting down MCP shell server...");
+    
+    // Set a hard timeout to force exit if cleanup takes too long
+    setTimeout(() => process.exit(0), 5000);
+    
+    // Kill all child processes
+    const processes = processManager.list();
+    await Promise.all(processes.map((p) => processManager.kill(p.id)));
+    
+    process.exit(0);
+  };
+  
+  // Handle various exit signals
+  process.stdin.on("close", () => void handleExit());
+  process.on("SIGINT", () => void handleExit());
+  process.on("SIGTERM", () => void handleExit());
+}
+
+// Setup exit handling
+setupExitWatchdog();
 
 // Start server
 const transport = new StdioServerTransport();
