@@ -26,11 +26,10 @@
 ## Testing & Validation
 
 - Validation: Monitor MCP output streams for TypeScript/compilation errors
-- Test UI with Puppeteer MCP: detect screen size first with `puppeteer_evaluate`
-- Puppeteer limitations: text selection unreliable, no console access via MCP
-- Ask user to navigate browser to relevant state before screenshots
-- Request console logs from user when debugging: "Can you check the browser console?"
-- Take screenshots at detected dimensions AND mobile (375x667) for responsive testing
+- Test UI with Playwright MCP: full browser automation with element interaction and console access
+- Responsive testing: Use `mcp__playwright__browser_resize` to test mobile (375x667), tablet (768x1024), desktop (1200x800)
+- Clerk verification: Type all 6 digits at once in first field - UI auto-distributes to separate inputs
+- Debug with `mcp__playwright__browser_console_messages` to view all browser console output
 
 ## Convex
 
