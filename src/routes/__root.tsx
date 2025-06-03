@@ -6,6 +6,7 @@ import {
   useAuth as useClerkAuth,
   useUser,
 } from "@clerk/clerk-react";
+import { Menu } from "lucide-react";
 import { Link, Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type { QueryClient } from "@tanstack/react-query";
@@ -62,19 +63,7 @@ function RootComponent() {
                       htmlFor="drawer-toggle"
                       className="btn btn-square btn-ghost drawer-button lg:hidden mr-2"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        className="inline-block w-5 h-5 stroke-current"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M4 6h16M4 12h16M4 18h16"
-                        ></path>
-                      </svg>
+                      <Menu className="w-5 h-5" />
                     </label>
                     <Link to="/" className="btn btn-ghost normal-case text-xl">
                       Fullstack Vibe Coding
