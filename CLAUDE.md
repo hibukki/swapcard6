@@ -176,4 +176,5 @@
 - Verify responsive design at multiple breakpoints
 - Document non-obvious implementation choices in this file
 - Import icons from `lucide-react`
-- When making identical changes to multiple occurrences, use Edit with `replace_all: true` instead of MultiEdit
+- When making identical changes to multiple occurrences, use Edit with `replace_all: true` instead of MultiEdit. Avoid MultiEdit whenever possible, it is unreliable.
+- Never leave floating promisses, use void when needed
