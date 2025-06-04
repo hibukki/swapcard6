@@ -32,7 +32,7 @@
 - Validation: Monitor MCP output streams for TypeScript/compilation errors
 - Test UI with Playwright MCP: full browser automation with element interaction and console access
 - Responsive testing: Use `mcp__playwright__browser_resize` to test mobile (375x667), tablet (768x1024), desktop (1200x800)
-- Clerk verification: Type all 6 digits at once in first field - UI auto-distributes to separate inputs
+- Clerk verification: sign in with your_email+clerk_test@example.com and 424242 as the verification code. Type all 6 digits at once in first field - UI auto-distributes to separate inputs
 - Debug with `mcp__playwright__browser_console_messages` to view all browser console output
 - If you run into an issue you don't know how to fix, look for relevant documentation or a reference implementation
 
