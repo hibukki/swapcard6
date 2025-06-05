@@ -4,11 +4,13 @@
       "WebFetch(domain:daisyui.com)",
       "WebFetch(domain:docs.convex.dev)",
       "WebFetch(domain:tanstack.com)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(rm:*)",
       "Bash(pnpm run:*)",
       "Bash(pnpm convex dev:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(rm:*)",
       "mcp__ide__getDiagnostics",
       "mcp__shell-commands__list-commands",
       "mcp__shell-commands__get-output",
@@ -23,7 +25,8 @@
       "mcp__playwright__browser_snapshot",
       "mcp__playwright__browser_wait_for",
       "mcp__playwright__browser_console_messages",
-      "mcp__playwright__browser_resize"
+      "mcp__playwright__browser_resize",
+      "mcp__playwright__browser_press_key"
     ],
     "deny": []
   }
