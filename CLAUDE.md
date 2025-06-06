@@ -137,6 +137,23 @@
 - `behavior`: State (btn-active), `color`: Colors (btn-primary), `size`: Sizes (btn-lg)
 - `placement`: Position (dropdown-top), `direction`: Orientation (menu-horizontal), `modifier`: Special (btn-wide)
 
+### v4 → v5 Breaking Changes
+
+- artboard / phone-\* → (removed) ➔ use Tailwind w-/h- classes
+- btm-nav / btm-nav-\*/btm-nav-active → dock / dock-\*/dock-active
+- online / offline / placeholder (avatars) → avatar-online / avatar-offline / avatar-placeholder
+- card-bordered → card-border
+- card-compact → (removed) ➔ use card-sm (or card-xs, etc.)
+- .active/.disabled (menus) → menu-active / menu-disabled (add w-full if needed)
+- tabs-bordered / tabs-boxed / tabs-lifted → tabs-border / tabs-box / tabs-lift
+- btn-group / input-group → join + join-item on each child
+- form-control / label-text / label-text-alt → (removed) ➔ use fieldset/legend or new DaisyUI form-group utilities
+- input-bordered / select-bordered / file-input-bordered / textarea-border → (removed) ➔ base classes include border; use –ghost variants for no border
+- footer (horizontal by default) → add footer-horizontal at desired breakpoint
+- .hover on <tr> → (removed) ➔ use Tailwind hover:bg-\* (e.g., hover:bg-base-300)
+- mask-parallelogram / mask-parallelogram-2/3/4 → (removed) ➔ implement with custom CSS
+- .menu (vertical) no longer w-full by default → add w-full if you need full width
+
 ### Key or Unfamiliar Components Reference
 
 - When using a component you aren't familiar with, always check its docs page.
@@ -158,7 +175,6 @@
 
 ### Usage Rules
 
-- Use `!` suffix for forced overrides: `btn bg-red-500!`
 - Responsive patterns: `lg:menu-horizontal`, `sm:card-horizontal`
 - Prefer daisyUI colors (`bg-primary`) over Tailwind colors (`bg-blue-500`) for theme consistency
 - Use `*-content` colors for text on colored backgrounds
