@@ -30,8 +30,9 @@
 ## Testing & Validation
 
 - Always follow these steps before squashing or pushing
-- Check both vite and convex stdout and stderr output streams for TypeScript/compilation errors
+- Check BOTH vite and convex stdout AND stderr output streams for TypeScript/compilation errors
 - Test UI with Playwright MCP: full browser automation with element interaction and console access
+  - The playwright mcp server is unreliable, if it doesn't work ask the user to test manually
 - Responsive testing: Use `mcp__playwright__browser_resize` to test mobile (375x667), tablet (768x1024), desktop (1200x800)
 - Clerk verification: sign in with `your_email+clerk_test@example.com` and 424242 as the verification code. Type all 6 digits at once in first field - UI auto-distributes to separate inputs
 - Debug with `mcp__playwright__browser_console_messages` to view all browser console output
