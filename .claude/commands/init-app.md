@@ -11,7 +11,7 @@ Help a user initialize their new application using this template. Track progress
   - Core functionality needed
   - Target users (if not obvious)
   - Key user flows
-- Document responses , delete the first line of CLAUDE.md to remove the template instructions, and commit.
+- Document responses, update project name in package.json, delete the first line of CLAUDE.md to remove the template instructions, and commit.
 
 ## Step 2: Implementation
 
