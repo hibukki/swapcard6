@@ -86,12 +86,11 @@
 - Text search: docs.convex.dev/search/text-search
 - Crons: docs.convex.dev/scheduling/cron-jobs
 - Durable long-running code flows with retries and delays: convex.dev/components/workflow
-- Organize AI workflows with message history and vector search: convex.dev/components/ai-agent
+- AI agent framework with persistent conversations and tools: convex.dev/components/agent. See https://github.com/get-convex/agent/blob/main/examples/chat-streaming/README.md for a chat example.
 - Prioritize tasks with separate customizable queues: convex.dev/components/workpool
 - Sync engine for ProseMirror-based editors: convex.dev/components/collaborative-text-editor-sync
 - Send and receive SMS with queryable status: convex.dev/components/twilio-sms
 - Add subscriptions and billing integration: convex.dev/components/polar
-- Stream text to browser while storing to database (good for LLM calls): convex.dev/components/persistent-text-streaming
 - Type-safe application-layer rate limits with sharding: convex.dev/components/rate-limiter
 - Framework for long-running data migrations: convex.dev/components/migrations
 - Distributed counter for high-throughput operations: convex.dev/components/sharded-counter
