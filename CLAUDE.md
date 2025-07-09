@@ -1,5 +1,5 @@
-- This is a template repository, and initializing a new application from it should be done by using the `init-app` custom command. If the user asks for anything else, instruct them to use that command. After the command is run, delete this line.
-- Always follow the guidelines in this file, unless explicitly told otherwise by the user or overided in the CLAUDE.local.md file.
+This is a template repository, and initializing a new application from it should be done by using the `init-app` custom command. If the user asks for anything else, instruct them to use that command. After the command is run, delete this line.
+Always follow the guidelines in this file, unless explicitly told otherwise by the user or overided in the CLAUDE.local.md file.
 
 ## Project Overview
 
@@ -114,11 +114,29 @@
 - Use `useSuspenseQuery` in components: `const { data } = useSuspenseQuery(queryOptions)`
 - For mutations, continue using Convex's `useMutation` directly
 
-## TanStack Form
+## TanStack Form + Zod v4
 
+- No adapter needed - TanStack Form natively supports Standard Schema libraries like Zod v4
+- Form-level validation:
+  ```tsx
+  const schema = z.object({ name: z.string().min(1) });
+  const form = useForm({
+    defaultValues: { name: "" },
+    validators: { onChange: schema }
+  });
+  ```
+- Field errors are StandardSchemaV1Issue[] with .message property:
+  ```tsx
+  {!field.state.meta.isValid && (
+    <em>{field.state.meta.errors.map(e => e.message).join(", ")}</em>
+  )}
+  ```
+- Number inputs use valueAsNumber:
+  ```tsx
+  onChange={(e) => field.handleChange(e.target.valueAsNumber)}
+  ```
 - Field validation can override form validation - design hierarchy carefully
 - Submit handler: `onSubmit: async ({ value }) => { await mutate(value); form.reset(); }`
-- Field errors: `{field.state.meta.errors && <span>{field.state.meta.errors}</span>}`
 - Disable during submit: `<button disabled={!form.state.canSubmit || form.state.isSubmitting}>`
 - Async validation: use `onChangeAsync` for server-side checks
 
@@ -183,7 +201,6 @@
 ## Other Guidelines
 
 - When stuck: check official docs first (docs.convex.dev, tanstack.com, daisyui.com)
-- Ask before installing new dependencies
 - Verify responsive design at multiple breakpoints
 - Document non-obvious implementation choices in this file
 - Import icons from `lucide-react`
