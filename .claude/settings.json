@@ -9,6 +9,7 @@
       "Bash(rg:*)",
       "Bash(mkdir:*)",
       "Bash(pnpm run:*)",
+      "Bash(pnpm dev:*)",
       "Bash(pnpx convex run:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
