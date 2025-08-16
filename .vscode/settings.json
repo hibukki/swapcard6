@@ -12,9 +12,6 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
   "typescript.tsdk": "node_modules/typescript/lib",
   "tailwindCSS.includeLanguages": {
     "typescript": "html",
