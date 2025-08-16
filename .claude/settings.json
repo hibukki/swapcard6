@@ -9,8 +9,6 @@
       "Bash(rg:*)",
       "Bash(mkdir:*)",
       "Bash(pnpm run:*)",
-      "Bash(tmux new-session:*)",
-      "Bash(tmux capture-pane:*)",
       "Bash(pnpx convex run:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
