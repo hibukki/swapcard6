@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 CLAUDE.local.md
+.pnpm-store
 
 # Editor directories and files
 .idea
