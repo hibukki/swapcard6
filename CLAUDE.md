@@ -10,6 +10,7 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 - Typography: Uses `@tailwindcss/typography` with `prose prose-invert` at root level, use `not-prose` to escape (e.g., for buttons/tables)
 - Environment variables: Client vars need `VITE_` prefix, Convex vars set in dashboard
 - Package manager: Always use `pnpm` and `pnpx`, NOT `npm` or `npx`
+- See @README.md for project-specific information
 
 ## Git Workflow
 

@@ -17,6 +17,7 @@ Help a user initialize their new application using this template.
 - Remove demo content (user listing, placeholder text) but keep useful layout structure and auth unless explicitly requested otherwise
 - Implement the MVP
 - Test the implementation (install Playwright browser: run `mcp__playwright__browser_install`)
+- Update README.md with the new app name, description, codebase structure. Be concise.
 - commit
 
 ## Notes
