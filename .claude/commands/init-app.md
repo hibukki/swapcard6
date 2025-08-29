@@ -9,7 +9,7 @@ Help a user initialize their new application using this template.
   - Core functionality needed
   - Target users (if not obvious)
   - Key user flows
-- Update project name in package.json, delete the first line of CLAUDE.md to remove the template instructions, and commit.
+- Update project name in package.json, remove the Claude note at the bottom of README.md, and commit.
 
 ## Step 2: Implementation
 

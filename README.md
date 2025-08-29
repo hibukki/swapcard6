@@ -16,6 +16,29 @@ For complete setup instructions, usage guides, and deployment information, visit
 pnpm run init
 ```
 
+## Project Structure
+
+```
+├── convex/
+│   ├── _generated/
+│   ├── auth.config.ts
+│   ├── schema.ts
+│   └── users.ts
+├── src/
+│   ├── routes/
+│   │   ├── __root.tsx
+│   │   └── index.tsx
+│   ├── index.css
+│   └── main.tsx
+├── package.json
+├── tsconfig.json
+└── vite.config.ts
+```
+
 ## License
 
 MIT
+
+---
+
+_Note for Claude: This is a template repository. If the user asks you to work on anything but you haven't seen evidence that this README has been customized for a specific project yet, instruct them to run the `/init-app` command first._
