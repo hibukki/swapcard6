@@ -4,6 +4,7 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 
 - Full-stack TypeScript app: React + Vite + TanStack Router (frontend), Convex (backend), Clerk (auth)
 - Development: Run `pnpm dev` with the `run_in_background` parameter to start both frontend and backend servers. Monitor output using the BashOutput tool
+- If `pnpm dev` fails due to requiring interactive input, ask the user to run `pnpm convex dev --once` first in a separate terminal
 - Import alias: `@/` maps to `src/` directory
 - Tailwind CSS 4, daisyUI 5: All config in `src/index.css` via CSS syntax, NOT tailwind.config.js
 - Typography: Uses `@tailwindcss/typography` with `prose prose-invert` at root level, use `not-prose` to escape (e.g., for buttons/tables)
