@@ -50,6 +50,7 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 - Add `"use node";` to the top of files containing actions that use Node.js built-in modules (can't contain queries and mutations)
 - `"use node";` is NOT needed for fetch, only use it for other Node.js built-ins
 - Convex + Clerk: Always use Convex's auth hooks (`useConvexAuth`) and components (`<Authenticated>`, `<Unauthenticated>`, `<AuthLoading>`) instead of Clerk's hooks/components. This ensures auth tokens are properly validated by the Convex backend.
+- Import data with `pnpm convex import --table tableName file.json`
 
 ### Function guidelines
 
