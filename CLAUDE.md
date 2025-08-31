@@ -47,7 +47,8 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 - Transactions are per-mutation - can't span multiple mutations. Calling multiple queries/mutation in a single action may introduce race conditions.
 - Hot reload issues: Restart if schema changes don't apply or types are stuck
 - Use `import { Doc, Id } from "./_generated/dataModel";` and `v.id("table")` for type safety.
-- Add `"use node";` to the top of files containing actions that use Node.js built-in modules (not needed for fetch, can't contain queries and mutations).
+- Add `"use node";` to the top of files containing actions that use Node.js built-in modules (can't contain queries and mutations)
+- `"use node";` is NOT needed for fetch, only use it for other Node.js built-ins
 - Convex + Clerk: Always use Convex's auth hooks (`useConvexAuth`) and components (`<Authenticated>`, `<Unauthenticated>`, `<AuthLoading>`) instead of Clerk's hooks/components. This ensures auth tokens are properly validated by the Convex backend.
 
 ### Function guidelines
