@@ -1,14 +1,10 @@
-# Dependencies
 node_modules/
 pnpm-lock.yaml
 
-# Build outputs
 dist/
 build/
 .convex/
 
-# Generated files
 convex/_generated/
 
-# Coverage
 coverage/
