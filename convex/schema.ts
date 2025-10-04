@@ -38,7 +38,7 @@ export default defineSchema({
       v.literal("creator"),
       v.literal("accepted"),
       v.literal("pending"),
-      v.literal("declined")
+      v.literal("declined"),
     ),
   })
     .index("by_meeting", ["meetingId"])
