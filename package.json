@@ -14,7 +14,7 @@
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "seed": "pnpx convex run seed:seedData"
+    "seed": "pnpx convex run seed:seedDataWithCurrentUser"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.45.0",

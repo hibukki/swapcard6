@@ -1,23 +1,55 @@
-import { internalMutation } from "./_generated/server";
+import { internalMutation, mutation } from "./_generated/server";
+import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 export const seedData = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    // Clear existing data (optional - comment out if you want to keep existing data)
-    const existingMeetings = await ctx.db.query("meetings").collect();
-    const existingParticipants = await ctx.db
-      .query("meetingParticipants")
-      .collect();
-    const existingRequests = await ctx.db.query("meetingRequests").collect();
+  args: {
+    currentUserClerkId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // Only clear seed data (meetings/requests created by seed script)
+    // Keep real user data intact
+    const seedUserIds: string[] = [];
 
-    for (const participant of existingParticipants) {
-      await ctx.db.delete(participant._id);
+    // Get seed users
+    for (let i = 1; i <= 5; i++) {
+      const seedUser = await ctx.db
+        .query("users")
+        .withIndex("by_clerkId", (q) => q.eq("clerkId", `seed_user_${i}`))
+        .unique();
+      if (seedUser) {
+        seedUserIds.push(seedUser._id);
+      }
     }
-    for (const meeting of existingMeetings) {
-      await ctx.db.delete(meeting._id);
+
+    // Delete only meetings created by or with seed users
+    const allMeetings = await ctx.db.query("meetings").collect();
+    for (const meeting of allMeetings) {
+      const participants = await ctx.db
+        .query("meetingParticipants")
+        .withIndex("by_meeting", (q) => q.eq("meetingId", meeting._id))
+        .collect();
+
+      // Delete if any participant is a seed user
+      const hasSeedUser = participants.some((p) => seedUserIds.includes(p.userId));
+      if (hasSeedUser || seedUserIds.includes(meeting.creatorId)) {
+        // Delete participants first
+        for (const p of participants) {
+          await ctx.db.delete(p._id);
+        }
+        await ctx.db.delete(meeting._id);
+      }
     }
-    for (const request of existingRequests) {
-      await ctx.db.delete(request._id);
+
+    // Delete requests involving seed users
+    const allRequests = await ctx.db.query("meetingRequests").collect();
+    for (const request of allRequests) {
+      if (
+        seedUserIds.includes(request.requesterId) ||
+        seedUserIds.includes(request.recipientId)
+      ) {
+        await ctx.db.delete(request._id);
+      }
     }
 
     // Get all users
@@ -210,6 +242,17 @@ export const seedData = internalMutation({
       }
     }
 
+    // Get current user if provided
+    let currentUser = null;
+    if (args.currentUserClerkId) {
+      currentUser = await ctx.db
+        .query("users")
+        .withIndex("by_clerkId", (q) =>
+          q.eq("clerkId", args.currentUserClerkId!)
+        )
+        .unique();
+    }
+
     // Create some private meetings between users
     if (users.length >= 2) {
       const privateMeetings = [
@@ -267,6 +310,66 @@ export const seedData = internalMutation({
       }
     }
 
+    // Create private meetings with the current user
+    if (currentUser && users.length >= 2) {
+      const currentUserMeetings = [
+        {
+          title: "Coffee Chat with Alice",
+          description: "Casual catch-up over coffee to discuss ideas.",
+          scheduledTime: now + 6 * oneHour,
+          duration: 30,
+          location: "Lobby Coffee Shop",
+          withUser: "Alice Johnson",
+        },
+        {
+          title: "Project Brainstorm with Bob",
+          description: "Discuss new project ideas and potential collaboration.",
+          scheduledTime: now + oneDay + 3 * oneHour,
+          duration: 45,
+          location: "Innovation Lab",
+          withUser: "Bob Smith",
+        },
+        {
+          title: "Design Review with David",
+          description: "Review design mockups and provide feedback.",
+          scheduledTime: now + 2 * oneDay + oneHour,
+          duration: 60,
+          location: "Design Studio",
+          withUser: "David Chen",
+        },
+      ];
+
+      for (const meetingData of currentUserMeetings) {
+        // Find the user by name
+        const otherUser = users.find((u) => u.name === meetingData.withUser);
+        if (!otherUser) continue;
+
+        const meetingId = await ctx.db.insert("meetings", {
+          creatorId: currentUser._id,
+          title: meetingData.title,
+          description: meetingData.description,
+          scheduledTime: meetingData.scheduledTime,
+          duration: meetingData.duration,
+          location: meetingData.location,
+          isPublic: false,
+        });
+
+        // Add current user as creator
+        await ctx.db.insert("meetingParticipants", {
+          meetingId,
+          userId: currentUser._id,
+          role: "creator",
+        });
+
+        // Add other user as participant
+        await ctx.db.insert("meetingParticipants", {
+          meetingId,
+          userId: otherUser._id,
+          role: "participant",
+        });
+      }
+    }
+
     // Create some pending meeting requests
     if (users.length >= 3) {
       const requests = [
@@ -301,6 +404,43 @@ export const seedData = internalMutation({
       }
     }
 
+    // Create pending requests TO the current user
+    if (currentUser && users.length >= 2) {
+      const currentUserRequests = [
+        {
+          fromUser: "Carol Davis",
+          proposedTime: now + 2 * oneDay + 5 * oneHour,
+          proposedDuration: 30,
+          location: "Conference Room B",
+          message:
+            "Hi! I'd love to pick your brain about marketing strategies. Do you have time for a quick chat?",
+        },
+        {
+          fromUser: "Emma Wilson",
+          proposedTime: now + 3 * oneDay + oneHour,
+          proposedDuration: 45,
+          location: "Data Lab",
+          message:
+            "I noticed your interest in data analytics. Would you like to discuss how we could collaborate on a project?",
+        },
+      ];
+
+      for (const requestData of currentUserRequests) {
+        const requester = users.find((u) => u.name === requestData.fromUser);
+        if (!requester) continue;
+
+        await ctx.db.insert("meetingRequests", {
+          requesterId: requester._id,
+          recipientId: currentUser._id,
+          status: "pending",
+          proposedTime: requestData.proposedTime,
+          proposedDuration: requestData.proposedDuration,
+          location: requestData.location,
+          message: requestData.message,
+        });
+      }
+    }
+
     const totalMeetings = await ctx.db.query("meetings").collect();
     const totalParticipations = await ctx.db
       .query("meetingParticipants")
@@ -313,7 +453,23 @@ export const seedData = internalMutation({
         meetingsCreated: totalMeetings.length,
         participationsCreated: totalParticipations.length,
         requestsCreated: totalRequests.length,
+        includedCurrentUser: currentUser !== null,
       },
     };
+  },
+});
+
+// Public mutation that calls the internal one with the current user's clerkId
+export const seedDataWithCurrentUser = mutation({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    // Call the internal mutation with the current user's clerkId
+    await ctx.scheduler.runAfter(
+      0,
+      internal.seed.seedData,
+      identity ? { currentUserClerkId: identity.subject } : {}
+    );
   },
 });
