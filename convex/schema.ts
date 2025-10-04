@@ -15,25 +15,7 @@ export default defineSchema({
     .index("by_clerkId", ["clerkId"])
     .index("by_email", ["email"]),
 
-  meetingRequests: defineTable({
-    requesterId: v.id("users"),
-    recipientId: v.id("users"),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("accepted"),
-      v.literal("rejected")
-    ),
-    proposedTime: v.optional(v.number()),
-    proposedDuration: v.optional(v.number()), // in minutes
-    location: v.optional(v.string()),
-    message: v.optional(v.string()),
-  })
-    .index("by_recipient", ["recipientId", "status"])
-    .index("by_requester", ["requesterId", "status"])
-    .index("by_status", ["status"]),
-
   meetings: defineTable({
-    requestId: v.optional(v.id("meetingRequests")), // optional for public meetings
     creatorId: v.id("users"),
     title: v.string(),
     description: v.optional(v.string()),
@@ -52,12 +34,15 @@ export default defineSchema({
   meetingParticipants: defineTable({
     meetingId: v.id("meetings"),
     userId: v.id("users"),
-    role: v.union(
+    status: v.union(
       v.literal("creator"),
-      v.literal("participant")
+      v.literal("accepted"),
+      v.literal("pending"),
+      v.literal("declined")
     ),
   })
     .index("by_meeting", ["meetingId"])
     .index("by_user", ["userId", "meetingId"])
-    .index("by_user_only", ["userId"]),
+    .index("by_user_only", ["userId"])
+    .index("by_user_and_status", ["userId", "status"]),
 });

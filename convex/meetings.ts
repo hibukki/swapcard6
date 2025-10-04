@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
+// Send meeting request - creates meeting with requester as creator and recipient as pending
 export const sendMeetingRequest = mutation({
   args: {
     recipientId: v.id("users"),
@@ -24,84 +25,165 @@ export const sendMeetingRequest = mutation({
       throw new ConvexError("User not found");
     }
 
-    // Check if a request already exists
-    const existingRequest = await ctx.db
-      .query("meetingRequests")
-      .withIndex("by_requester", (q) =>
-        q.eq("requesterId", requester._id).eq("status", "pending")
+    const recipient = await ctx.db.get(args.recipientId);
+    if (!recipient) {
+      throw new ConvexError("Recipient not found");
+    }
+
+    // Check if a pending request already exists between these users
+    const existingParticipations = await ctx.db
+      .query("meetingParticipants")
+      .withIndex("by_user_and_status", (q) =>
+        q.eq("userId", requester._id).eq("status", "creator")
       )
       .collect();
 
-    const hasPendingRequest = existingRequest.some(
-      (r) => r.recipientId === args.recipientId
-    );
+    for (const participation of existingParticipations) {
+      const meeting = await ctx.db.get(participation.meetingId);
+      if (!meeting || meeting.isPublic) continue;
 
-    if (hasPendingRequest) {
-      throw new ConvexError("You already have a pending request with this user");
+      // Check if recipient is pending in this meeting
+      const recipientParticipation = await ctx.db
+        .query("meetingParticipants")
+        .withIndex("by_user", (q) =>
+          q.eq("userId", args.recipientId).eq("meetingId", meeting._id)
+        )
+        .unique();
+
+      if (recipientParticipation && recipientParticipation.status === "pending") {
+        throw new ConvexError("You already have a pending request with this user");
+      }
     }
 
-    const requestId = await ctx.db.insert("meetingRequests", {
-      requesterId: requester._id,
-      recipientId: args.recipientId,
-      status: "pending",
-      proposedTime: args.proposedTime,
-      proposedDuration: args.proposedDuration ?? 30,
+    // Create the meeting
+    const meetingId = await ctx.db.insert("meetings", {
+      creatorId: requester._id,
+      title: `Meeting with ${recipient.name}`,
+      description: args.message,
+      scheduledTime: args.proposedTime ?? Date.now() + 24 * 60 * 60 * 1000, // default to tomorrow
+      duration: args.proposedDuration ?? 30,
       location: args.location,
-      message: args.message,
+      isPublic: false,
     });
 
-    return requestId;
+    // Add requester as creator
+    await ctx.db.insert("meetingParticipants", {
+      meetingId,
+      userId: requester._id,
+      status: "creator",
+    });
+
+    // Add recipient as pending
+    await ctx.db.insert("meetingParticipants", {
+      meetingId,
+      userId: args.recipientId,
+      status: "pending",
+    });
+
+    return meetingId;
   },
 });
 
-export const getMyRequests = query({
+// Get meetings where user has pending invitations (received requests)
+export const getPendingInvitations = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return { sent: [], received: [] };
+    if (!identity) return [];
 
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
       .unique();
 
-    if (!user) return { sent: [], received: [] };
+    if (!user) return [];
 
-    const sentRequests = await ctx.db
-      .query("meetingRequests")
-      .withIndex("by_requester", (q) => q.eq("requesterId", user._id))
+    // Get all pending participations
+    const pendingParticipations = await ctx.db
+      .query("meetingParticipants")
+      .withIndex("by_user_and_status", (q) =>
+        q.eq("userId", user._id).eq("status", "pending")
+      )
       .collect();
 
-    const receivedRequests = await ctx.db
-      .query("meetingRequests")
-      .withIndex("by_recipient", (q) => q.eq("recipientId", user._id))
-      .collect();
+    const enriched = await Promise.all(
+      pendingParticipations.map(async (participation) => {
+        const meeting = await ctx.db.get(participation.meetingId);
+        if (!meeting) return null;
 
-    const enrichSent = await Promise.all(
-      sentRequests.map(async (req) => ({
-        ...req,
-        recipient: await ctx.db.get(req.recipientId),
-      }))
+        const creator = await ctx.db.get(meeting.creatorId);
+
+        return {
+          ...meeting,
+          participationId: participation._id,
+          requester: creator,
+        };
+      })
     );
 
-    const enrichReceived = await Promise.all(
-      receivedRequests.map(async (req) => ({
-        ...req,
-        requester: await ctx.db.get(req.requesterId),
-      }))
-    );
-
-    return { sent: enrichSent, received: enrichReceived };
+    return enriched.filter((m) => m !== null).sort((a, b) => a.scheduledTime - b.scheduledTime);
   },
 });
 
-export const respondToRequest = mutation({
+// Get meetings the user has sent (where they are creator and others are pending)
+export const getSentRequests = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) return [];
+
+    // Get all meetings where user is creator
+    const creatorParticipations = await ctx.db
+      .query("meetingParticipants")
+      .withIndex("by_user_and_status", (q) =>
+        q.eq("userId", user._id).eq("status", "creator")
+      )
+      .collect();
+
+    const enriched = await Promise.all(
+      creatorParticipations.map(async (participation) => {
+        const meeting = await ctx.db.get(participation.meetingId);
+        if (!meeting || meeting.isPublic) return null;
+
+        // Get all participants to find pending ones
+        const allParticipations = await ctx.db
+          .query("meetingParticipants")
+          .withIndex("by_meeting", (q) => q.eq("meetingId", meeting._id))
+          .collect();
+
+        const pendingParticipations = allParticipations.filter(
+          (p) => p.status === "pending"
+        );
+
+        if (pendingParticipations.length === 0) return null; // No pending invites
+
+        const recipients = await Promise.all(
+          pendingParticipations.map((p) => ctx.db.get(p.userId))
+        );
+
+        return {
+          ...meeting,
+          recipients: recipients.filter((r) => r !== null),
+        };
+      })
+    );
+
+    return enriched.filter((m) => m !== null).sort((a, b) => a.scheduledTime - b.scheduledTime);
+  },
+});
+
+// Respond to meeting invitation
+export const respondToInvitation = mutation({
   args: {
-    requestId: v.id("meetingRequests"),
+    meetingId: v.id("meetings"),
     accept: v.boolean(),
-    scheduledTime: v.optional(v.number()),
-    duration: v.optional(v.number()),
-    location: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -118,54 +200,35 @@ export const respondToRequest = mutation({
       throw new ConvexError("User not found");
     }
 
-    const request = await ctx.db.get(args.requestId);
-    if (!request) {
-      throw new ConvexError("Request not found");
+    const meeting = await ctx.db.get(args.meetingId);
+    if (!meeting) {
+      throw new ConvexError("Meeting not found");
     }
 
-    if (request.recipientId !== user._id) {
-      throw new ConvexError("Not authorized");
+    const participation = await ctx.db
+      .query("meetingParticipants")
+      .withIndex("by_user", (q) =>
+        q.eq("userId", user._id).eq("meetingId", args.meetingId)
+      )
+      .unique();
+
+    if (!participation) {
+      throw new ConvexError("You are not invited to this meeting");
     }
 
-    if (request.status !== "pending") {
-      throw new ConvexError("Request already responded to");
+    if (participation.status !== "pending") {
+      throw new ConvexError("You have already responded to this invitation");
     }
 
     if (args.accept) {
-      const scheduledTime = args.scheduledTime ?? request.proposedTime ?? Date.now();
-      const duration = args.duration ?? request.proposedDuration ?? 30;
-      const requester = await ctx.db.get(request.requesterId);
-
-      const meetingId = await ctx.db.insert("meetings", {
-        requestId: args.requestId,
-        creatorId: request.requesterId,
-        title: `Meeting with ${requester?.name ?? "attendee"}`,
-        scheduledTime,
-        duration,
-        location: args.location ?? request.location,
-        isPublic: false,
-      });
-
-      // Add both participants
-      await ctx.db.insert("meetingParticipants", {
-        meetingId,
-        userId: request.requesterId,
-        role: "creator",
-      });
-
-      await ctx.db.insert("meetingParticipants", {
-        meetingId,
-        userId: request.recipientId,
-        role: "participant",
-      });
-
-      await ctx.db.patch(args.requestId, { status: "accepted" });
+      await ctx.db.patch(participation._id, { status: "accepted" });
     } else {
-      await ctx.db.patch(args.requestId, { status: "rejected" });
+      await ctx.db.patch(participation._id, { status: "declined" });
     }
   },
 });
 
+// Get all user's meetings (accepted + creator, excluding pending and declined)
 export const getMyMeetings = query({
   args: {},
   handler: async (ctx) => {
@@ -179,34 +242,42 @@ export const getMyMeetings = query({
 
     if (!user) return [];
 
-    // Get all meetings where user is a participant
+    // Get all participations where status is creator or accepted
     const participations = await ctx.db
       .query("meetingParticipants")
       .withIndex("by_user_only", (q) => q.eq("userId", user._id))
       .collect();
 
+    const acceptedParticipations = participations.filter(
+      (p) => p.status === "creator" || p.status === "accepted"
+    );
+
     const enriched = await Promise.all(
-      participations.map(async (participation) => {
+      acceptedParticipations.map(async (participation) => {
         const meeting = await ctx.db.get(participation.meetingId);
         if (!meeting) return null;
 
-        // Get all participants for this meeting
+        // Get all accepted/creator participants for this meeting
         const allParticipations = await ctx.db
           .query("meetingParticipants")
           .withIndex("by_meeting", (q) => q.eq("meetingId", meeting._id))
           .collect();
 
+        const activeParticipations = allParticipations.filter(
+          (p) => p.status === "creator" || p.status === "accepted"
+        );
+
         const participants = await Promise.all(
-          allParticipations.map(async (p) => {
+          activeParticipations.map(async (p) => {
             const u = await ctx.db.get(p.userId);
-            return u ? { ...u, role: p.role } : null;
+            return u ? { ...u, role: p.status } : null;
           })
         );
 
         return {
           ...meeting,
           participants: participants.filter((p) => p !== null),
-          userRole: participation.role,
+          userRole: participation.status,
         };
       })
     );
@@ -253,11 +324,11 @@ export const createMeeting = mutation({
       maxParticipants: args.maxParticipants,
     });
 
-    // Add creator as a participant
+    // Add creator as a participant with creator status
     await ctx.db.insert("meetingParticipants", {
       meetingId,
       userId: user._id,
-      role: "creator",
+      status: "creator",
     });
 
     return meetingId;
@@ -277,16 +348,20 @@ export const getPublicMeetings = query({
       publicMeetings.map(async (meeting) => {
         const creator = await ctx.db.get(meeting.creatorId);
 
-        // Count current participants
+        // Count current participants (only accepted and creator)
         const participations = await ctx.db
           .query("meetingParticipants")
           .withIndex("by_meeting", (q) => q.eq("meetingId", meeting._id))
           .collect();
 
+        const activeParticipations = participations.filter(
+          (p) => p.status === "creator" || p.status === "accepted"
+        );
+
         const participants = await Promise.all(
-          participations.map(async (p) => {
+          activeParticipations.map(async (p) => {
             const u = await ctx.db.get(p.userId);
-            return u ? { ...u, role: p.role } : null;
+            return u ? { ...u, role: p.status } : null;
           })
         );
 
@@ -347,17 +422,27 @@ export const joinMeeting = mutation({
       .unique();
 
     if (existingParticipation) {
-      throw new ConvexError("You are already a participant of this meeting");
+      if (existingParticipation.status === "accepted" || existingParticipation.status === "creator") {
+        throw new ConvexError("You are already a participant of this meeting");
+      } else if (existingParticipation.status === "declined") {
+        // Re-accept if previously declined
+        await ctx.db.patch(existingParticipation._id, { status: "accepted" });
+        return args.meetingId;
+      }
     }
 
-    // Check if meeting is full
+    // Check if meeting is full (only count accepted + creator)
     if (meeting.maxParticipants) {
       const currentParticipants = await ctx.db
         .query("meetingParticipants")
         .withIndex("by_meeting", (q) => q.eq("meetingId", args.meetingId))
         .collect();
 
-      if (currentParticipants.length >= meeting.maxParticipants) {
+      const activeCount = currentParticipants.filter(
+        (p) => p.status === "accepted" || p.status === "creator"
+      ).length;
+
+      if (activeCount >= meeting.maxParticipants) {
         throw new ConvexError("This meeting is full");
       }
     }
@@ -365,7 +450,7 @@ export const joinMeeting = mutation({
     await ctx.db.insert("meetingParticipants", {
       meetingId: args.meetingId,
       userId: user._id,
-      role: "participant",
+      status: "accepted",
     });
 
     return args.meetingId;

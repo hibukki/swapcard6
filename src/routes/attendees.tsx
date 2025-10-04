@@ -120,6 +120,8 @@ function MeetingRequestModal({
   const sendRequest = useMutation(api.meetings.sendMeetingRequest);
   const [message, setMessage] = useState("");
   const [location, setLocation] = useState("");
+  const [proposedTime, setProposedTime] = useState("");
+  const [proposedDuration, setProposedDuration] = useState(30);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -130,7 +132,8 @@ function MeetingRequestModal({
         recipientId,
         message: message || undefined,
         location: location || undefined,
-        proposedDuration: 30,
+        proposedTime: proposedTime ? new Date(proposedTime).getTime() : undefined,
+        proposedDuration,
       });
       onClose();
     } catch (error) {
@@ -150,6 +153,36 @@ function MeetingRequestModal({
           }}
           className="mt-4 space-y-4"
         >
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Proposed Time (optional)
+            </label>
+            <input
+              type="datetime-local"
+              className="input input-border w-full"
+              value={proposedTime}
+              onChange={(e) => setProposedTime(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Duration (minutes)
+            </label>
+            <select
+              className="select select-border w-full"
+              value={proposedDuration}
+              onChange={(e) => setProposedDuration(parseInt(e.target.value))}
+            >
+              <option value={15}>15 minutes</option>
+              <option value={30}>30 minutes</option>
+              <option value={45}>45 minutes</option>
+              <option value={60}>1 hour</option>
+              <option value={90}>1.5 hours</option>
+              <option value={120}>2 hours</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-1">
               Message (optional)

@@ -275,7 +275,7 @@ function CreatePublicMeetingModal({ onClose }: { onClose: () => void }) {
     <dialog className="modal modal-open">
       <div className="modal-box max-w-2xl">
         <h3 className="font-bold text-lg mb-4">Create Public Meeting</h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
           <div>
             <label className="label">
               <span className="label-text">Meeting Title</span>

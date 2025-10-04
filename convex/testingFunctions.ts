@@ -22,3 +22,28 @@ export const deleteTestUser = testingMutation({
     }
   },
 });
+
+export const clearAllData = testingMutation({
+  args: {},
+  handler: async (ctx) => {
+    // Delete all meetingParticipants
+    const participants = await ctx.db.query("meetingParticipants").collect();
+    for (const p of participants) {
+      await ctx.db.delete(p._id);
+    }
+
+    // Delete all meetings
+    const meetings = await ctx.db.query("meetings").collect();
+    for (const m of meetings) {
+      await ctx.db.delete(m._id);
+    }
+
+    // Delete all users
+    const users = await ctx.db.query("users").collect();
+    for (const u of users) {
+      await ctx.db.delete(u._id);
+    }
+
+    return { success: true };
+  },
+});

@@ -1,7 +1,31 @@
 import { internalMutation, mutation } from "./_generated/server";
-import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+
+export const clearAllData = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // Delete all meetingParticipants
+    const participants = await ctx.db.query("meetingParticipants").collect();
+    for (const p of participants) {
+      await ctx.db.delete(p._id);
+    }
+
+    // Delete all meetings
+    const meetings = await ctx.db.query("meetings").collect();
+    for (const m of meetings) {
+      await ctx.db.delete(m._id);
+    }
+
+    // Delete all users
+    const users = await ctx.db.query("users").collect();
+    for (const u of users) {
+      await ctx.db.delete(u._id);
+    }
+
+    return { success: true, message: "All data cleared" };
+  },
+});
 
 export const seedData = internalMutation({
   args: {},
@@ -180,7 +204,7 @@ export const seedData = internalMutation({
         await ctx.db.insert("meetingParticipants", {
           meetingId,
           userId: creator._id,
-          role: "creator",
+          status: "creator",
         });
       } else {
         publicMeetingIds.push(existing._id);
@@ -242,7 +266,7 @@ export const seedData = internalMutation({
             await ctx.db.insert("meetingParticipants", {
               meetingId,
               userId: user._id,
-              role: "participant",
+              status: "accepted",
             });
             added++;
           }
@@ -277,22 +301,20 @@ export const seedData = internalMutation({
           await ctx.db.insert("meetingParticipants", {
             meetingId,
             userId: user._id,
-            role: "creator",
+            status: "creator",
           });
 
           await ctx.db.insert("meetingParticipants", {
             meetingId,
             userId: otherUser._id,
-            role: "participant",
+            status: "accepted",
           });
         }
       }
     }
 
-    // Create some pending meeting requests between users
-    const requestPairs: Array<[Id<"users">, Id<"users">]> = [];
-
-    // Create 5 random request pairs
+    // Create some pending meeting requests (meetings with pending participants)
+    // Create 5 random pending invitations
     for (let i = 0; i < 5; i++) {
       const requester = allUsers[Math.floor(Math.random() * allUsers.length)];
       const otherUsers = allUsers.filter((u) => u._id !== requester._id);
@@ -300,36 +322,36 @@ export const seedData = internalMutation({
 
       const recipient = otherUsers[Math.floor(Math.random() * otherUsers.length)];
 
-      // Check if request already exists
-      const existingRequest = await ctx.db
-        .query("meetingRequests")
-        .filter((q) =>
-          q.and(
-            q.eq(q.field("requesterId"), requester._id),
-            q.eq(q.field("recipientId"), recipient._id),
-            q.eq(q.field("status"), "pending")
-          )
-        )
-        .first();
+      // Create a meeting with requester as creator and recipient as pending
+      const meetingId = await ctx.db.insert("meetings", {
+        creatorId: requester._id,
+        title: `Meeting with ${recipient.name}`,
+        description: "Would love to connect and discuss potential collaboration!",
+        scheduledTime: now + Math.floor(Math.random() * 5) * oneDay,
+        duration: [30, 45, 60][Math.floor(Math.random() * 3)],
+        location: ["Cafe", "Office", "Conference Room", "Virtual - Zoom"][Math.floor(Math.random() * 4)],
+        isPublic: false,
+      });
 
-      if (!existingRequest) {
-        await ctx.db.insert("meetingRequests", {
-          requesterId: requester._id,
-          recipientId: recipient._id,
-          status: "pending",
-          proposedTime: now + Math.floor(Math.random() * 5) * oneDay,
-          proposedDuration: [30, 45, 60][Math.floor(Math.random() * 3)],
-          location: ["Cafe", "Office", "Conference Room", "Virtual - Zoom"][Math.floor(Math.random() * 4)],
-          message: "Would love to connect and discuss potential collaboration!",
-        });
-      }
+      // Add requester as creator
+      await ctx.db.insert("meetingParticipants", {
+        meetingId,
+        userId: requester._id,
+        status: "creator",
+      });
+
+      // Add recipient as pending
+      await ctx.db.insert("meetingParticipants", {
+        meetingId,
+        userId: recipient._id,
+        status: "pending",
+      });
     }
 
     const totalMeetings = await ctx.db.query("meetings").collect();
     const totalParticipations = await ctx.db
       .query("meetingParticipants")
       .collect();
-    const totalRequests = await ctx.db.query("meetingRequests").collect();
 
     return {
       success: true,
@@ -337,7 +359,6 @@ export const seedData = internalMutation({
         totalUsers: allUsers.length,
         totalMeetings: totalMeetings.length,
         totalParticipations: totalParticipations.length,
-        totalRequests: totalRequests.length,
       },
     };
   },

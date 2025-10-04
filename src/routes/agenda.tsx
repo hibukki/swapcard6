@@ -7,14 +7,16 @@ import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
-const requestsQuery = convexQuery(api.meetings.getMyRequests, {});
+const pendingInvitationsQuery = convexQuery(api.meetings.getPendingInvitations, {});
+const sentRequestsQuery = convexQuery(api.meetings.getSentRequests, {});
 const meetingsQuery = convexQuery(api.meetings.getMyMeetings, {});
 
 export const Route = createFileRoute("/agenda")({
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session) {
       await Promise.all([
-        queryClient.ensureQueryData(requestsQuery),
+        queryClient.ensureQueryData(pendingInvitationsQuery),
+        queryClient.ensureQueryData(sentRequestsQuery),
         queryClient.ensureQueryData(meetingsQuery),
       ]);
     }
@@ -23,11 +25,9 @@ export const Route = createFileRoute("/agenda")({
 });
 
 function AgendaPage() {
-  const { data: requests } = useSuspenseQuery(requestsQuery);
+  const { data: pendingInvitations } = useSuspenseQuery(pendingInvitationsQuery);
+  const { data: sentRequests } = useSuspenseQuery(sentRequestsQuery);
   const { data: meetings } = useSuspenseQuery(meetingsQuery);
-
-  const pendingReceived = requests.received.filter((r) => r.status === "pending");
-  const pendingSent = requests.sent.filter((r) => r.status === "pending");
 
   return (
     <div>
@@ -39,16 +39,16 @@ function AgendaPage() {
         <section>
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <Clock className="w-5 h-5" />
-            Incoming Requests ({pendingReceived.length})
+            Incoming Requests ({pendingInvitations.length})
           </h2>
-          {pendingReceived.length === 0 ? (
+          {pendingInvitations.length === 0 ? (
             <div className="p-6 bg-base-200 rounded-lg text-center opacity-70">
               No pending requests
             </div>
           ) : (
             <div className="space-y-3">
-              {pendingReceived.map((request) => (
-                <IncomingRequestCard key={request._id} request={request} />
+              {pendingInvitations.map((meeting) => (
+                <IncomingRequestCard key={meeting._id} meeting={meeting} />
               ))}
             </div>
           )}
@@ -57,39 +57,44 @@ function AgendaPage() {
         {/* Sent Requests */}
         <section>
           <h2 className="text-xl font-bold mb-4">
-            Sent Requests ({pendingSent.length})
+            Sent Requests ({sentRequests.length})
           </h2>
-          {pendingSent.length === 0 ? (
+          {sentRequests.length === 0 ? (
             <div className="p-6 bg-base-200 rounded-lg text-center opacity-70">
               No pending sent requests
             </div>
           ) : (
             <div className="space-y-3">
-              {pendingSent.map((request) => (
+              {sentRequests.map((meeting) => (
                 <div
-                  key={request._id}
+                  key={meeting._id}
                   className="card card-border bg-base-200"
                 >
                   <div className="card-body">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="font-semibold">
-                          {request.recipient?.name}
+                          {meeting.recipients.map((r) => r.name).join(", ")}
                         </h3>
-                        {request.recipient?.role && (
+                        {meeting.recipients[0]?.role && (
                           <p className="text-sm opacity-70">
-                            {request.recipient.role}
+                            {meeting.recipients[0].role}
                           </p>
                         )}
-                        {request.message && (
+                        <p className="text-sm mt-2 opacity-80 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {new Date(meeting.scheduledTime).toLocaleString()}
+                          {` (${meeting.duration} min)`}
+                        </p>
+                        {meeting.description && (
                           <p className="text-sm mt-2 opacity-80">
-                            {request.message}
+                            {meeting.description}
                           </p>
                         )}
-                        {request.location && (
+                        {meeting.location && (
                           <p className="text-sm mt-1 opacity-70 flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
-                            {request.location}
+                            {meeting.location}
                           </p>
                         )}
                       </div>
@@ -172,25 +177,25 @@ function AgendaPage() {
 }
 
 function IncomingRequestCard({
-  request,
+  meeting,
 }: {
-  request: {
-    _id: Id<"meetingRequests">;
+  meeting: {
+    _id: Id<"meetings">;
     requester: { name: string; role?: string } | null;
-    message?: string;
+    description?: string;
     location?: string;
-    proposedTime?: number;
-    proposedDuration?: number;
+    scheduledTime: number;
+    duration: number;
   };
 }) {
-  const respondToRequest = useMutation(api.meetings.respondToRequest);
+  const respondToInvitation = useMutation(api.meetings.respondToInvitation);
   const [isResponding, setIsResponding] = useState(false);
 
   const handleRespond = async (accept: boolean) => {
     setIsResponding(true);
     try {
-      await respondToRequest({
-        requestId: request._id,
+      await respondToInvitation({
+        meetingId: meeting._id,
         accept,
       });
     } catch (error) {
@@ -205,24 +210,23 @@ function IncomingRequestCard({
       <div className="card-body">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <h3 className="font-semibold">{request.requester?.name}</h3>
-            {request.requester?.role && (
-              <p className="text-sm opacity-70">{request.requester.role}</p>
+            <h3 className="font-semibold">{meeting.requester?.name}</h3>
+            {meeting.requester?.role && (
+              <p className="text-sm opacity-70">{meeting.requester.role}</p>
             )}
-            {request.message && (
-              <p className="text-sm mt-2 opacity-80">{request.message}</p>
+            {meeting.description && (
+              <p className="text-sm mt-2 opacity-80">{meeting.description}</p>
             )}
             <div className="mt-2 space-y-1">
-              {request.proposedTime && (
-                <p className="text-sm opacity-70 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {new Date(request.proposedTime).toLocaleString()}
-                </p>
-              )}
-              {request.location && (
+              <p className="text-sm opacity-70 flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {new Date(meeting.scheduledTime).toLocaleString()}
+                {` (${meeting.duration} min)`}
+              </p>
+              {meeting.location && (
                 <p className="text-sm opacity-70 flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
-                  {request.location}
+                  {meeting.location}
                 </p>
               )}
             </div>
