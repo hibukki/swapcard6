@@ -28,7 +28,7 @@ function CalendarPage() {
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"week" | "month">("week");
-  const [calendarMode, setCalendarMode] = useState<"my" | "public">("my");
+  const [calendarMode, setCalendarMode] = useState<"my" | "public" | "combined">("my");
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Transform public meetings to match the structure of my meetings
@@ -37,9 +37,25 @@ function CalendarPage() {
     userRole: meeting.participants.some((p: any) => p.role === "creator")
       ? ("creator" as const)
       : ("participant" as const),
+    isPublicMeeting: true, // Mark as public for styling
   }));
 
-  const meetings = calendarMode === "my" ? myMeetings : publicMeetings;
+  // Mark my meetings for styling
+  const myMeetingsWithFlag = myMeetings.map((meeting) => ({
+    ...meeting,
+    isMyMeeting: true,
+  }));
+
+  // Determine which meetings to show
+  let meetings;
+  if (calendarMode === "my") {
+    meetings = myMeetingsWithFlag;
+  } else if (calendarMode === "public") {
+    meetings = publicMeetings;
+  } else {
+    // Combined view - show both
+    meetings = [...myMeetingsWithFlag, ...publicMeetings];
+  }
 
   // Navigate dates
   const navigatePrevious = () => {
@@ -100,13 +116,19 @@ function CalendarPage() {
               className={`btn btn-sm join-item ${calendarMode === "my" ? "btn-active" : ""}`}
               onClick={() => setCalendarMode("my")}
             >
-              My Calendar
+              My Meetings
             </button>
             <button
               className={`btn btn-sm join-item ${calendarMode === "public" ? "btn-active" : ""}`}
               onClick={() => setCalendarMode("public")}
             >
-              Public Meetings
+              Public Events
+            </button>
+            <button
+              className={`btn btn-sm join-item ${calendarMode === "combined" ? "btn-active" : ""}`}
+              onClick={() => setCalendarMode("combined")}
+            >
+              Combined
             </button>
           </div>
           <div className="join">
@@ -132,6 +154,25 @@ function CalendarPage() {
           </button>
         </div>
       </div>
+
+      {/* Legend for combined view */}
+      {calendarMode === "combined" && (
+        <div className="flex items-center gap-4 text-sm mb-4 p-3 bg-base-200 rounded-lg">
+          <span className="font-semibold">Legend:</span>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-primary/20 border-l-4 border-primary"></div>
+            <span>My Private Meetings</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-success/20 border-l-4 border-success"></div>
+            <span>Public Meetings I'm In</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-secondary/20 border-l-4 border-secondary"></div>
+            <span>Available Public Events</span>
+          </div>
+        </div>
+      )}
 
       {/* Calendar Grid */}
       {view === "week" ? (
@@ -340,21 +381,40 @@ function MonthView({
                 {day}
               </div>
               <div className="space-y-1">
-                {dayMeetings.slice(0, 3).map((meeting) => (
-                  <div
-                    key={meeting._id}
-                    className="text-xs bg-primary/20 text-primary-content p-1 rounded truncate"
-                  >
-                    {new Date(meeting.scheduledTime).toLocaleTimeString(
-                      "en-US",
-                      {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      }
-                    )}{" "}
-                    {meeting.title}
-                  </div>
-                ))}
+                {dayMeetings.slice(0, 3).map((meeting) => {
+                  const isMyMeeting = meeting.isMyMeeting;
+                  const isPublicMeeting = meeting.isPublicMeeting;
+
+                  let bgColor = "bg-primary/20";
+                  let textColor = "text-primary-content";
+
+                  if (isMyMeeting && !isPublicMeeting) {
+                    bgColor = "bg-primary/20";
+                    textColor = "text-primary-content";
+                  } else if (isPublicMeeting && !isMyMeeting) {
+                    bgColor = "bg-secondary/20";
+                    textColor = "text-secondary-content";
+                  } else if (isMyMeeting && isPublicMeeting) {
+                    bgColor = "bg-success/20";
+                    textColor = "text-success-content";
+                  }
+
+                  return (
+                    <div
+                      key={meeting._id}
+                      className={`text-xs ${bgColor} ${textColor} p-1 rounded truncate`}
+                    >
+                      {new Date(meeting.scheduledTime).toLocaleTimeString(
+                        "en-US",
+                        {
+                          hour: "numeric",
+                          minute: "2-digit",
+                        }
+                      )}{" "}
+                      {meeting.title}
+                    </div>
+                  );
+                })}
                 {dayMeetings.length > 3 && (
                   <div className="text-xs text-base-content/60">
                     +{dayMeetings.length - 3} more
@@ -373,9 +433,34 @@ function MeetingCard({ meeting }: { meeting: any }) {
   const startTime = new Date(meeting.scheduledTime);
   const endTime = new Date(meeting.scheduledTime + meeting.duration * 60000);
 
+  // Determine color based on meeting type
+  const isMyMeeting = meeting.isMyMeeting;
+  const isPublicMeeting = meeting.isPublicMeeting;
+
+  let bgColor = "bg-primary/20";
+  let borderColor = "border-primary";
+  let textColor = "text-primary-content";
+
+  if (isMyMeeting && !isPublicMeeting) {
+    // My private meetings - primary blue
+    bgColor = "bg-primary/20";
+    borderColor = "border-primary";
+    textColor = "text-primary-content";
+  } else if (isPublicMeeting && !isMyMeeting) {
+    // Public meetings I'm not in - secondary/accent color
+    bgColor = "bg-secondary/20";
+    borderColor = "border-secondary";
+    textColor = "text-secondary-content";
+  } else if (isMyMeeting && isPublicMeeting) {
+    // Public meetings I'm in - success green
+    bgColor = "bg-success/20";
+    borderColor = "border-success";
+    textColor = "text-success-content";
+  }
+
   return (
-    <div className="bg-primary/20 border-l-4 border-primary p-1 rounded text-xs mb-1">
-      <div className="font-semibold text-primary-content truncate">
+    <div className={`${bgColor} border-l-4 ${borderColor} p-1 rounded text-xs mb-1`}>
+      <div className={`font-semibold ${textColor} truncate`}>
         {meeting.title}
       </div>
       <div className="text-base-content/80">
@@ -394,6 +479,9 @@ function MeetingCard({ meeting }: { meeting: any }) {
           {meeting.participants.length} participant
           {meeting.participants.length !== 1 ? "s" : ""}
         </div>
+      )}
+      {isPublicMeeting && !isMyMeeting && (
+        <div className="text-xs opacity-70 mt-0.5">📢 Public</div>
       )}
     </div>
   );
