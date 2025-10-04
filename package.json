@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "preview": "vite preview",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "seed": "pnpx convex run seed:seedData"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.45.0",

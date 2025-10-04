@@ -7,18 +7,39 @@ import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
+const myMeetingsQuery = convexQuery(api.meetings.getMyMeetings, {});
+const publicMeetingsQuery = convexQuery(api.meetings.getPublicMeetings, {});
+
 export const Route = createFileRoute("/calendar")({
+  loader: async ({ context: { queryClient } }) => {
+    if ((window as any).Clerk?.session) {
+      await Promise.all([
+        queryClient.ensureQueryData(myMeetingsQuery),
+        queryClient.ensureQueryData(publicMeetingsQuery),
+      ]);
+    }
+  },
   component: CalendarPage,
 });
 
 function CalendarPage() {
-  const { data: meetings } = useSuspenseQuery(
-    convexQuery(api.meetings.getMyMeetings, {})
-  );
+  const { data: myMeetings } = useSuspenseQuery(myMeetingsQuery);
+  const { data: publicMeetingsData } = useSuspenseQuery(publicMeetingsQuery);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"week" | "month">("week");
+  const [calendarMode, setCalendarMode] = useState<"my" | "public">("my");
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Transform public meetings to match the structure of my meetings
+  const publicMeetings = publicMeetingsData.map((meeting) => ({
+    ...meeting,
+    userRole: meeting.participants.some((p: any) => p.role === "creator")
+      ? ("creator" as const)
+      : ("participant" as const),
+  }));
+
+  const meetings = calendarMode === "my" ? myMeetings : publicMeetings;
 
   // Navigate dates
   const navigatePrevious = () => {
@@ -73,7 +94,21 @@ function CalendarPage() {
           </h2>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="join">
+            <button
+              className={`btn btn-sm join-item ${calendarMode === "my" ? "btn-active" : ""}`}
+              onClick={() => setCalendarMode("my")}
+            >
+              My Calendar
+            </button>
+            <button
+              className={`btn btn-sm join-item ${calendarMode === "public" ? "btn-active" : ""}`}
+              onClick={() => setCalendarMode("public")}
+            >
+              Public Meetings
+            </button>
+          </div>
           <div className="join">
             <button
               className={`btn btn-sm join-item ${view === "week" ? "btn-active" : ""}`}

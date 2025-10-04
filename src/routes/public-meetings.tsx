@@ -2,7 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
-import { Calendar, Clock, MapPin, Users, UserPlus } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, UserPlus, Plus } from "lucide-react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -23,6 +23,7 @@ function PublicMeetingsPage() {
   const joinMeeting = useMutation(api.meetings.joinMeeting);
   const leaveMeeting = useMutation(api.meetings.leaveMeeting);
   const [joiningMeetingId, setJoiningMeetingId] = useState<Id<"meetings"> | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const handleJoinMeeting = async (meetingId: Id<"meetings">) => {
     setJoiningMeetingId(meetingId);
@@ -53,8 +54,19 @@ function PublicMeetingsPage() {
 
   return (
     <div>
-      <h1 className="mt-0">Public Meetings</h1>
-      <p>Browse and join public meetings open to all attendees</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="mt-0">Public Meetings</h1>
+          <p>Browse and join public meetings open to all attendees</p>
+        </div>
+        <button
+          className="not-prose btn btn-primary gap-2 mt-4"
+          onClick={() => setShowCreateModal(true)}
+        >
+          <Plus className="w-4 h-4" />
+          Create Public Meeting
+        </button>
+      </div>
 
       <div className="not-prose mt-8 space-y-8">
         {/* Upcoming Public Meetings */}
@@ -221,6 +233,165 @@ function PublicMeetingsPage() {
           </section>
         )}
       </div>
+
+      {/* Create Public Meeting Modal */}
+      {showCreateModal && (
+        <CreatePublicMeetingModal onClose={() => setShowCreateModal(false)} />
+      )}
     </div>
+  );
+}
+
+function CreatePublicMeetingModal({ onClose }: { onClose: () => void }) {
+  const createMeeting = useMutation(api.meetings.createMeeting);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    scheduledTime: "",
+    duration: 60,
+    location: "",
+    maxParticipants: undefined as number | undefined,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const scheduledTime = new Date(formData.scheduledTime).getTime();
+
+    await createMeeting({
+      title: formData.title,
+      description: formData.description || undefined,
+      scheduledTime,
+      duration: formData.duration,
+      location: formData.location || undefined,
+      isPublic: true,
+      maxParticipants: formData.maxParticipants,
+    });
+
+    onClose();
+  };
+
+  return (
+    <dialog className="modal modal-open">
+      <div className="modal-box max-w-2xl">
+        <h3 className="font-bold text-lg mb-4">Create Public Meeting</h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="label">
+              <span className="label-text">Meeting Title</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              placeholder="e.g., Networking Coffee Break, Product Demo Session"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="label">
+              <span className="label-text">Description</span>
+            </label>
+            <textarea
+              className="textarea textarea-bordered w-full"
+              rows={3}
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              placeholder="What will you discuss? Who should join?"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">
+                <span className="label-text">Date & Time</span>
+              </label>
+              <input
+                type="datetime-local"
+                className="input input-bordered w-full"
+                value={formData.scheduledTime}
+                onChange={(e) =>
+                  setFormData({ ...formData, scheduledTime: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            <div>
+              <label className="label">
+                <span className="label-text">Duration (minutes)</span>
+              </label>
+              <input
+                type="number"
+                className="input input-bordered w-full"
+                value={formData.duration}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    duration: parseInt(e.target.value),
+                  })
+                }
+                min="1"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="label">
+              <span className="label-text">Location</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={formData.location}
+              onChange={(e) =>
+                setFormData({ ...formData, location: e.target.value })
+              }
+              placeholder="Room name, Zoom link, or meeting point"
+            />
+          </div>
+
+          <div>
+            <label className="label">
+              <span className="label-text">Max Participants (optional)</span>
+            </label>
+            <input
+              type="number"
+              className="input input-bordered w-full"
+              value={formData.maxParticipants ?? ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  maxParticipants: e.target.value
+                    ? parseInt(e.target.value)
+                    : undefined,
+                })
+              }
+              min="2"
+              placeholder="Leave empty for unlimited"
+            />
+          </div>
+
+          <div className="modal-action">
+            <button type="button" className="btn" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary">
+              Create Public Meeting
+            </button>
+          </div>
+        </form>
+      </div>
+      <form method="dialog" className="modal-backdrop" onClick={onClose}>
+        <button>close</button>
+      </form>
+    </dialog>
   );
 }
