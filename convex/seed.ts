@@ -4,70 +4,13 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 
 export const seedData = internalMutation({
-  args: {
-    currentUserClerkId: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    // Only clear seed data (meetings/requests created by seed script)
-    // Keep real user data intact
-    const seedUserIds: string[] = [];
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const oneHour = 60 * 60 * 1000;
+    const oneDay = 24 * oneHour;
 
-    // Get seed users
-    for (let i = 1; i <= 5; i++) {
-      const seedUser = await ctx.db
-        .query("users")
-        .withIndex("by_clerkId", (q) => q.eq("clerkId", `seed_user_${i}`))
-        .unique();
-      if (seedUser) {
-        seedUserIds.push(seedUser._id);
-      }
-    }
-
-    // Delete only meetings created by or with seed users
-    const allMeetings = await ctx.db.query("meetings").collect();
-    for (const meeting of allMeetings) {
-      const participants = await ctx.db
-        .query("meetingParticipants")
-        .withIndex("by_meeting", (q) => q.eq("meetingId", meeting._id))
-        .collect();
-
-      // Delete if any participant is a seed user
-      const hasSeedUser = participants.some((p) => seedUserIds.includes(p.userId));
-      if (hasSeedUser || seedUserIds.includes(meeting.creatorId)) {
-        // Delete participants first
-        for (const p of participants) {
-          await ctx.db.delete(p._id);
-        }
-        await ctx.db.delete(meeting._id);
-      }
-    }
-
-    // Delete requests involving seed users
-    const allRequests = await ctx.db.query("meetingRequests").collect();
-    for (const request of allRequests) {
-      if (
-        seedUserIds.includes(request.requesterId) ||
-        seedUserIds.includes(request.recipientId)
-      ) {
-        await ctx.db.delete(request._id);
-      }
-    }
-
-    // Get current user if provided (do this first)
-    let currentUser = null;
-    if (args.currentUserClerkId) {
-      currentUser = await ctx.db
-        .query("users")
-        .withIndex("by_clerkId", (q) =>
-          q.eq("clerkId", args.currentUserClerkId!)
-        )
-        .unique();
-    }
-
-    // Get all users
-    let users = await ctx.db.query("users").collect();
-
-    // Create sample users if there aren't enough
+    // Create sample users if they don't exist
     const sampleUsers = [
       {
         clerkId: "seed_user_1",
@@ -116,7 +59,6 @@ export const seedData = internalMutation({
       },
     ];
 
-    // Only create sample users that don't already exist
     for (const userData of sampleUsers) {
       const existing = await ctx.db
         .query("users")
@@ -128,25 +70,18 @@ export const seedData = internalMutation({
       }
     }
 
-    // Refresh users list
-    users = await ctx.db.query("users").collect();
+    // Get all users (including both seed users and real users)
+    const allUsers = await ctx.db.query("users").collect();
 
-    if (users.length < 2) {
-      throw new Error(
-        "Failed to create sample users. Database may have constraints preventing user creation."
-      );
+    if (allUsers.length < 2) {
+      throw new Error("Need at least 2 users. Database may have constraints.");
     }
 
-    const now = Date.now();
-    const oneHour = 60 * 60 * 1000;
-    const oneDay = 24 * oneHour;
-
-    // Create sample public meetings
-    const publicMeetings = [
+    // Create public meetings if they don't exist (check by title to avoid duplicates)
+    const publicMeetingTemplates = [
       {
         title: "Opening Keynote: Future of Tech",
-        description:
-          "Join us for an inspiring keynote about the future of technology and innovation. Perfect for all attendees!",
+        description: "Join us for an inspiring keynote about the future of technology and innovation. Perfect for all attendees!",
         scheduledTime: now + 2 * oneHour,
         duration: 90,
         location: "Main Auditorium",
@@ -154,8 +89,7 @@ export const seedData = internalMutation({
       },
       {
         title: "Networking Coffee Break",
-        description:
-          "Casual networking session over coffee. Great opportunity to meet fellow attendees and exchange ideas.",
+        description: "Casual networking session over coffee. Great opportunity to meet fellow attendees and exchange ideas.",
         scheduledTime: now + 4 * oneHour,
         duration: 30,
         location: "Lobby Lounge",
@@ -163,8 +97,7 @@ export const seedData = internalMutation({
       },
       {
         title: "AI & Machine Learning Workshop",
-        description:
-          "Hands-on workshop exploring the latest in AI and ML. Bring your laptop!",
+        description: "Hands-on workshop exploring the latest in AI and ML. Bring your laptop!",
         scheduledTime: now + oneDay,
         duration: 120,
         location: "Workshop Room A",
@@ -172,8 +105,7 @@ export const seedData = internalMutation({
       },
       {
         title: "Startup Pitch Session",
-        description:
-          "Watch innovative startups pitch their ideas. Investors and entrepreneurs welcome!",
+        description: "Watch innovative startups pitch their ideas. Investors and entrepreneurs welcome!",
         scheduledTime: now + oneDay + 3 * oneHour,
         duration: 60,
         location: "Innovation Hub",
@@ -181,8 +113,7 @@ export const seedData = internalMutation({
       },
       {
         title: "Product Demo: Latest Features",
-        description:
-          "Live demonstration of our newest product features. Q&A session included.",
+        description: "Live demonstration of our newest product features. Q&A session included.",
         scheduledTime: now + 2 * oneDay,
         duration: 45,
         location: "Demo Theater",
@@ -190,8 +121,7 @@ export const seedData = internalMutation({
       },
       {
         title: "Panel Discussion: Remote Work Best Practices",
-        description:
-          "Industry leaders discuss the future of remote work and hybrid teams.",
+        description: "Industry leaders discuss the future of remote work and hybrid teams.",
         scheduledTime: now + 2 * oneDay + 2 * oneHour,
         duration: 75,
         location: "Conference Hall B",
@@ -199,8 +129,7 @@ export const seedData = internalMutation({
       },
       {
         title: "Evening Networking Reception",
-        description:
-          "Wind down with drinks and networking. All conference attendees invited!",
+        description: "Wind down with drinks and networking. All conference attendees invited!",
         scheduledTime: now + 2 * oneDay + 6 * oneHour,
         duration: 120,
         location: "Rooftop Terrace",
@@ -208,8 +137,7 @@ export const seedData = internalMutation({
       },
       {
         title: "Breakfast with Industry Leaders",
-        description:
-          "Exclusive breakfast session with C-level executives. Limited spots available.",
+        description: "Exclusive breakfast session with C-level executives. Limited spots available.",
         scheduledTime: now + 3 * oneDay,
         duration: 60,
         location: "Executive Dining Room",
@@ -217,107 +145,126 @@ export const seedData = internalMutation({
       },
     ];
 
-    // Get only seed users for public meeting participants (exclude current user)
-    const seedUsers = users.filter((u) =>
-      u.clerkId.startsWith("seed_user_") && (!currentUser || u._id !== currentUser._id)
-    );
+    const publicMeetingIds: Id<"meetings">[] = [];
 
-    // Create public meetings with participants - ensure each user participates in 3-4 public meetings
-    const publicMeetingData: Array<{ meetingId: Id<"meetings">; creatorId: Id<"users"> }> = [];
+    for (const template of publicMeetingTemplates) {
+      // Check if this public meeting already exists
+      const existing = await ctx.db
+        .query("meetings")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("title"), template.title),
+            q.eq(q.field("isPublic"), true)
+          )
+        )
+        .first();
 
-    for (const meetingData of publicMeetings) {
-      const creatorIndex = Math.floor(Math.random() * seedUsers.length);
-      const creator = seedUsers[creatorIndex];
+      if (!existing) {
+        // Create the public meeting with a random user as creator
+        const creator = allUsers[Math.floor(Math.random() * allUsers.length)];
 
-      const meetingId = await ctx.db.insert("meetings", {
-        creatorId: creator._id,
-        title: meetingData.title,
-        description: meetingData.description,
-        scheduledTime: meetingData.scheduledTime,
-        duration: meetingData.duration,
-        location: meetingData.location,
-        isPublic: true,
-        maxParticipants: meetingData.maxParticipants,
-      });
-
-      publicMeetingData.push({ meetingId, creatorId: creator._id });
-
-      // Add creator as participant
-      await ctx.db.insert("meetingParticipants", {
-        meetingId,
-        userId: creator._id,
-        role: "creator",
-      });
-    }
-
-    // Now ensure each seed user participates in 3-4 public meetings
-    for (const user of seedUsers) {
-      // Count how many public meetings they're already in (as creator)
-      const alreadyCreated = publicMeetingData.filter(
-        (m) => m.creatorId === user._id
-      ).length;
-
-      // Participate in 3-4 total public meetings
-      const targetParticipations = 3 + Math.floor(Math.random() * 2); // 3-4 meetings
-      const meetingsToJoin = targetParticipations - alreadyCreated;
-
-      // Shuffle public meetings and join some
-      const shuffledMeetings = [...publicMeetingData].sort(() => Math.random() - 0.5);
-      let joined = 0;
-
-      for (const { meetingId, creatorId } of shuffledMeetings) {
-        if (joined >= meetingsToJoin) break;
-        if (creatorId === user._id) continue; // Skip meetings user created
-
-        // Check if already participating
-        const existing = await ctx.db
-          .query("meetingParticipants")
-          .withIndex("by_meeting", (q) => q.eq("meetingId", meetingId))
-          .filter((q) => q.eq(q.field("userId"), user._id))
-          .first();
-
-        if (existing) continue;
-
-        // Join this meeting
-        await ctx.db.insert("meetingParticipants", {
-          meetingId,
-          userId: user._id,
-          role: "participant",
+        const meetingId = await ctx.db.insert("meetings", {
+          creatorId: creator._id,
+          title: template.title,
+          description: template.description,
+          scheduledTime: template.scheduledTime,
+          duration: template.duration,
+          location: template.location,
+          isPublic: true,
+          maxParticipants: template.maxParticipants,
         });
 
-        joined++;
+        publicMeetingIds.push(meetingId);
+
+        // Add creator as participant
+        await ctx.db.insert("meetingParticipants", {
+          meetingId,
+          userId: creator._id,
+          role: "creator",
+        });
+      } else {
+        publicMeetingIds.push(existing._id);
       }
     }
 
-    // Create private meetings for each seed user (2-3 per user)
-    if (seedUsers.length >= 2) {
-      const privateMeetingTemplates = [
-        { title: "1-on-1: Strategy Discussion", description: "Private discussion about project strategy and roadmap.", duration: 30, location: "Meeting Room 3" },
-        { title: "Team Sync: Project Updates", description: "Quick sync on project progress and blockers.", duration: 45, location: "Conference Room A" },
-        { title: "Client Meeting: Requirements Review", description: "Review client requirements and discuss next steps.", duration: 60, location: "Virtual - Zoom" },
-        { title: "Coffee Chat", description: "Informal discussion over coffee.", duration: 30, location: "Cafe" },
-        { title: "Brainstorming Session", description: "Creative brainstorming for new ideas.", duration: 45, location: "Innovation Lab" },
-        { title: "Progress Check-in", description: "Review progress and next steps.", duration: 30, location: "Office" },
-        { title: "Collaboration Meeting", description: "Discuss potential collaboration opportunities.", duration: 60, location: "Conference Room B" },
-      ];
+    // Now ensure each user has at least 4 public and 4 private meetings
+    const privateMeetingTemplates = [
+      { title: "1-on-1: Strategy Discussion", description: "Private discussion about project strategy and roadmap.", duration: 30, location: "Meeting Room 3" },
+      { title: "Team Sync: Project Updates", description: "Quick sync on project progress and blockers.", duration: 45, location: "Conference Room A" },
+      { title: "Client Meeting: Requirements Review", description: "Review client requirements and discuss next steps.", duration: 60, location: "Virtual - Zoom" },
+      { title: "Coffee Chat", description: "Informal discussion over coffee.", duration: 30, location: "Cafe" },
+      { title: "Brainstorming Session", description: "Creative brainstorming for new ideas.", duration: 45, location: "Innovation Lab" },
+      { title: "Progress Check-in", description: "Review progress and next steps.", duration: 30, location: "Office" },
+      { title: "Collaboration Meeting", description: "Discuss potential collaboration opportunities.", duration: 60, location: "Conference Room B" },
+      { title: "Design Review", description: "Review design mockups and provide feedback.", duration: 60, location: "Design Studio" },
+      { title: "Marketing Strategy Discussion", description: "Discuss marketing approach for upcoming quarter.", duration: 45, location: "Marketing Office" },
+      { title: "Data Analysis Review", description: "Review latest analytics and insights.", duration: 60, location: "Data Lab" },
+    ];
 
-      // Give each seed user 2-3 private meetings
-      for (let i = 0; i < seedUsers.length; i++) {
-        const creator = seedUsers[i];
-        const numMeetings = 2 + Math.floor(Math.random() * 2); // 2-3 meetings
+    for (const user of allUsers) {
+      // Count existing meetings for this user
+      const userParticipations = await ctx.db
+        .query("meetingParticipants")
+        .withIndex("by_user_only", (q) => q.eq("userId", user._id))
+        .collect();
 
-        for (let j = 0; j < numMeetings; j++) {
-          // Pick a different seed user as participant
-          const participantIndex = (i + j + 1) % seedUsers.length;
-          const participant = seedUsers[participantIndex];
+      let publicCount = 0;
+      let privateCount = 0;
 
-          if (participant._id === creator._id) continue; // Skip if same user
+      for (const participation of userParticipations) {
+        const meeting = await ctx.db.get(participation.meetingId);
+        if (meeting) {
+          if (meeting.isPublic) {
+            publicCount++;
+          } else {
+            privateCount++;
+          }
+        }
+      }
 
+      // Add public meetings if needed (target: 4)
+      const publicNeeded = Math.max(0, 4 - publicCount);
+      if (publicNeeded > 0) {
+        const shuffledPublic = [...publicMeetingIds].sort(() => Math.random() - 0.5);
+        let added = 0;
+
+        for (const meetingId of shuffledPublic) {
+          if (added >= publicNeeded) break;
+
+          // Check if already participating
+          const existing = await ctx.db
+            .query("meetingParticipants")
+            .withIndex("by_meeting", (q) => q.eq("meetingId", meetingId))
+            .filter((q) => q.eq(q.field("userId"), user._id))
+            .first();
+
+          if (!existing) {
+            await ctx.db.insert("meetingParticipants", {
+              meetingId,
+              userId: user._id,
+              role: "participant",
+            });
+            added++;
+          }
+        }
+      }
+
+      // Add private meetings if needed (target: 4)
+      const privateNeeded = Math.max(0, 4 - privateCount);
+      if (privateNeeded > 0) {
+        for (let i = 0; i < privateNeeded; i++) {
+          // Pick a random other user
+          const otherUsers = allUsers.filter((u) => u._id !== user._id);
+          if (otherUsers.length === 0) continue;
+
+          const otherUser = otherUsers[Math.floor(Math.random() * otherUsers.length)];
           const template = privateMeetingTemplates[Math.floor(Math.random() * privateMeetingTemplates.length)];
-          const scheduledTime = now + (j + 1) * oneDay + Math.floor(Math.random() * 8) * oneHour;
+
+          // Schedule in the next 7 days with random time
+          const scheduledTime = now + Math.floor(Math.random() * 7) * oneDay + Math.floor(Math.random() * 12) * oneHour;
 
           const meetingId = await ctx.db.insert("meetings", {
-            creatorId: creator._id,
+            creatorId: user._id,
             title: template.title,
             description: template.description,
             scheduledTime,
@@ -326,200 +273,54 @@ export const seedData = internalMutation({
             isPublic: false,
           });
 
-          // Add creator and participant
+          // Add both users as participants
           await ctx.db.insert("meetingParticipants", {
             meetingId,
-            userId: creator._id,
+            userId: user._id,
             role: "creator",
           });
 
           await ctx.db.insert("meetingParticipants", {
             meetingId,
-            userId: participant._id,
+            userId: otherUser._id,
             role: "participant",
           });
         }
       }
     }
 
-    // Create private meetings with the current user (5-6 meetings throughout the week)
-    if (currentUser && users.length >= 2) {
-      const currentUserMeetings = [
-        {
-          title: "Coffee Chat with Alice",
-          description: "Casual catch-up over coffee to discuss ideas.",
-          scheduledTime: now + 6 * oneHour,
-          duration: 30,
-          location: "Lobby Coffee Shop",
-          withUser: "Alice Johnson",
-        },
-        {
-          title: "Project Brainstorm with Bob",
-          description: "Discuss new project ideas and potential collaboration.",
-          scheduledTime: now + oneDay + 3 * oneHour,
-          duration: 45,
-          location: "Innovation Lab",
-          withUser: "Bob Smith",
-        },
-        {
-          title: "Design Review with David",
-          description: "Review design mockups and provide feedback.",
-          scheduledTime: now + 2 * oneDay + oneHour,
-          duration: 60,
-          location: "Design Studio",
-          withUser: "David Chen",
-        },
-        {
-          title: "Marketing Strategy with Carol",
-          description: "Discuss marketing approach for Q4.",
-          scheduledTime: now + 3 * oneDay + 2 * oneHour,
-          duration: 45,
-          location: "Conference Room C",
-          withUser: "Carol Davis",
-        },
-        {
-          title: "Data Analysis Review with Emma",
-          description: "Review latest analytics and insights.",
-          scheduledTime: now + 4 * oneDay + 4 * oneHour,
-          duration: 60,
-          location: "Data Lab",
-          withUser: "Emma Wilson",
-        },
-        {
-          title: "Quick Sync with Alice",
-          description: "Follow-up on action items from last meeting.",
-          scheduledTime: now + 5 * oneDay + oneHour,
-          duration: 30,
-          location: "Virtual - Zoom",
-          withUser: "Alice Johnson",
-        },
-      ];
+    // Create some pending meeting requests between users
+    const requestPairs: Array<[Id<"users">, Id<"users">]> = [];
 
-      for (const meetingData of currentUserMeetings) {
-        // Find the user by name
-        const otherUser = users.find((u) => u.name === meetingData.withUser);
-        if (!otherUser) continue;
+    // Create 5 random request pairs
+    for (let i = 0; i < 5; i++) {
+      const requester = allUsers[Math.floor(Math.random() * allUsers.length)];
+      const otherUsers = allUsers.filter((u) => u._id !== requester._id);
+      if (otherUsers.length === 0) continue;
 
-        const meetingId = await ctx.db.insert("meetings", {
-          creatorId: currentUser._id,
-          title: meetingData.title,
-          description: meetingData.description,
-          scheduledTime: meetingData.scheduledTime,
-          duration: meetingData.duration,
-          location: meetingData.location,
-          isPublic: false,
-        });
+      const recipient = otherUsers[Math.floor(Math.random() * otherUsers.length)];
 
-        // Add current user as creator
-        await ctx.db.insert("meetingParticipants", {
-          meetingId,
-          userId: currentUser._id,
-          role: "creator",
-        });
+      // Check if request already exists
+      const existingRequest = await ctx.db
+        .query("meetingRequests")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("requesterId"), requester._id),
+            q.eq(q.field("recipientId"), recipient._id),
+            q.eq(q.field("status"), "pending")
+          )
+        )
+        .first();
 
-        // Add other user as participant
-        await ctx.db.insert("meetingParticipants", {
-          meetingId,
-          userId: otherUser._id,
-          role: "participant",
-        });
-      }
-
-      // Make current user participate in 2-3 public meetings
-      const currentUserPublicParticipations = 2 + Math.floor(Math.random() * 2); // 2-3 meetings
-      const shuffledPublicMeetings = [...publicMeetingData].sort(() => Math.random() - 0.5);
-      let currentUserJoined = 0;
-
-      for (const { meetingId } of shuffledPublicMeetings) {
-        if (currentUserJoined >= currentUserPublicParticipations) break;
-
-        // Check if already participating
-        const existing = await ctx.db
-          .query("meetingParticipants")
-          .withIndex("by_meeting", (q) => q.eq("meetingId", meetingId))
-          .filter((q) => q.eq(q.field("userId"), currentUser._id))
-          .first();
-
-        if (existing) continue;
-
-        // Join this public meeting
-        await ctx.db.insert("meetingParticipants", {
-          meetingId,
-          userId: currentUser._id,
-          role: "participant",
-        });
-
-        currentUserJoined++;
-      }
-    }
-
-    // Create some pending meeting requests between seed users
-    if (seedUsers.length >= 3) {
-      const requests = [
-        {
-          proposedTime: now + 3 * oneDay,
-          proposedDuration: 30,
-          location: "Cafe",
-          message: "Would love to discuss potential collaboration opportunities!",
-        },
-        {
-          proposedTime: now + 3 * oneDay + 2 * oneHour,
-          proposedDuration: 45,
-          location: "Office",
-          message:
-            "Let's chat about the upcoming project. I have some ideas to share.",
-        },
-      ];
-
-      for (const requestData of requests) {
-        const requesterIndex = Math.floor(Math.random() * seedUsers.length);
-        const recipientIndex = (requesterIndex + 1) % seedUsers.length;
-
-        await ctx.db.insert("meetingRequests", {
-          requesterId: seedUsers[requesterIndex]._id,
-          recipientId: seedUsers[recipientIndex]._id,
-          status: "pending",
-          proposedTime: requestData.proposedTime,
-          proposedDuration: requestData.proposedDuration,
-          location: requestData.location,
-          message: requestData.message,
-        });
-      }
-    }
-
-    // Create pending requests TO the current user
-    if (currentUser && users.length >= 2) {
-      const currentUserRequests = [
-        {
-          fromUser: "Carol Davis",
-          proposedTime: now + 2 * oneDay + 5 * oneHour,
-          proposedDuration: 30,
-          location: "Conference Room B",
-          message:
-            "Hi! I'd love to pick your brain about marketing strategies. Do you have time for a quick chat?",
-        },
-        {
-          fromUser: "Emma Wilson",
-          proposedTime: now + 3 * oneDay + oneHour,
-          proposedDuration: 45,
-          location: "Data Lab",
-          message:
-            "I noticed your interest in data analytics. Would you like to discuss how we could collaborate on a project?",
-        },
-      ];
-
-      for (const requestData of currentUserRequests) {
-        const requester = users.find((u) => u.name === requestData.fromUser);
-        if (!requester) continue;
-
+      if (!existingRequest) {
         await ctx.db.insert("meetingRequests", {
           requesterId: requester._id,
-          recipientId: currentUser._id,
+          recipientId: recipient._id,
           status: "pending",
-          proposedTime: requestData.proposedTime,
-          proposedDuration: requestData.proposedDuration,
-          location: requestData.location,
-          message: requestData.message,
+          proposedTime: now + Math.floor(Math.random() * 5) * oneDay,
+          proposedDuration: [30, 45, 60][Math.floor(Math.random() * 3)],
+          location: ["Cafe", "Office", "Conference Room", "Virtual - Zoom"][Math.floor(Math.random() * 4)],
+          message: "Would love to connect and discuss potential collaboration!",
         });
       }
     }
@@ -533,26 +334,20 @@ export const seedData = internalMutation({
     return {
       success: true,
       summary: {
-        meetingsCreated: totalMeetings.length,
-        participationsCreated: totalParticipations.length,
-        requestsCreated: totalRequests.length,
-        includedCurrentUser: currentUser !== null,
+        totalUsers: allUsers.length,
+        totalMeetings: totalMeetings.length,
+        totalParticipations: totalParticipations.length,
+        totalRequests: totalRequests.length,
       },
     };
   },
 });
 
-// Public mutation that calls the internal one with the current user's clerkId
+// Public mutation that calls the internal one
 export const seedDataWithCurrentUser = mutation({
   args: {},
   handler: async (ctx): Promise<void> => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    // Call the internal mutation with the current user's clerkId
-    await ctx.scheduler.runAfter(
-      0,
-      internal.seed.seedData,
-      identity ? { currentUserClerkId: identity.subject } : {}
-    );
+    // Call the internal mutation (no need to pass current user anymore)
+    await ctx.scheduler.runAfter(0, internal.seed.seedData, {});
   },
 });
