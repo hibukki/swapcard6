@@ -88,6 +88,24 @@ function RootComponent() {
                           Attendees
                         </Link>
                         <Link
+                          to="/public-meetings"
+                          className="btn btn-ghost"
+                          activeProps={{
+                            className: "btn btn-ghost btn-active",
+                          }}
+                        >
+                          Public Meetings
+                        </Link>
+                        <Link
+                          to="/calendar"
+                          className="btn btn-ghost"
+                          activeProps={{
+                            className: "btn btn-ghost btn-active",
+                          }}
+                        >
+                          Calendar
+                        </Link>
+                        <Link
                           to="/agenda"
                           className="btn btn-ghost"
                           activeProps={{
@@ -140,6 +158,30 @@ function RootComponent() {
                             className="flex items-center p-2"
                           >
                             Attendees
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/public-meetings"
+                            onClick={() => setIsSidebarOpen(false)}
+                            activeProps={{
+                              className: "active",
+                            }}
+                            className="flex items-center p-2"
+                          >
+                            Public Meetings
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/calendar"
+                            onClick={() => setIsSidebarOpen(false)}
+                            activeProps={{
+                              className: "active",
+                            }}
+                            className="flex items-center p-2"
+                          >
+                            Calendar
                           </Link>
                         </li>
                         <li>

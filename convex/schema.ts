@@ -33,15 +33,31 @@ export default defineSchema({
     .index("by_status", ["status"]),
 
   meetings: defineTable({
-    requestId: v.id("meetingRequests"),
-    attendee1Id: v.id("users"),
-    attendee2Id: v.id("users"),
+    requestId: v.optional(v.id("meetingRequests")), // optional for public meetings
+    creatorId: v.id("users"),
+    title: v.string(),
+    description: v.optional(v.string()),
     scheduledTime: v.number(),
     duration: v.number(), // in minutes
     location: v.optional(v.string()),
+    isPublic: v.boolean(), // true = anyone can join, false = invite-only
+    maxParticipants: v.optional(v.number()), // null = unlimited
     notes: v.optional(v.string()),
   })
-    .index("by_attendee1", ["attendee1Id", "scheduledTime"])
-    .index("by_attendee2", ["attendee2Id", "scheduledTime"])
-    .index("by_time", ["scheduledTime"]),
+    .index("by_creator", ["creatorId", "scheduledTime"])
+    .index("by_time", ["scheduledTime"])
+    .index("by_public", ["isPublic", "scheduledTime"]),
+
+  // Junction table for meeting participants
+  meetingParticipants: defineTable({
+    meetingId: v.id("meetings"),
+    userId: v.id("users"),
+    role: v.union(
+      v.literal("creator"),
+      v.literal("participant")
+    ),
+  })
+    .index("by_meeting", ["meetingId"])
+    .index("by_user", ["userId", "meetingId"])
+    .index("by_user_only", ["userId"]),
 });

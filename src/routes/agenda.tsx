@@ -123,11 +123,11 @@ function AgendaPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="font-semibold">
-                          {meeting.otherUser?.name}
+                          {meeting.title}
                         </h3>
-                        {meeting.otherUser?.role && (
-                          <p className="text-sm opacity-70">
-                            {meeting.otherUser.role}
+                        {meeting.description && (
+                          <p className="text-sm opacity-70 mt-1">
+                            {meeting.description}
                           </p>
                         )}
                         <div className="mt-2 space-y-1">
@@ -142,9 +142,23 @@ function AgendaPage() {
                               {meeting.location}
                             </p>
                           )}
+                          <div className="text-sm opacity-70 mt-2">
+                            <strong>Participants ({meeting.participants?.length ?? 0}):</strong>{" "}
+                            {meeting.participants
+                              ?.map((p: any) => p.name)
+                              .join(", ")}
+                          </div>
                         </div>
                       </div>
-                      <span className="badge badge-success">Confirmed</span>
+                      <div className="flex flex-col gap-2 items-end">
+                        <span className="badge badge-success">Confirmed</span>
+                        {meeting.isPublic && (
+                          <span className="badge badge-info">Public</span>
+                        )}
+                        {meeting.userRole === "creator" && (
+                          <span className="badge">Creator</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

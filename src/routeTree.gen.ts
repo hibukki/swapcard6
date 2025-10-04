@@ -9,14 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PublicMeetingsRouteImport } from './routes/public-meetings'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AttendeesRouteImport } from './routes/attendees'
 import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as IndexRouteImport } from './routes/index'
 
+const PublicMeetingsRoute = PublicMeetingsRouteImport.update({
+  id: '/public-meetings',
+  path: '/public-meetings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AttendeesRoute = AttendeesRouteImport.update({
@@ -39,43 +51,84 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/attendees': typeof AttendeesRoute
+  '/calendar': typeof CalendarRoute
   '/profile': typeof ProfileRoute
+  '/public-meetings': typeof PublicMeetingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/attendees': typeof AttendeesRoute
+  '/calendar': typeof CalendarRoute
   '/profile': typeof ProfileRoute
+  '/public-meetings': typeof PublicMeetingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/attendees': typeof AttendeesRoute
+  '/calendar': typeof CalendarRoute
   '/profile': typeof ProfileRoute
+  '/public-meetings': typeof PublicMeetingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/agenda' | '/attendees' | '/profile'
+  fullPaths:
+    | '/'
+    | '/agenda'
+    | '/attendees'
+    | '/calendar'
+    | '/profile'
+    | '/public-meetings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/agenda' | '/attendees' | '/profile'
-  id: '__root__' | '/' | '/agenda' | '/attendees' | '/profile'
+  to:
+    | '/'
+    | '/agenda'
+    | '/attendees'
+    | '/calendar'
+    | '/profile'
+    | '/public-meetings'
+  id:
+    | '__root__'
+    | '/'
+    | '/agenda'
+    | '/attendees'
+    | '/calendar'
+    | '/profile'
+    | '/public-meetings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AgendaRoute: typeof AgendaRoute
   AttendeesRoute: typeof AttendeesRoute
+  CalendarRoute: typeof CalendarRoute
   ProfileRoute: typeof ProfileRoute
+  PublicMeetingsRoute: typeof PublicMeetingsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/public-meetings': {
+      id: '/public-meetings'
+      path: '/public-meetings'
+      fullPath: '/public-meetings'
+      preLoaderRoute: typeof PublicMeetingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/attendees': {
@@ -106,7 +159,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AgendaRoute: AgendaRoute,
   AttendeesRoute: AttendeesRoute,
+  CalendarRoute: CalendarRoute,
   ProfileRoute: ProfileRoute,
+  PublicMeetingsRoute: PublicMeetingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
