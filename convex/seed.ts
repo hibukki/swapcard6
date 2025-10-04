@@ -342,7 +342,7 @@ export const seedData = internalMutation({
       }
     }
 
-    // Create private meetings with the current user
+    // Create private meetings with the current user (5-6 meetings throughout the week)
     if (currentUser && users.length >= 2) {
       const currentUserMeetings = [
         {
@@ -368,6 +368,30 @@ export const seedData = internalMutation({
           duration: 60,
           location: "Design Studio",
           withUser: "David Chen",
+        },
+        {
+          title: "Marketing Strategy with Carol",
+          description: "Discuss marketing approach for Q4.",
+          scheduledTime: now + 3 * oneDay + 2 * oneHour,
+          duration: 45,
+          location: "Conference Room C",
+          withUser: "Carol Davis",
+        },
+        {
+          title: "Data Analysis Review with Emma",
+          description: "Review latest analytics and insights.",
+          scheduledTime: now + 4 * oneDay + 4 * oneHour,
+          duration: 60,
+          location: "Data Lab",
+          withUser: "Emma Wilson",
+        },
+        {
+          title: "Quick Sync with Alice",
+          description: "Follow-up on action items from last meeting.",
+          scheduledTime: now + 5 * oneDay + oneHour,
+          duration: 30,
+          location: "Virtual - Zoom",
+          withUser: "Alice Johnson",
         },
       ];
 
