@@ -52,6 +52,17 @@ export const seedData = internalMutation({
       }
     }
 
+    // Get current user if provided (do this first)
+    let currentUser = null;
+    if (args.currentUserClerkId) {
+      currentUser = await ctx.db
+        .query("users")
+        .withIndex("by_clerkId", (q) =>
+          q.eq("clerkId", args.currentUserClerkId!)
+        )
+        .unique();
+    }
+
     // Get all users
     let users = await ctx.db.query("users").collect();
 
@@ -205,10 +216,15 @@ export const seedData = internalMutation({
       },
     ];
 
+    // Get only seed users for public meeting participants (exclude current user)
+    const seedUsers = users.filter((u) =>
+      u.clerkId.startsWith("seed_user_") && (!currentUser || u._id !== currentUser._id)
+    );
+
     // Create public meetings with participants
     for (const meetingData of publicMeetings) {
-      const creatorIndex = Math.floor(Math.random() * users.length);
-      const creator = users[creatorIndex];
+      const creatorIndex = Math.floor(Math.random() * seedUsers.length);
+      const creator = seedUsers[creatorIndex];
 
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: creator._id,
@@ -228,9 +244,9 @@ export const seedData = internalMutation({
         role: "creator",
       });
 
-      // Add some random participants (2-5 participants per meeting)
+      // Add some random participants (2-5 participants per meeting) from seed users only
       const numParticipants = Math.floor(Math.random() * 4) + 2;
-      const availableUsers = users.filter((u) => u._id !== creator._id);
+      const availableUsers = seedUsers.filter((u) => u._id !== creator._id);
 
       // Shuffle available users for better distribution
       const shuffledUsers = [...availableUsers].sort(() => Math.random() - 0.5);
@@ -245,19 +261,8 @@ export const seedData = internalMutation({
       }
     }
 
-    // Get current user if provided
-    let currentUser = null;
-    if (args.currentUserClerkId) {
-      currentUser = await ctx.db
-        .query("users")
-        .withIndex("by_clerkId", (q) =>
-          q.eq("clerkId", args.currentUserClerkId!)
-        )
-        .unique();
-    }
-
-    // Create some private meetings between users
-    if (users.length >= 2) {
+    // Create some private meetings between seed users only
+    if (seedUsers.length >= 2) {
       const privateMeetings = [
         {
           title: "1-on-1: Strategy Discussion",
@@ -283,10 +288,10 @@ export const seedData = internalMutation({
       ];
 
       for (const meetingData of privateMeetings) {
-        const creatorIndex = Math.floor(Math.random() * users.length);
-        const creator = users[creatorIndex];
-        const participantIndex = (creatorIndex + 1) % users.length;
-        const participant = users[participantIndex];
+        const creatorIndex = Math.floor(Math.random() * seedUsers.length);
+        const creator = seedUsers[creatorIndex];
+        const participantIndex = (creatorIndex + 1) % seedUsers.length;
+        const participant = seedUsers[participantIndex];
 
         const meetingId = await ctx.db.insert("meetings", {
           creatorId: creator._id,
@@ -373,8 +378,8 @@ export const seedData = internalMutation({
       }
     }
 
-    // Create some pending meeting requests
-    if (users.length >= 3) {
+    // Create some pending meeting requests between seed users
+    if (seedUsers.length >= 3) {
       const requests = [
         {
           proposedTime: now + 3 * oneDay,
@@ -392,12 +397,12 @@ export const seedData = internalMutation({
       ];
 
       for (const requestData of requests) {
-        const requesterIndex = Math.floor(Math.random() * users.length);
-        const recipientIndex = (requesterIndex + 1) % users.length;
+        const requesterIndex = Math.floor(Math.random() * seedUsers.length);
+        const recipientIndex = (requesterIndex + 1) % seedUsers.length;
 
         await ctx.db.insert("meetingRequests", {
-          requesterId: users[requesterIndex]._id,
-          recipientId: users[recipientIndex]._id,
+          requesterId: seedUsers[requesterIndex]._id,
+          recipientId: seedUsers[recipientIndex]._id,
           status: "pending",
           proposedTime: requestData.proposedTime,
           proposedDuration: requestData.proposedDuration,
