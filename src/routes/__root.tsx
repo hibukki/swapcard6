@@ -73,20 +73,37 @@ function RootComponent() {
                         to="/"
                         className="btn btn-ghost normal-case text-xl"
                       >
-                        Fullstack Vibe Coding
+                        SwapCard6
                       </Link>
                     </div>
                     <div className="navbar-center hidden lg:flex">
                       <nav className="flex">
                         <Link
-                          to="/"
+                          to="/attendees"
                           className="btn btn-ghost"
                           activeProps={{
                             className: "btn btn-ghost btn-active",
                           }}
-                          onClick={() => setIsSidebarOpen(false)}
                         >
-                          Home
+                          Attendees
+                        </Link>
+                        <Link
+                          to="/agenda"
+                          className="btn btn-ghost"
+                          activeProps={{
+                            className: "btn btn-ghost btn-active",
+                          }}
+                        >
+                          Agenda
+                        </Link>
+                        <Link
+                          to="/profile"
+                          className="btn btn-ghost"
+                          activeProps={{
+                            className: "btn btn-ghost btn-active",
+                          }}
+                        >
+                          Profile
                         </Link>
                       </nav>
                     </div>
@@ -99,7 +116,7 @@ function RootComponent() {
                     <Outlet />
                   </main>
                   <footer className="footer footer-center p-4 text-base-content">
-                    <p>© {new Date().getFullYear()} Fullstack Vibe Coding</p>
+                    <p>© {new Date().getFullYear()} SwapCard6</p>
                   </footer>
                 </div>
                 {/* Sidebar content for mobile */}
@@ -115,14 +132,38 @@ function RootComponent() {
                       <ul className="space-y-2">
                         <li>
                           <Link
-                            to="/"
+                            to="/attendees"
                             onClick={() => setIsSidebarOpen(false)}
                             activeProps={{
                               className: "active",
                             }}
                             className="flex items-center p-2"
                           >
-                            Home
+                            Attendees
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/agenda"
+                            onClick={() => setIsSidebarOpen(false)}
+                            activeProps={{
+                              className: "active",
+                            }}
+                            className="flex items-center p-2"
+                          >
+                            Agenda
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/profile"
+                            onClick={() => setIsSidebarOpen(false)}
+                            activeProps={{
+                              className: "active",
+                            }}
+                            className="flex items-center p-2"
+                          >
+                            Profile
                           </Link>
                         </li>
                       </ul>
@@ -138,7 +179,7 @@ function RootComponent() {
               <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
                 <div className="container mx-auto flex justify-between w-full">
                   <div className="navbar-start">
-                    <h1 className="font-semibold">Fullstack Vibe Coding</h1>
+                    <h1 className="font-semibold">SwapCard6</h1>
                   </div>
                   <div className="navbar-end">
                     <SignInButton mode="modal">
@@ -158,7 +199,7 @@ function RootComponent() {
                 <Outlet />
               </main>
               <footer className="footer footer-center p-4 text-base-content">
-                <p>© {new Date().getFullYear()} Fullstack Vibe Coding</p>
+                <p>© {new Date().getFullYear()} SwapCard6</p>
               </footer>
             </Unauthenticated>
           </div>

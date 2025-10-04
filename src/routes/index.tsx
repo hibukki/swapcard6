@@ -1,30 +1,22 @@
 import { SignInButton } from "@clerk/clerk-react";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Authenticated, Unauthenticated } from "convex/react";
-import { Zap } from "lucide-react";
-import { api } from "../../convex/_generated/api";
-
-const usersQueryOptions = convexQuery(api.users.listUsers, {});
+import { Users } from "lucide-react";
 
 export const Route = createFileRoute("/")({
-  loader: async ({ context: { queryClient } }) =>
-    await queryClient.ensureQueryData(usersQueryOptions),
   component: HomePage,
 });
 
 function HomePage() {
   return (
     <div className="text-center">
-      <div className="not-prose flex justify-center mb-4">
-        <Zap className="w-16 h-16 text-primary" />
-      </div>
-      <h1>Fullstack Vibe Coding</h1>
-
       <Unauthenticated>
-        <p>Sign in to see the list of users.</p>
-        <div className="not-prose mt-4">
+        <div className="not-prose flex justify-center mb-6">
+          <Users className="w-20 h-20 text-primary" />
+        </div>
+        <h1 className="mt-0">SwapCard6</h1>
+        <p className="text-lg">Connect with conference attendees and schedule 1-on-1 meetings</p>
+        <div className="not-prose mt-8">
           <SignInButton mode="modal">
             <button className="btn btn-primary btn-lg">Get Started</button>
           </SignInButton>
@@ -32,45 +24,9 @@ function HomePage() {
       </Unauthenticated>
 
       <Authenticated>
-        <UsersList />
+        <h1 className="mt-0">Welcome to SwapCard6</h1>
+        <p>Browse attendees, send meeting requests, and manage your agenda</p>
       </Authenticated>
     </div>
-  );
-}
-
-function UsersList() {
-  const { data: users } = useSuspenseQuery(usersQueryOptions);
-
-  return (
-    <>
-      <h2>Users</h2>
-
-      {users.length === 0 ? (
-        <div className="not-prose">
-          <div className="p-8 bg-base-200 rounded-lg">
-            <p className="opacity-70">No users yet. You're the first!</p>
-          </div>
-        </div>
-      ) : (
-        <div className="not-prose overflow-x-auto">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user._id}>
-                  <td>{user.name}</td>
-                  <td>{new Date(user._creationTime).toLocaleDateString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </>
   );
 }
