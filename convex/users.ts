@@ -1,5 +1,5 @@
 import { mutation, query, QueryCtx, MutationCtx } from "./_generated/server";
-import { ConvexError } from "convex/values";
+import { ConvexError, v } from "convex/values";
 
 export async function getCurrentUserOrNull(ctx: QueryCtx | MutationCtx) {
   const identity = await ctx.auth.getUserIdentity();
