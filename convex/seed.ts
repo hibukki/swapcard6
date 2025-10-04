@@ -232,8 +232,11 @@ export const seedData = internalMutation({
       const numParticipants = Math.floor(Math.random() * 4) + 2;
       const availableUsers = users.filter((u) => u._id !== creator._id);
 
-      for (let i = 0; i < Math.min(numParticipants, availableUsers.length); i++) {
-        const participant = availableUsers[i];
+      // Shuffle available users for better distribution
+      const shuffledUsers = [...availableUsers].sort(() => Math.random() - 0.5);
+
+      for (let i = 0; i < Math.min(numParticipants, shuffledUsers.length); i++) {
+        const participant = shuffledUsers[i];
         await ctx.db.insert("meetingParticipants", {
           meetingId,
           userId: participant._id,

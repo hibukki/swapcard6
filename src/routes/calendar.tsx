@@ -31,14 +31,21 @@ function CalendarPage() {
   const [calendarMode, setCalendarMode] = useState<"my" | "public" | "combined">("my");
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Transform public meetings to match the structure of my meetings
-  const publicMeetings = publicMeetingsData.map((meeting) => ({
-    ...meeting,
-    userRole: meeting.participants.some((p: any) => p.role === "creator")
-      ? ("creator" as const)
-      : ("participant" as const),
-    isPublicMeeting: true, // Mark as public for styling
-  }));
+  // Get IDs of meetings the user is already in
+  const myMeetingIds = new Set(myMeetings.map((m) => m._id));
+
+  // Transform public meetings, marking those the user is in
+  const publicMeetings = publicMeetingsData.map((meeting) => {
+    const userIsParticipant = myMeetingIds.has(meeting._id);
+    return {
+      ...meeting,
+      userRole: meeting.participants.some((p: any) => p.role === "creator")
+        ? ("creator" as const)
+        : ("participant" as const),
+      isPublicMeeting: true, // Mark as public for styling
+      userIsParticipant, // Track if user is already in this meeting
+    };
+  });
 
   // Mark my meetings for styling
   const myMeetingsWithFlag = myMeetings.map((meeting) => ({
@@ -51,10 +58,12 @@ function CalendarPage() {
   if (calendarMode === "my") {
     meetings = myMeetingsWithFlag;
   } else if (calendarMode === "public") {
+    // Show all public meetings (including ones user is in)
     meetings = publicMeetings;
   } else {
-    // Combined view - show both
-    meetings = [...myMeetingsWithFlag, ...publicMeetings];
+    // Combined view - show my meetings + public meetings I'm NOT in
+    const publicMeetingsNotIn = publicMeetings.filter((m) => !m.userIsParticipant);
+    meetings = [...myMeetingsWithFlag, ...publicMeetingsNotIn];
   }
 
   // Navigate dates
