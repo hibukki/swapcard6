@@ -21,11 +21,75 @@ export const seedData = internalMutation({
     }
 
     // Get all users
-    const users = await ctx.db.query("users").collect();
+    let users = await ctx.db.query("users").collect();
+
+    // Create sample users if there aren't enough
+    const sampleUsers = [
+      {
+        clerkId: "seed_user_1",
+        name: "Alice Johnson",
+        email: "alice@example.com",
+        bio: "Product Manager passionate about building great user experiences",
+        company: "TechCorp",
+        role: "Senior Product Manager",
+        interests: ["Product Design", "User Research", "Agile"],
+      },
+      {
+        clerkId: "seed_user_2",
+        name: "Bob Smith",
+        email: "bob@example.com",
+        bio: "Full-stack developer with 10+ years of experience",
+        company: "StartupXYZ",
+        role: "Lead Engineer",
+        interests: ["React", "Node.js", "Cloud Architecture"],
+      },
+      {
+        clerkId: "seed_user_3",
+        name: "Carol Davis",
+        email: "carol@example.com",
+        bio: "Marketing strategist helping companies grow",
+        company: "GrowthLab",
+        role: "VP of Marketing",
+        interests: ["Content Marketing", "SEO", "Brand Strategy"],
+      },
+      {
+        clerkId: "seed_user_4",
+        name: "David Chen",
+        email: "david@example.com",
+        bio: "Designer focused on creating delightful experiences",
+        company: "DesignStudio",
+        role: "UX Designer",
+        interests: ["UI/UX", "Design Systems", "Accessibility"],
+      },
+      {
+        clerkId: "seed_user_5",
+        name: "Emma Wilson",
+        email: "emma@example.com",
+        bio: "Data scientist uncovering insights from data",
+        company: "DataCorp",
+        role: "Senior Data Scientist",
+        interests: ["Machine Learning", "Python", "Data Visualization"],
+      },
+    ];
+
+    // Only create sample users that don't already exist
+    for (const userData of sampleUsers) {
+      const existing = await ctx.db
+        .query("users")
+        .withIndex("by_clerkId", (q) => q.eq("clerkId", userData.clerkId))
+        .unique();
+
+      if (!existing) {
+        await ctx.db.insert("users", userData);
+      }
+    }
+
+    // Refresh users list
+    users = await ctx.db.query("users").collect();
 
     if (users.length < 2) {
       throw new Error(
-        "Need at least 2 users to seed data. Please sign up with at least 2 accounts first."
+        "Failed to create sample users. Database may have constraints preventing user creation."
       );
     }
 
