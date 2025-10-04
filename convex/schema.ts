@@ -45,4 +45,35 @@ export default defineSchema({
     .index("by_user", ["userId", "meetingId"])
     .index("by_user_only", ["userId"])
     .index("by_user_and_status", ["userId", "status"]),
+
+  // Chat system tables
+  chats: defineTable({
+    name: v.optional(v.string()), // Optional name for group chats
+    isGroup: v.boolean(), // true for 3+ users, false for 1-on-1
+  }),
+
+  chatParticipants: defineTable({
+    chatId: v.id("chats"),
+    userId: v.id("users"),
+  })
+    .index("by_chat", ["chatId"])
+    .index("by_user", ["userId"])
+    .index("by_user_and_chat", ["userId", "chatId"]),
+
+  messages: defineTable({
+    chatId: v.id("chats"),
+    authorId: v.id("users"),
+    content: v.string(),
+    parentMessageId: v.optional(v.id("messages")), // For replies
+  })
+    .index("by_chat", ["chatId", "_creationTime"])
+    .index("by_parent", ["parentMessageId", "_creationTime"]),
+
+  messageReactions: defineTable({
+    messageId: v.id("messages"),
+    userId: v.id("users"),
+    emoji: v.string(),
+  })
+    .index("by_message", ["messageId"])
+    .index("by_user_and_message", ["userId", "messageId"]),
 });

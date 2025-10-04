@@ -1,8 +1,8 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
-import { MessageSquare, UserPlus } from "lucide-react";
+import { MessageSquare, UserPlus, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -19,7 +19,14 @@ export const Route = createFileRoute("/attendees")({
 
 function AttendeesPage() {
   const { data: users } = useSuspenseQuery(usersQuery);
+  const navigate = useNavigate();
+  const findOrCreateChat = useMutation(api.chats.findOrCreateChat);
   const [selectedUser, setSelectedUser] = useState<Id<"users"> | null>(null);
+
+  const handleSendMessage = async (userId: Id<"users">) => {
+    const chatId = await findOrCreateChat({ participantIds: [userId] });
+    void navigate({ to: "/chats/$chatId", params: { chatId } });
+  };
 
   return (
     <div>
@@ -85,13 +92,20 @@ function AttendeesPage() {
                   </div>
                 )}
 
-                <div className="card-actions mt-4">
+                <div className="card-actions mt-4 flex gap-2">
                   <button
-                    className="btn btn-primary btn-sm w-full"
+                    className="btn btn-primary btn-sm flex-1"
                     onClick={() => setSelectedUser(user._id)}
                   >
                     <UserPlus className="w-4 h-4" />
                     Request Meeting
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm flex-1"
+                    onClick={() => void handleSendMessage(user._id)}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Message
                   </button>
                 </div>
               </div>
