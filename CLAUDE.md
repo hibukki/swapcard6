@@ -4,7 +4,14 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 
 - Full-stack TypeScript app: React + Vite + TanStack Router (frontend), Convex (backend), Clerk (auth)
 - Development: Run `pnpm dev` with the `run_in_background` parameter to start both frontend and backend servers. Monitor output using the BashOutput tool
-- If `pnpm dev` fails due to requiring interactive input, ask the user to run `pnpm convex dev --once` first in a separate terminal
+- If `pnpm dev` fails due to requiring interactive input, possible solutions:
+  - Ask the user to run `pnpm convex dev --once` first in a separate terminal
+  - Make sure `.env.local` exists
+    - and has values for
+      - `VITE_CLERK_PUBLISHABLE_KEY` (documented elsewhere)
+      - `CONVEX_DEPLOYMENT`
+      - `VITE_CONVEX_URL` (for a local deployment, suitable e.g for running in a github action, you can use `http://127.0.0.1:3210`)
+    - Values for this project might be found in `.env.claude` or `.env.example`
 - Import alias: `@/` maps to `src/` directory
 - Tailwind CSS 4, daisyUI 5: All config in `src/index.css` via CSS syntax, NOT tailwind.config.js
 - Typography: Uses `@tailwindcss/typography` with `prose prose-invert` at root level, use `not-prose` to escape (e.g., for buttons/tables)
@@ -17,19 +24,6 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 - Commit at logical checkpoints (feature complete, major milestone, before risky changes)
 - If user requests rollback: use `git log` or `git reflog` to find commit, then `git reset --hard [commit-hash]`
 - Before pushing: run `pnpm lint`, review with `git diff origin/main`, commit with `"feat: [complete feature description]"`
-
-## Testing & Validation
-
-- Before pushing: Check background process output for Convex backend errors. Run `pnpm lint` and `pnpm test:e2e`
-- Manual testing: Test UI with Playwright MCP (`mcp__playwright__browser_*`) before writing e2e tests
-  - The playwright mcp server is unreliable, if it doesn't work ask the user to test manually
-- Test account: `claude+clerk_test@example.com`, code `424242`. Use slowly: true / pressSequentially to trigger auto distribution
-- Responsive testing: Use `mcp__playwright__browser_resize` to test mobile (375x667), tablet (768x1024), desktop (1200x800)
-- Debug with `mcp__playwright__browser_console_messages` to view browser console output
-- Add e2e tests only when explicitly requested by user - not proactively
-- Convex in tests: Use `ConvexTestingHelper` for queries/mutations
-- Test cleanup: Use `testingMutation` from `convex/testingFunctions.ts` for cleanup functions - prevents accidental production use
-- If you run into an issue you don't know how to fix, look for relevant documentation or a reference implementation
 
 ## Convex
 
@@ -125,14 +119,16 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
   const schema = z.object({ name: z.string().min(1) });
   const form = useForm({
     defaultValues: { name: "" },
-    validators: { onChange: schema }
+    validators: { onChange: schema },
   });
   ```
 - Field errors are StandardSchemaV1Issue[] with .message property:
   ```tsx
-  {!field.state.meta.isValid && (
-    <em>{field.state.meta.errors.map(e => e.message).join(", ")}</em>
-  )}
+  {
+    !field.state.meta.isValid && (
+      <em>{field.state.meta.errors.map((e) => e.message).join(", ")}</em>
+    );
+  }
   ```
 - Number inputs use valueAsNumber:
   ```tsx
