@@ -80,10 +80,12 @@ jobs:
       - name: Configure environment for preview deployment
         env:
           PREVIEW_NAME: ${{ steps.preview-name.outputs.name }}
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
         run: |
           grep CLERK .env.claude > .env.local || true
           echo "CONVEX_DEPLOYMENT=$PREVIEW_NAME" >> .env.local
           echo "VITE_CONVEX_URL=$CONVEX_URL" >> .env.local
+          echo "CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY" >> .env.local
           cat .env.local
 
       - name: Run Claude Code
@@ -91,10 +93,12 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          
+
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
             actions: read
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
           # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
           # prompt: 'Update the pull request description to include a summary of changes.'
