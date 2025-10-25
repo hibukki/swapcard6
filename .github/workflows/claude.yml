@@ -60,70 +60,31 @@ jobs:
         run: pnpm run build
 
       - name: Deploy to Convex preview deployment
-        id: convex-deploy
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
           PREVIEW_NAME: ${{ steps.preview-name.outputs.name }}
         run: |
-          # Deploy and capture output
-          echo "Deploying Convex functions to preview: $PREVIEW_NAME"
-          DEPLOY_OUTPUT=$(pnpx convex deploy --preview-name "$PREVIEW_NAME" 2>&1) || {
-            echo "Error: Convex deployment failed"
-            echo "$DEPLOY_OUTPUT"
-            exit 1
-          }
+          DEPLOY_OUTPUT=$(pnpx convex deploy --preview-name "$PREVIEW_NAME" 2>&1)
           echo "$DEPLOY_OUTPUT"
 
-          # Extract deployment URL from output
           CONVEX_URL=$(echo "$DEPLOY_OUTPUT" | grep -oE 'https://[^[:space:]]+\.convex\.(cloud|site)' | head -1)
 
-          # Verify URL was extracted
           if [ -z "$CONVEX_URL" ]; then
-            echo "Error: Failed to extract Convex URL from deployment output"
-            echo "Deployment output was:"
-            echo "$DEPLOY_OUTPUT"
+            echo "Failed to extract Convex URL"
             exit 1
           fi
 
-          echo "url=$CONVEX_URL" >> $GITHUB_OUTPUT
-          echo "Successfully deployed to: $CONVEX_URL"
+          echo "CONVEX_URL=$CONVEX_URL" >> $GITHUB_ENV
+          curl -sf "$CONVEX_URL" > /dev/null
 
       - name: Configure environment for preview deployment
         env:
           PREVIEW_NAME: ${{ steps.preview-name.outputs.name }}
-          CONVEX_URL: ${{ steps.convex-deploy.outputs.url }}
         run: |
-          echo "Configuring environment for preview deployment: $PREVIEW_NAME"
-          echo "Convex URL: $CONVEX_URL"
-
-          # Verify CONVEX_URL is set
-          if [ -z "$CONVEX_URL" ]; then
-            echo "Error: CONVEX_URL is empty"
-            exit 1
-          fi
-
-          # Start with Clerk credentials from .env.claude
-          grep CLERK .env.claude > .env.local || {
-            echo "Warning: No CLERK credentials found in .env.claude"
-          }
-
-          # Add Convex preview deployment configuration
+          grep CLERK .env.claude > .env.local || true
           echo "CONVEX_DEPLOYMENT=$PREVIEW_NAME" >> .env.local
           echo "VITE_CONVEX_URL=$CONVEX_URL" >> .env.local
-
-          echo "Generated .env.local:"
           cat .env.local
-
-      - name: Verify backend connection
-        env:
-          CONVEX_URL: ${{ steps.convex-deploy.outputs.url }}
-        run: |
-          echo "Testing connection to Convex backend..."
-          # Simple curl test to verify the backend is accessible
-          curl -f "$CONVEX_URL" || {
-            echo "Warning: Could not connect to Convex backend at $CONVEX_URL"
-            echo "This might be normal if the URL requires specific headers"
-          }
 
       - name: Run Claude Code
         id: claude
