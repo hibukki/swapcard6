@@ -56,34 +56,34 @@ jobs:
             echo "name=issue-${ISSUE_NUM}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Build TypeScript (verify compilation)
+        run: pnpm run build
+
       - name: Deploy to Convex preview deployment
-        id: convex-deploy
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
           PREVIEW_NAME: ${{ steps.preview-name.outputs.name }}
         run: |
-          # Deploy and capture output
-          DEPLOY_OUTPUT=$(npx convex deploy --preview-name "$PREVIEW_NAME" 2>&1)
+          DEPLOY_OUTPUT=$(pnpx convex deploy --preview-name "$PREVIEW_NAME" 2>&1)
           echo "$DEPLOY_OUTPUT"
 
-          # Extract deployment URL from output
           CONVEX_URL=$(echo "$DEPLOY_OUTPUT" | grep -oE 'https://[^[:space:]]+\.convex\.(cloud|site)' | head -1)
-          echo "url=$CONVEX_URL" >> $GITHUB_OUTPUT
-          echo "Deployed to: $CONVEX_URL"
+
+          if [ -z "$CONVEX_URL" ]; then
+            echo "Failed to extract Convex URL"
+            exit 1
+          fi
+
+          echo "CONVEX_URL=$CONVEX_URL" >> $GITHUB_ENV
+          curl -sf "$CONVEX_URL" > /dev/null
 
       - name: Configure environment for preview deployment
         env:
           PREVIEW_NAME: ${{ steps.preview-name.outputs.name }}
-          CONVEX_URL: ${{ steps.convex-deploy.outputs.url }}
         run: |
-          # Start with Clerk credentials from .env.claude
           grep CLERK .env.claude > .env.local || true
-
-          # Add Convex preview deployment configuration
           echo "CONVEX_DEPLOYMENT=$PREVIEW_NAME" >> .env.local
           echo "VITE_CONVEX_URL=$CONVEX_URL" >> .env.local
-
-          echo "Generated .env.local:"
           cat .env.local
 
       - name: Run Claude Code
