@@ -57,6 +57,36 @@ pnpm dev
 
 This runs both the Vite frontend and Convex backend in parallel.
 
+## GitHub Actions - Claude Code Integration
+
+This project uses [Claude Code](https://docs.claude.com/en/docs/claude-code) via GitHub Actions. Tag `@claude` in issue or PR comments to get AI assistance with development tasks.
+
+### Setup Requirements
+
+To enable the Claude Code GitHub Action with Convex preview deployments:
+
+1. **Get your Convex Deploy Key**:
+   - Go to your [Convex Dashboard](https://dashboard.convex.dev)
+   - Navigate to Settings → Deploy Keys
+   - Generate a new deploy key
+
+2. **Add GitHub Secrets**:
+   - Go to your repository Settings → Secrets and variables → Actions
+   - Add `CONVEX_DEPLOY_KEY` with the deploy key from step 1
+   - Ensure `CLAUDE_CODE_OAUTH_TOKEN` is also configured (for Claude Code)
+
+3. **How it works**:
+   - When you tag `@claude` in an issue/PR comment, the workflow automatically:
+     - Deploys Convex functions to a preview deployment (named `issue-{number}` or `pr-{number}`)
+     - Configures environment variables to connect to the preview backend
+     - Runs Claude Code with access to the live preview deployment
+   - Each new run on the same issue/PR replaces the previous preview deployment
+   - Preview deployments are automatically cleaned up after 14 days of inactivity
+
+4. **Manual cleanup** (optional):
+   - View and delete preview deployments from the [Convex Dashboard](https://dashboard.convex.dev)
+   - Navigate to your project → Deployments to see all active previews
+
 ## License
 
 MIT
