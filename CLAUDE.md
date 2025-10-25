@@ -19,6 +19,22 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 - Package manager: Always use `pnpm` and `pnpx`, NOT `npm` or `npx`
 - See @README.md for project-specific information
 
+### When running in an Anthropic environment
+
+You can't run a local backend, but you can deploy a convex preview deployment:
+
+```sh
+pnpx convex deploy --preview-create my-branch-name
+```
+
+A longer example from the docs:
+
+```sh
+pnpx convex deploy --cmd 'npm run build' --cmd-url-env-var-name CUSTOM_CONVEX_URL
+```
+
+Then, before running `pnpm run dev:frontend`, you'll need to set the `VITE_CONVEX_URL`.
+
 ## Git Workflow
 
 - Commit at logical checkpoints (feature complete, major milestone, before risky changes)
