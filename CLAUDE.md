@@ -3,8 +3,8 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 ## Project Overview
 
 - Full-stack TypeScript app: React + Vite + TanStack Router (frontend), Convex (backend), Clerk (auth)
-- Development: Run `pnpm dev` with the `run_in_background` parameter to start both frontend and backend servers. Monitor output using the BashOutput tool
-- If `pnpm dev` fails due to requiring interactive input, possible solutions:
+- Development: Run `pnpm dev:frontend` and `pnpm dev:backend` with the `run_in_background` parameter to start both frontend and backend servers. Monitor output using the BashOutput tool
+- If `pnpm dev:backend` fails due to requiring interactive input, possible solutions:
   - Ask the user to run `pnpm convex dev --once` first in a separate terminal
   - Make sure `.env.local` exists
     - and has values for
