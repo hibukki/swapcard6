@@ -6,6 +6,7 @@ import { Calendar, Clock, MapPin, Users, UserPlus, Plus } from "lucide-react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { UrlInput } from "@/components/UrlInput";
 
 const publicMeetingsQuery = convexQuery(api.meetings.getPublicMeetings, {});
 
@@ -347,12 +348,11 @@ function CreatePublicMeetingModal({ onClose }: { onClose: () => void }) {
             <label className="label">
               <span className="label-text">Location</span>
             </label>
-            <input
-              type="text"
+            <UrlInput
               className="input input-bordered w-full"
               value={formData.location}
-              onChange={(e) =>
-                setFormData({ ...formData, location: e.target.value })
+              onChange={(location) =>
+                setFormData({ ...formData, location })
               }
               placeholder="Room name, Zoom link, or meeting point"
             />
