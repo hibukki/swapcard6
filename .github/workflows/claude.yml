@@ -64,7 +64,7 @@ jobs:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
           PREVIEW_NAME: ${{ steps.preview-name.outputs.name }}
         run: |
-          DEPLOY_OUTPUT=$(pnpx convex deploy --preview-name "$PREVIEW_NAME" 2>&1)
+          DEPLOY_OUTPUT=$(pnpx convex deploy --preview-create "$PREVIEW_NAME" 2>&1)
           echo "$DEPLOY_OUTPUT"
 
           CONVEX_URL=$(echo "$DEPLOY_OUTPUT" | grep -oE 'https://[^[:space:]]+\.convex\.(cloud|site)' | head -1)
