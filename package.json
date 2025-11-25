@@ -24,6 +24,7 @@
     "@tanstack/react-router": "^1.131.28",
     "@tanstack/react-router-devtools": "^1.131.28",
     "convex": "^1.26.2",
+    "ical-generator": "^10.0.0",
     "lucide-react": "^0.511.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
