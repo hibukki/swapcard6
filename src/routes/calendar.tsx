@@ -1,17 +1,15 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { ChevronLeft, ChevronRight, Clock, MapPin, Users } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
-import type { FunctionReturnType } from "convex/server";
+import type { Id, Doc } from "../../convex/_generated/dataModel";
 import { z } from "zod";
 
-const myMeetingsQuery = convexQuery(api.meetings.getMyMeetings, {});
-const publicMeetingsQuery = convexQuery(api.meetings.getPublicMeetings, {});
-const pendingInvitationsQuery = convexQuery(api.meetings.getPendingInvitations, {});
-const sentRequestsQuery = convexQuery(api.meetings.getSentRequests, {});
+const myParticipationsQuery = convexQuery(api.meetingParticipants.listByUser, {});
+const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
 
 const calendarSearchSchema = z.object({
   view: z.enum(["week", "month"]).optional().default("week"),
@@ -24,21 +22,41 @@ export const Route = createFileRoute("/calendar")({
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session) {
       await Promise.all([
-        queryClient.ensureQueryData(myMeetingsQuery),
+        queryClient.ensureQueryData(myParticipationsQuery),
         queryClient.ensureQueryData(publicMeetingsQuery),
-        queryClient.ensureQueryData(pendingInvitationsQuery),
-        queryClient.ensureQueryData(sentRequestsQuery),
       ]);
     }
   },
   component: CalendarPage,
 });
 
+// Enriched meeting type for calendar display
+interface CalendarMeeting {
+  _id: Id<"meetings">;
+  _creationTime: number;
+  title: string;
+  scheduledTime: number;
+  duration: number;
+  location?: string;
+  description?: string;
+  isPublic: boolean;
+  maxParticipants?: number;
+  creatorId: Id<"users">;
+  notes?: string;
+  // UI flags
+  isMyMeeting?: boolean;
+  isPublicMeeting?: boolean;
+  isPendingRequest?: boolean;
+  isOutgoing?: boolean;
+  userRole?: "creator" | "accepted" | "pending" | "declined" | "participant";
+  userIsParticipant?: boolean;
+}
+
 function CalendarPage() {
-  const { data: myMeetings } = useSuspenseQuery(myMeetingsQuery);
+  const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
   const { data: publicMeetingsData } = useSuspenseQuery(publicMeetingsQuery);
-  const { data: pendingInvitations } = useSuspenseQuery(pendingInvitationsQuery);
-  const { data: sentRequests } = useSuspenseQuery(sentRequestsQuery);
+  const allMeetings = useQuery(api.meetings.list, {});
+  const allUsers = useQuery(api.users.listUsers, {});
   const navigate = useNavigate({ from: "/calendar" });
   const search = Route.useSearch();
 
@@ -95,77 +113,110 @@ function CalendarPage() {
     });
   };
 
-  type Meeting = FunctionReturnType<typeof api.meetings.getMyMeetings>[number];
-  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
+  const [selectedMeeting, setSelectedMeeting] = useState<CalendarMeeting | null>(null);
 
   const setView = (newView: "week" | "month") => updateSearch({ view: newView });
   const setCalendarMode = (newMode: "my" | "public" | "combined") => updateSearch({ mode: newMode });
   const setCurrentDate = (date: Date) => updateSearch({ date: date.toISOString().split('T')[0] });
 
+  // Build lookup maps
+  const meetingsMap = useMemo(() => {
+    if (!allMeetings) return new Map<Id<"meetings">, Doc<"meetings">>();
+    return new Map(allMeetings.map((m) => [m._id, m]));
+  }, [allMeetings]);
+
+  const usersMap = useMemo(() => {
+    if (!allUsers) return new Map<Id<"users">, Doc<"users">>();
+    return new Map(allUsers.map((u) => [u._id, u]));
+  }, [allUsers]);
+
+  // Build my meetings with enrichment
+  const myMeetings = useMemo((): CalendarMeeting[] => {
+    const results: CalendarMeeting[] = [];
+    for (const p of myParticipations) {
+      if (p.status !== "accepted" && p.status !== "creator") continue;
+      const meeting = meetingsMap.get(p.meetingId);
+      if (!meeting) continue;
+      results.push({
+        ...meeting,
+        isMyMeeting: true,
+        userRole: p.status,
+      });
+    }
+    return results;
+  }, [myParticipations, meetingsMap]);
+
+  // Get pending invitations (incoming)
+  const pendingInvitations = useMemo((): CalendarMeeting[] => {
+    const results: CalendarMeeting[] = [];
+    for (const p of myParticipations) {
+      if (p.status !== "pending") continue;
+      const meeting = meetingsMap.get(p.meetingId);
+      if (!meeting) continue;
+      const requester = usersMap.get(meeting.creatorId);
+      results.push({
+        ...meeting,
+        title: `Meeting Request from ${requester?.name || "Unknown"}`,
+        isPendingRequest: true,
+        isOutgoing: false,
+        userRole: "pending" as const,
+      });
+    }
+    return results;
+  }, [myParticipations, meetingsMap, usersMap]);
+
+  // Get sent requests (outgoing - meetings I created that are not public)
+  const sentRequests = useMemo((): CalendarMeeting[] => {
+    const results: CalendarMeeting[] = [];
+    for (const p of myParticipations) {
+      if (p.status !== "creator") continue;
+      const meeting = meetingsMap.get(p.meetingId);
+      if (!meeting || meeting.isPublic) continue;
+      results.push({
+        ...meeting,
+        title: `Meeting Request: ${meeting.title}`,
+        isPendingRequest: true,
+        isOutgoing: true,
+        userRole: "creator" as const,
+      });
+    }
+    return results;
+  }, [myParticipations, meetingsMap]);
+
   // Get IDs of meetings the user is already in
-  const myMeetingIds = new Set(myMeetings.map((m) => m._id));
+  const myMeetingIds = useMemo(() => {
+    return new Set(myMeetings.map((m) => m._id));
+  }, [myMeetings]);
 
   // Transform public meetings, marking those the user is in
-  const publicMeetings = publicMeetingsData.map((meeting) => {
-    const userIsParticipant = myMeetingIds.has(meeting._id);
-    return {
-      ...meeting,
-      userRole: meeting.participants.some((p: any) => p.role === "creator")
-        ? ("creator" as const)
-        : ("participant" as const),
-      isPublicMeeting: true, // Mark as public for styling
-      userIsParticipant, // Track if user is already in this meeting
-    };
-  });
+  const publicMeetings = useMemo((): CalendarMeeting[] => {
+    return publicMeetingsData.map((meeting): CalendarMeeting => {
+      const userIsParticipant = myMeetingIds.has(meeting._id);
+      return {
+        ...meeting,
+        isPublicMeeting: true,
+        userIsParticipant,
+        userRole: userIsParticipant ? ("participant" as const) : undefined,
+      };
+    });
+  }, [publicMeetingsData, myMeetingIds]);
 
-  // Mark my meetings for styling
-  const myMeetingsWithFlag = myMeetings.map((meeting) => ({
-    ...meeting,
-    isMyMeeting: true,
-  }));
-
-  // Convert pending invitations and sent requests to calendar events
-  const pendingRequests = [
-    ...sentRequests.map((meeting) => ({
-      _id: meeting._id,
-      title: `Meeting Request to ${meeting.recipients.map((r) => r.name).join(", ")}`,
-      scheduledTime: meeting.scheduledTime,
-      duration: meeting.duration,
-      location: meeting.location,
-      description: meeting.description,
-      isPendingRequest: true,
-      isOutgoing: true,
-      participants: meeting.recipients,
-      pendingParticipants: meeting.recipients,
-      userRole: "creator" as const,
-    })),
-    ...pendingInvitations.map((meeting) => ({
-      _id: meeting._id,
-      title: `Meeting Request from ${meeting.requester?.name || "Unknown"}`,
-      scheduledTime: meeting.scheduledTime,
-      duration: meeting.duration,
-      location: meeting.location,
-      description: meeting.description,
-      isPendingRequest: true,
-      isOutgoing: false,
-      participants: meeting.requester ? [meeting.requester] : [],
-      pendingParticipants: meeting.requester ? [meeting.requester] : [],
-      requester: meeting.requester,
-      userRole: "pending" as const,
-    })),
-  ];
+  // Pending requests for calendar display
+  const pendingRequests: CalendarMeeting[] = useMemo(() => {
+    return [...sentRequests, ...pendingInvitations];
+  }, [sentRequests, pendingInvitations]);
 
   // Determine which meetings to show
-  let meetings;
+  let meetings: CalendarMeeting[];
   if (calendarMode === "my") {
-    meetings = [...myMeetingsWithFlag, ...pendingRequests];
+    meetings = [...myMeetings, ...pendingRequests];
   } else if (calendarMode === "public") {
     // Show all public meetings (including ones user is in)
     meetings = publicMeetings;
   } else {
     // Combined view - show my meetings + public meetings I'm NOT in + pending requests
     const publicMeetingsNotIn = publicMeetings.filter((m) => !m.userIsParticipant);
-    meetings = [...myMeetingsWithFlag, ...publicMeetingsNotIn, ...pendingRequests];
+    meetings = [...myMeetings, ...publicMeetingsNotIn, ...pendingRequests];
   }
 
   // Navigate dates
@@ -192,6 +243,14 @@ function CalendarPage() {
   const goToToday = () => {
     setCurrentDate(new Date());
   };
+
+  if (!allMeetings || !allUsers) {
+    return (
+      <div className="flex justify-center p-8">
+        <span className="loading loading-spinner loading-lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="not-prose h-[calc(100vh-200px)] flex flex-col">
@@ -297,6 +356,7 @@ function CalendarPage() {
       {selectedMeeting && (
         <MeetingDetailModal
           meeting={selectedMeeting}
+          creator={usersMap.get(selectedMeeting.creatorId)}
           onClose={() => setSelectedMeeting(null)}
         />
       )}
@@ -309,9 +369,9 @@ function WeekView({
   currentDate,
   onMeetingClick,
 }: {
-  meetings: any[];
+  meetings: CalendarMeeting[];
   currentDate: Date;
-  onMeetingClick: (meeting: any) => void;
+  onMeetingClick: (meeting: CalendarMeeting) => void;
 }) {
   // Get the start of the week (Sunday)
   const startOfWeek = new Date(currentDate);
@@ -359,7 +419,7 @@ function WeekView({
 
         {/* Time slots */}
         {hours.map((hour) => (
-          <>
+          <React.Fragment key={`row-${hour}`}>
             {/* Time label */}
             <div
               key={`time-${hour}`}
@@ -411,7 +471,7 @@ function WeekView({
                 </div>
               );
             })}
-          </>
+          </React.Fragment>
         ))}
       </div>
     </div>
@@ -423,9 +483,9 @@ function MonthView({
   currentDate,
   onMeetingClick,
 }: {
-  meetings: any[];
+  meetings: CalendarMeeting[];
   currentDate: Date;
-  onMeetingClick: (meeting: any) => void;
+  onMeetingClick: (meeting: CalendarMeeting) => void;
 }) {
   // Get first day of month
   const firstDay = new Date(
@@ -446,7 +506,7 @@ function MonthView({
   const daysInMonth = lastDay.getDate();
 
   // Generate calendar days (including padding)
-  const calendarDays = [];
+  const calendarDays: (number | null)[] = [];
   for (let i = 0; i < startDay; i++) {
     calendarDays.push(null); // Empty days before month starts
   }
@@ -557,7 +617,7 @@ function MonthView({
   );
 }
 
-function MeetingCard({ meeting, onClick }: { meeting: any; onClick: () => void }) {
+function MeetingCard({ meeting, onClick }: { meeting: CalendarMeeting; onClick: () => void }) {
   const startTime = new Date(meeting.scheduledTime);
   const endTime = new Date(meeting.scheduledTime + meeting.duration * 60000);
 
@@ -611,12 +671,6 @@ function MeetingCard({ meeting, onClick }: { meeting: any; onClick: () => void }
           minute: "2-digit",
         })}
       </div>
-      {meeting.participants && (
-        <div className="text-base-content/60 truncate">
-          {meeting.participants.length} participant
-          {meeting.participants.length !== 1 ? "s" : ""}
-        </div>
-      )}
       {isPublicMeeting && !isMyMeeting && (
         <div className="text-xs opacity-70 mt-0.5">📢 Public</div>
       )}
@@ -626,23 +680,21 @@ function MeetingCard({ meeting, onClick }: { meeting: any; onClick: () => void }
 
 function MeetingDetailModal({
   meeting,
+  creator,
   onClose,
 }: {
-  meeting: any;
+  meeting: CalendarMeeting;
+  creator: Doc<"users"> | undefined;
   onClose: () => void;
 }) {
-  const joinMeeting = useMutation(api.meetings.joinMeeting);
-  const leaveMeeting = useMutation(api.meetings.leaveMeeting);
+  const join = useMutation(api.meetingParticipants.join);
+  const leave = useMutation(api.meetingParticipants.leave);
   const [isLoading, setIsLoading] = useState(false);
-
-  const isParticipant = meeting.participants?.some(
-    (p: any) => p.role !== undefined
-  );
 
   const handleJoin = async () => {
     setIsLoading(true);
     try {
-      await joinMeeting({ meetingId: meeting._id });
+      await join({ meetingId: meeting._id });
       onClose();
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to join meeting");
@@ -654,7 +706,7 @@ function MeetingDetailModal({
   const handleLeave = async () => {
     setIsLoading(true);
     try {
-      await leaveMeeting({ meetingId: meeting._id });
+      await leave({ meetingId: meeting._id });
       onClose();
     } catch (error) {
       alert(
@@ -665,6 +717,8 @@ function MeetingDetailModal({
     }
   };
 
+  const isParticipant = meeting.isMyMeeting || meeting.userIsParticipant;
+
   return (
     <dialog className="modal modal-open">
       <div className="modal-box max-w-2xl">
@@ -674,7 +728,9 @@ function MeetingDetailModal({
             {meeting.isPublic && (
               <span className="badge badge-primary">Public</span>
             )}
-            {meeting.isFull && <span className="badge badge-warning">Full</span>}
+            {meeting.isPendingRequest && (
+              <span className="badge badge-warning">Pending</span>
+            )}
           </div>
         </div>
 
@@ -696,60 +752,26 @@ function MeetingDetailModal({
             </div>
           )}
 
-          <div className="flex items-center gap-2 text-sm">
-            <Users className="w-4 h-4 opacity-70" />
-            <span>
-              {meeting.participantCount || meeting.participants?.length || 0}
-              {meeting.maxParticipants ? ` / ${meeting.maxParticipants}` : ""}{" "}
-              participants
-            </span>
-          </div>
+          {meeting.maxParticipants && (
+            <div className="flex items-center gap-2 text-sm">
+              <Users className="w-4 h-4 opacity-70" />
+              <span>Max {meeting.maxParticipants} participants</span>
+            </div>
+          )}
 
-          {meeting.creator && (
+          {creator && (
             <div className="text-sm">
               <span className="opacity-70">Hosted by: </span>
-              <span className="font-semibold">{meeting.creator.name}</span>
+              <span className="font-semibold">{creator.name}</span>
             </div>
           )}
         </div>
-
-        {/* Show participants for confirmed meetings */}
-        {meeting.participants && meeting.participants.length > 0 && !meeting.isPendingRequest && (
-          <div className="mb-6">
-            <div className="text-sm font-semibold mb-2">Participants:</div>
-            <div className="flex flex-wrap gap-2">
-              {meeting.participants.map((p: any) => (
-                <span key={p._id} className="badge badge-sm">
-                  {p.name}
-                  {p.role === "creator" && <span className="ml-1 opacity-70">(Host)</span>}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Show pending participants for pending requests */}
-        {meeting.isPendingRequest && meeting.pendingParticipants && meeting.pendingParticipants.length > 0 && (
-          <div className="mb-6">
-            <div className="text-sm font-semibold mb-2">
-              {meeting.isOutgoing ? "Waiting for response from:" : "Request from:"}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {meeting.pendingParticipants.map((p: any) => (
-                <span key={p._id || p.name} className="badge badge-warning badge-sm">
-                  {p.name}
-                  {p.role && <span className="ml-1 opacity-70">({p.role})</span>}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="modal-action">
           <button type="button" className="btn" onClick={onClose}>
             Close
           </button>
-          {meeting.isPublic && (
+          {meeting.isPublic && !meeting.isPendingRequest && (
             <>
               {isParticipant ? (
                 <button
@@ -763,7 +785,7 @@ function MeetingDetailModal({
                 <button
                   className="btn btn-primary"
                   onClick={() => void handleJoin()}
-                  disabled={meeting.isFull || isLoading}
+                  disabled={isLoading}
                 >
                   {isLoading ? "Joining..." : "Join Meeting"}
                 </button>

@@ -1,18 +1,22 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation } from "convex/react";
-import { Calendar, Clock, MapPin, Users, UserPlus, Plus } from "lucide-react";
-import { useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { Calendar, Clock, MapPin, UserPlus, Plus } from "lucide-react";
+import { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Id, Doc } from "../../convex/_generated/dataModel";
 
-const publicMeetingsQuery = convexQuery(api.meetings.getPublicMeetings, {});
+const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
+const myParticipationsQuery = convexQuery(api.meetingParticipants.listByUser, {});
 
 export const Route = createFileRoute("/public-meetings")({
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session) {
-      await queryClient.ensureQueryData(publicMeetingsQuery);
+      await Promise.all([
+        queryClient.ensureQueryData(publicMeetingsQuery),
+        queryClient.ensureQueryData(myParticipationsQuery),
+      ]);
     }
   },
   component: PublicMeetingsPage,
@@ -20,15 +24,33 @@ export const Route = createFileRoute("/public-meetings")({
 
 function PublicMeetingsPage() {
   const { data: meetings } = useSuspenseQuery(publicMeetingsQuery);
-  const joinMeeting = useMutation(api.meetings.joinMeeting);
-  const leaveMeeting = useMutation(api.meetings.leaveMeeting);
+  const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
+  const allUsers = useQuery(api.users.listUsers, {});
+
+  const join = useMutation(api.meetingParticipants.join);
+  const leave = useMutation(api.meetingParticipants.leave);
   const [joiningMeetingId, setJoiningMeetingId] = useState<Id<"meetings"> | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Build user lookup map
+  const usersMap = useMemo(() => {
+    if (!allUsers) return new Map<Id<"users">, Doc<"users">>();
+    return new Map(allUsers.map((u) => [u._id, u]));
+  }, [allUsers]);
+
+  // Build set of meeting IDs I'm participating in
+  const myMeetingIds = useMemo(() => {
+    return new Set(
+      myParticipations
+        .filter((p) => p.status === "accepted" || p.status === "creator")
+        .map((p) => p.meetingId)
+    );
+  }, [myParticipations]);
 
   const handleJoinMeeting = async (meetingId: Id<"meetings">) => {
     setJoiningMeetingId(meetingId);
     try {
-      await joinMeeting({ meetingId });
+      await join({ meetingId });
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to join meeting");
     } finally {
@@ -39,7 +61,7 @@ function PublicMeetingsPage() {
   const handleLeaveMeeting = async (meetingId: Id<"meetings">) => {
     setJoiningMeetingId(meetingId);
     try {
-      await leaveMeeting({ meetingId });
+      await leave({ meetingId });
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to leave meeting");
     } finally {
@@ -51,6 +73,14 @@ function PublicMeetingsPage() {
   const now = Date.now();
   const upcomingMeetings = meetings.filter((m) => m.scheduledTime >= now);
   const pastMeetings = meetings.filter((m) => m.scheduledTime < now);
+
+  if (!allUsers) {
+    return (
+      <div className="flex justify-center p-8">
+        <span className="loading loading-spinner loading-lg" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -82,116 +112,19 @@ function PublicMeetingsPage() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {upcomingMeetings.map((meeting) => {
-                const isParticipant = meeting.participants.some(
-                  (p: any) => p.role !== undefined
-                );
+                const isParticipant = myMeetingIds.has(meeting._id);
+                const creator = usersMap.get(meeting.creatorId);
+
                 return (
-                  <div
+                  <PublicMeetingCard
                     key={meeting._id}
-                    className="card card-border bg-base-200"
-                  >
-                    <div className="card-body">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-lg">{meeting.title}</h3>
-                        {meeting.isFull && (
-                          <span className="badge badge-warning">Full</span>
-                        )}
-                      </div>
-
-                      {meeting.description && (
-                        <p className="text-sm opacity-80 mt-1">
-                          {meeting.description}
-                        </p>
-                      )}
-
-                      <div className="mt-3 space-y-2">
-                        <div className="text-sm flex items-center gap-2">
-                          <Clock className="w-4 h-4 opacity-70" />
-                          <span>
-                            {new Date(meeting.scheduledTime).toLocaleString()}
-                          </span>
-                          <span className="opacity-70">
-                            ({meeting.duration} min)
-                          </span>
-                        </div>
-
-                        {meeting.location && (
-                          <div className="text-sm flex items-center gap-2">
-                            <MapPin className="w-4 h-4 opacity-70" />
-                            <span>{meeting.location}</span>
-                          </div>
-                        )}
-
-                        <div className="text-sm flex items-center gap-2">
-                          <Users className="w-4 h-4 opacity-70" />
-                          <span>
-                            {meeting.participantCount}
-                            {meeting.maxParticipants
-                              ? ` / ${meeting.maxParticipants}`
-                              : ""}{" "}
-                            participants
-                          </span>
-                        </div>
-
-                        <div className="text-sm">
-                          <span className="opacity-70">Hosted by: </span>
-                          <span className="font-semibold">
-                            {meeting.creator?.name}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Participant avatars/list */}
-                      {meeting.participants.length > 0 && (
-                        <div className="mt-3">
-                          <div className="text-xs opacity-70 mb-1">
-                            Participants:
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {meeting.participants.slice(0, 5).map((p: any) => (
-                              <span
-                                key={p._id}
-                                className="badge badge-sm"
-                                title={p.name}
-                              >
-                                {p.name}
-                              </span>
-                            ))}
-                            {meeting.participants.length > 5 && (
-                              <span className="badge badge-sm opacity-70">
-                                +{meeting.participants.length - 5} more
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="card-actions mt-4">
-                        {isParticipant ? (
-                          <button
-                            className="btn btn-error btn-sm w-full"
-                            onClick={() => void handleLeaveMeeting(meeting._id)}
-                            disabled={joiningMeetingId === meeting._id}
-                          >
-                            Leave Meeting
-                          </button>
-                        ) : (
-                          <button
-                            className="btn btn-primary btn-sm w-full gap-2"
-                            onClick={() => void handleJoinMeeting(meeting._id)}
-                            disabled={
-                              meeting.isFull || joiningMeetingId === meeting._id
-                            }
-                          >
-                            <UserPlus className="w-4 h-4" />
-                            {joiningMeetingId === meeting._id
-                              ? "Joining..."
-                              : "Join Meeting"}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                    meeting={meeting}
+                    creator={creator}
+                    isParticipant={isParticipant}
+                    isLoading={joiningMeetingId === meeting._id}
+                    onJoin={() => void handleJoinMeeting(meeting._id)}
+                    onLeave={() => void handleLeaveMeeting(meeting._id)}
+                  />
                 );
               })}
             </div>
@@ -221,10 +154,6 @@ function PublicMeetingsPage() {
                         <Clock className="w-4 h-4" />
                         {new Date(meeting.scheduledTime).toLocaleString()}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        {meeting.participantCount} participants
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -242,8 +171,86 @@ function PublicMeetingsPage() {
   );
 }
 
+function PublicMeetingCard({
+  meeting,
+  creator,
+  isParticipant,
+  isLoading,
+  onJoin,
+  onLeave,
+}: {
+  meeting: Doc<"meetings">;
+  creator: Doc<"users"> | undefined;
+  isParticipant: boolean;
+  isLoading: boolean;
+  onJoin: () => void;
+  onLeave: () => void;
+}) {
+  return (
+    <div className="card card-border bg-base-200">
+      <div className="card-body">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold text-lg">{meeting.title}</h3>
+          {meeting.maxParticipants && (
+            <span className="badge badge-warning">
+              Max {meeting.maxParticipants}
+            </span>
+          )}
+        </div>
+
+        {meeting.description && (
+          <p className="text-sm opacity-80 mt-1">{meeting.description}</p>
+        )}
+
+        <div className="mt-3 space-y-2">
+          <div className="text-sm flex items-center gap-2">
+            <Clock className="w-4 h-4 opacity-70" />
+            <span>{new Date(meeting.scheduledTime).toLocaleString()}</span>
+            <span className="opacity-70">({meeting.duration} min)</span>
+          </div>
+
+          {meeting.location && (
+            <div className="text-sm flex items-center gap-2">
+              <MapPin className="w-4 h-4 opacity-70" />
+              <span>{meeting.location}</span>
+            </div>
+          )}
+
+          {creator && (
+            <div className="text-sm">
+              <span className="opacity-70">Hosted by: </span>
+              <span className="font-semibold">{creator.name}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="card-actions mt-4">
+          {isParticipant ? (
+            <button
+              className="btn btn-error btn-sm w-full"
+              onClick={onLeave}
+              disabled={isLoading}
+            >
+              Leave Meeting
+            </button>
+          ) : (
+            <button
+              className="btn btn-primary btn-sm w-full gap-2"
+              onClick={onJoin}
+              disabled={isLoading}
+            >
+              <UserPlus className="w-4 h-4" />
+              {isLoading ? "Joining..." : "Join Meeting"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CreatePublicMeetingModal({ onClose }: { onClose: () => void }) {
-  const createMeeting = useMutation(api.meetings.createMeeting);
+  const create = useMutation(api.meetings.create);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -258,7 +265,7 @@ function CreatePublicMeetingModal({ onClose }: { onClose: () => void }) {
 
     const scheduledTime = new Date(formData.scheduledTime).getTime();
 
-    await createMeeting({
+    await create({
       title: formData.title,
       description: formData.description || undefined,
       scheduledTime,

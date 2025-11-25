@@ -1,33 +1,79 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Calendar, Check, Clock, MapPin, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Id, Doc } from "../../convex/_generated/dataModel";
 
-const pendingInvitationsQuery = convexQuery(api.meetings.getPendingInvitations, {});
-const sentRequestsQuery = convexQuery(api.meetings.getSentRequests, {});
-const meetingsQuery = convexQuery(api.meetings.getMyMeetings, {});
+const myParticipationsQuery = convexQuery(api.meetingParticipants.listByUser, {});
 
 export const Route = createFileRoute("/agenda")({
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session) {
-      await Promise.all([
-        queryClient.ensureQueryData(pendingInvitationsQuery),
-        queryClient.ensureQueryData(sentRequestsQuery),
-        queryClient.ensureQueryData(meetingsQuery),
-      ]);
+      await queryClient.ensureQueryData(myParticipationsQuery);
     }
   },
   component: AgendaPage,
 });
 
 function AgendaPage() {
-  const { data: pendingInvitations } = useSuspenseQuery(pendingInvitationsQuery);
-  const { data: sentRequests } = useSuspenseQuery(sentRequestsQuery);
-  const { data: meetings } = useSuspenseQuery(meetingsQuery);
+  const { data: participations } = useSuspenseQuery(myParticipationsQuery);
+  const allMeetings = useQuery(api.meetings.list, {});
+  const allUsers = useQuery(api.users.listUsers, {});
+
+  // Build lookup maps
+  const meetingsMap = useMemo(() => {
+    if (!allMeetings) return new Map<Id<"meetings">, Doc<"meetings">>();
+    return new Map(allMeetings.map((m) => [m._id, m]));
+  }, [allMeetings]);
+
+  const usersMap = useMemo(() => {
+    if (!allUsers) return new Map<Id<"users">, Doc<"users">>();
+    return new Map(allUsers.map((u) => [u._id, u]));
+  }, [allUsers]);
+
+  // Filter and enrich participations
+  const pendingInvitations = useMemo(() => {
+    return participations
+      .filter((p) => p.status === "pending")
+      .map((p) => {
+        const meeting = meetingsMap.get(p.meetingId);
+        const requester = meeting ? usersMap.get(meeting.creatorId) : null;
+        return { participation: p, meeting, requester };
+      })
+      .filter((item) => item.meeting != null);
+  }, [participations, meetingsMap, usersMap]);
+
+  const sentRequests = useMemo(() => {
+    // Get meetings where I'm the creator and there are pending participants
+    return participations
+      .filter((p) => p.status === "creator")
+      .map((p) => {
+        const meeting = meetingsMap.get(p.meetingId);
+        return { participation: p, meeting };
+      })
+      .filter((item) => item.meeting != null && !item.meeting.isPublic);
+  }, [participations, meetingsMap]);
+
+  const confirmedMeetings = useMemo(() => {
+    return participations
+      .filter((p) => p.status === "accepted" || p.status === "creator")
+      .map((p) => {
+        const meeting = meetingsMap.get(p.meetingId);
+        return { participation: p, meeting };
+      })
+      .filter((item) => item.meeting != null);
+  }, [participations, meetingsMap]);
+
+  if (!allMeetings || !allUsers) {
+    return (
+      <div className="flex justify-center p-8">
+        <span className="loading loading-spinner loading-lg" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -47,8 +93,16 @@ function AgendaPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {pendingInvitations.map((meeting) => (
-                <IncomingRequestCard key={meeting._id} meeting={meeting} />
+              {pendingInvitations.map(({ participation, meeting, requester }) => (
+                <IncomingRequestCard
+                  key={participation._id}
+                  meetingId={meeting!._id}
+                  requester={requester}
+                  description={meeting!.description}
+                  location={meeting!.location}
+                  scheduledTime={meeting!.scheduledTime}
+                  duration={meeting!.duration}
+                />
               ))}
             </div>
           )}
@@ -65,36 +119,31 @@ function AgendaPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {sentRequests.map((meeting) => (
+              {sentRequests.map(({ participation, meeting }) => (
                 <div
-                  key={meeting._id}
+                  key={participation._id}
                   className="card card-border bg-base-200"
                 >
                   <div className="card-body">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="font-semibold">
-                          {meeting.recipients.map((r) => r.name).join(", ")}
+                          {meeting!.title}
                         </h3>
-                        {meeting.recipients[0]?.role && (
-                          <p className="text-sm opacity-70">
-                            {meeting.recipients[0].role}
-                          </p>
-                        )}
                         <p className="text-sm mt-2 opacity-80 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {new Date(meeting.scheduledTime).toLocaleString()}
-                          {` (${meeting.duration} min)`}
+                          {new Date(meeting!.scheduledTime).toLocaleString()}
+                          {` (${meeting!.duration} min)`}
                         </p>
-                        {meeting.description && (
+                        {meeting!.description && (
                           <p className="text-sm mt-2 opacity-80">
-                            {meeting.description}
+                            {meeting!.description}
                           </p>
                         )}
-                        {meeting.location && (
+                        {meeting!.location && (
                           <p className="text-sm mt-1 opacity-70 flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
-                            {meeting.location}
+                            {meeting!.location}
                           </p>
                         )}
                       </div>
@@ -111,56 +160,50 @@ function AgendaPage() {
         <section>
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Scheduled Meetings ({meetings.length})
+            Scheduled Meetings ({confirmedMeetings.length})
           </h2>
-          {meetings.length === 0 ? (
+          {confirmedMeetings.length === 0 ? (
             <div className="p-6 bg-base-200 rounded-lg text-center opacity-70">
               No scheduled meetings yet
             </div>
           ) : (
             <div className="space-y-3">
-              {meetings.map((meeting) => (
+              {confirmedMeetings.map(({ participation, meeting }) => (
                 <div
-                  key={meeting._id}
+                  key={participation._id}
                   className="card card-border bg-base-200"
                 >
                   <div className="card-body">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="font-semibold">
-                          {meeting.title}
+                          {meeting!.title}
                         </h3>
-                        {meeting.description && (
+                        {meeting!.description && (
                           <p className="text-sm opacity-70 mt-1">
-                            {meeting.description}
+                            {meeting!.description}
                           </p>
                         )}
                         <div className="mt-2 space-y-1">
                           <p className="text-sm flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {new Date(meeting.scheduledTime).toLocaleString()} (
-                            {meeting.duration} min)
+                            {new Date(meeting!.scheduledTime).toLocaleString()} (
+                            {meeting!.duration} min)
                           </p>
-                          {meeting.location && (
+                          {meeting!.location && (
                             <p className="text-sm flex items-center gap-1">
                               <MapPin className="w-3 h-3" />
-                              {meeting.location}
+                              {meeting!.location}
                             </p>
                           )}
-                          <div className="text-sm opacity-70 mt-2">
-                            <strong>Participants ({meeting.participants?.length ?? 0}):</strong>{" "}
-                            {meeting.participants
-                              ?.map((p: any) => p.name)
-                              .join(", ")}
-                          </div>
                         </div>
                       </div>
                       <div className="flex flex-col gap-2 items-end">
                         <span className="badge badge-success">Confirmed</span>
-                        {meeting.isPublic && (
+                        {meeting!.isPublic && (
                           <span className="badge badge-info">Public</span>
                         )}
-                        {meeting.userRole === "creator" && (
+                        {participation.status === "creator" && (
                           <span className="badge">Creator</span>
                         )}
                       </div>
@@ -177,25 +220,28 @@ function AgendaPage() {
 }
 
 function IncomingRequestCard({
-  meeting,
+  meetingId,
+  requester,
+  description,
+  location,
+  scheduledTime,
+  duration,
 }: {
-  meeting: {
-    _id: Id<"meetings">;
-    requester: { name: string; role?: string } | null;
-    description?: string;
-    location?: string;
-    scheduledTime: number;
-    duration: number;
-  };
+  meetingId: Id<"meetings">;
+  requester: Doc<"users"> | null | undefined;
+  description?: string;
+  location?: string;
+  scheduledTime: number;
+  duration: number;
 }) {
-  const respondToInvitation = useMutation(api.meetings.respondToInvitation);
+  const respond = useMutation(api.meetingParticipants.respond);
   const [isResponding, setIsResponding] = useState(false);
 
   const handleRespond = async (accept: boolean) => {
     setIsResponding(true);
     try {
-      await respondToInvitation({
-        meetingId: meeting._id,
+      await respond({
+        meetingId,
         accept,
       });
     } catch (error) {
@@ -210,23 +256,23 @@ function IncomingRequestCard({
       <div className="card-body">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <h3 className="font-semibold">{meeting.requester?.name}</h3>
-            {meeting.requester?.role && (
-              <p className="text-sm opacity-70">{meeting.requester.role}</p>
+            <h3 className="font-semibold">{requester?.name ?? "Unknown"}</h3>
+            {requester?.role && (
+              <p className="text-sm opacity-70">{requester.role}</p>
             )}
-            {meeting.description && (
-              <p className="text-sm mt-2 opacity-80">{meeting.description}</p>
+            {description && (
+              <p className="text-sm mt-2 opacity-80">{description}</p>
             )}
             <div className="mt-2 space-y-1">
               <p className="text-sm opacity-70 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {new Date(meeting.scheduledTime).toLocaleString()}
-                {` (${meeting.duration} min)`}
+                {new Date(scheduledTime).toLocaleString()}
+                {` (${duration} min)`}
               </p>
-              {meeting.location && (
+              {location && (
                 <p className="text-sm opacity-70 flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
-                  {meeting.location}
+                  {location}
                 </p>
               )}
             </div>

@@ -117,8 +117,9 @@ function MeetingRequestModal({
   recipientId: Id<"users">;
   onClose: () => void;
 }) {
-  const sendRequest = useMutation(api.meetings.sendMeetingRequest);
-  const [message, setMessage] = useState("");
+  const sendRequest = useMutation(api.meetingParticipants.sendRequest);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [proposedTime, setProposedTime] = useState("");
   const [proposedDuration, setProposedDuration] = useState(30);
@@ -126,14 +127,21 @@ function MeetingRequestModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!proposedTime) {
+      alert("Please select a proposed time for the meeting");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await sendRequest({
         recipientId,
-        message: message || undefined,
+        title: title || "Meeting Request",
+        description: description || undefined,
         location: location || undefined,
-        proposedTime: proposedTime ? new Date(proposedTime).getTime() : undefined,
-        proposedDuration,
+        scheduledTime: new Date(proposedTime).getTime(),
+        duration: proposedDuration,
       });
       onClose();
     } catch (error) {
@@ -155,13 +163,27 @@ function MeetingRequestModal({
         >
           <div>
             <label className="block text-sm font-medium mb-1">
-              Proposed Time (optional)
+              Meeting Title
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Quick chat about AI"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Proposed Time
             </label>
             <input
               type="datetime-local"
-              className="input input-border w-full"
+              className="input input-bordered w-full"
               value={proposedTime}
               onChange={(e) => setProposedTime(e.target.value)}
+              required
             />
           </div>
 
@@ -170,7 +192,7 @@ function MeetingRequestModal({
               Duration (minutes)
             </label>
             <select
-              className="select select-border w-full"
+              className="select select-bordered w-full"
               value={proposedDuration}
               onChange={(e) => setProposedDuration(parseInt(e.target.value))}
             >
@@ -188,10 +210,10 @@ function MeetingRequestModal({
               Message (optional)
             </label>
             <textarea
-              className="textarea textarea-border w-full"
+              className="textarea textarea-bordered w-full"
               rows={3}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="Tell them why you'd like to meet..."
             />
           </div>
@@ -202,7 +224,7 @@ function MeetingRequestModal({
             </label>
             <input
               type="text"
-              className="input input-border w-full"
+              className="input input-bordered w-full"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Coffee shop, booth #5, etc."
