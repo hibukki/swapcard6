@@ -221,3 +221,4 @@ Then, before running `pnpm run dev:frontend`, you'll need to set the `VITE_CONVE
 - Import icons from `lucide-react`
 - When making identical changes to multiple occurrences, use Edit with `replace_all: true` instead of MultiEdit. Avoid MultiEdit whenever possible, it is unreliable.
 - Never leave floating promisses, use void when needed
+- Comments shouldn't be used if the code can be self-documenting.
