@@ -84,10 +84,12 @@ export default defineSchema({
     canHelpWith: v.optional(v.string()),
     needsHelpWith: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
+    calendarToken: v.optional(v.string()),
   })
     .index("by_clerkId", ["clerkId"])
     .index("by_email", ["email"])
-    .index("by_name", ["name"]),
+    .index("by_name", ["name"])
+    .index("by_calendarToken", ["calendarToken"]),
 
   meetings: defineTable({
     ...meetingFields,

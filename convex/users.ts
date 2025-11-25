@@ -134,6 +134,38 @@ export const updateProfile = mutation({
   },
 });
 
+export const getOrCreateCalendarToken = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUserOrCrash(ctx);
+
+    if (user.calendarToken) {
+      return user.calendarToken;
+    }
+
+    const token = crypto.randomUUID();
+    await ctx.db.patch(user._id, { calendarToken: token });
+    return token;
+  },
+});
+
+export const regenerateCalendarToken = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUserOrCrash(ctx);
+    const token = crypto.randomUUID();
+    await ctx.db.patch(user._id, { calendarToken: token });
+    return token;
+  },
+});
+
+export async function getUserByCalendarToken(ctx: QueryCtx, token: string) {
+  return await ctx.db
+    .query("users")
+    .withIndex("by_calendarToken", (q) => q.eq("calendarToken", token))
+    .unique();
+}
+
 // Note: This fetches all users and filters in the client. Acceptable for small user counts.
 // For large scale, consider pagination with .paginate() or a different approach.
 export const listUsers = query({

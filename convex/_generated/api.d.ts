@@ -13,11 +13,14 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as calendarFeed from "../calendarFeed.js";
+import type * as calendarFeedInternal from "../calendarFeedInternal.js";
 import type * as conferenceAttendees from "../conferenceAttendees.js";
 import type * as conferenceAttendeesUtils from "../conferenceAttendeesUtils.js";
 import type * as conferenceUtils from "../conferenceUtils.js";
 import type * as conferences from "../conferences.js";
 import type * as health from "../health.js";
+import type * as http from "../http.js";
 import type * as meetingParticipants from "../meetingParticipants.js";
 import type * as meetingParticipantsUtils from "../meetingParticipantsUtils.js";
 import type * as meetingUtils from "../meetingUtils.js";
@@ -36,11 +39,14 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  calendarFeed: typeof calendarFeed;
+  calendarFeedInternal: typeof calendarFeedInternal;
   conferenceAttendees: typeof conferenceAttendees;
   conferenceAttendeesUtils: typeof conferenceAttendeesUtils;
   conferenceUtils: typeof conferenceUtils;
   conferences: typeof conferences;
   health: typeof health;
+  http: typeof http;
   meetingParticipants: typeof meetingParticipants;
   meetingParticipantsUtils: typeof meetingParticipantsUtils;
   meetingUtils: typeof meetingUtils;
