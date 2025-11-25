@@ -2,10 +2,10 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
-import { MessageSquare, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { MessageSquare, Search, UserPlus, X } from "lucide-react";
+import { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Id, Doc } from "../../convex/_generated/dataModel";
 
 const usersQuery = convexQuery(api.users.listUsers, {});
 
@@ -17,26 +17,70 @@ export const Route = createFileRoute("/attendees")({
   component: AttendeesPage,
 });
 
+function matchesSearch(user: Doc<"users">, query: string): boolean {
+  const q = query.toLowerCase();
+  if (user.name.toLowerCase().includes(q)) return true;
+  if (user.role?.toLowerCase().includes(q)) return true;
+  if (user.company?.toLowerCase().includes(q)) return true;
+  if (user.bio?.toLowerCase().includes(q)) return true;
+  if (user.interests?.some((i) => i.toLowerCase().includes(q))) return true;
+  return false;
+}
+
 function AttendeesPage() {
   const { data: users } = useSuspenseQuery(usersQuery);
   const [selectedUser, setSelectedUser] = useState<Id<"users"> | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return users;
+    return users.filter((user) => matchesSearch(user, searchQuery.trim()));
+  }, [users, searchQuery]);
 
   return (
     <div>
       <h1 className="mt-0">Attendees</h1>
       <p>Browse conference attendees and send meeting requests</p>
 
-      {users.length === 0 ? (
-        <div className="not-prose mt-8">
+      <div className="not-prose mt-6 mb-6">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" />
+          <input
+            type="text"
+            className="input input-bordered w-full pl-10 pr-10"
+            placeholder="Search by name, role, company, interests..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button
+              className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100"
+              onClick={() => setSearchQuery("")}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        {searchQuery && (
+          <p className="text-sm opacity-70 mt-2">
+            {filteredUsers.length} {filteredUsers.length === 1 ? "result" : "results"}
+          </p>
+        )}
+      </div>
+
+      {filteredUsers.length === 0 ? (
+        <div className="not-prose">
           <div className="p-8 bg-base-200 rounded-lg text-center">
             <p className="opacity-70">
-              No other attendees yet. Be the first to connect!
+              {searchQuery
+                ? "No attendees match your search"
+                : "No other attendees yet. Be the first to connect!"}
             </p>
           </div>
         </div>
       ) : (
-        <div className="not-prose mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {users.map((user) => (
+        <div className="not-prose grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredUsers.map((user) => (
             <div key={user._id} className="card card-border bg-base-200">
               <div className="card-body">
                 <div className="flex items-start gap-3">
