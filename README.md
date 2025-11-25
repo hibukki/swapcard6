@@ -13,13 +13,13 @@ pnpm run init
 ### Run the dev server
 
 ```bash
-pnpm dev:backend
+pnpm run dev:backend
 ```
 
 And in another shell:
 
 ```bash
-pnpm dev:frontend
+pnpm run dev:frontend
 ```
 
 ## License
