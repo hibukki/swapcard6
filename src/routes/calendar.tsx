@@ -2,11 +2,12 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-import { ChevronLeft, ChevronRight, Clock, MapPin, Users } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Clock, MapPin, Users } from "lucide-react";
 import React, { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
 import { z } from "zod";
+import { CalendarSubscription } from "../components/CalendarSubscription";
 
 const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
 const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
@@ -344,6 +345,17 @@ function CalendarPage() {
           </div>
         </div>
       )}
+
+      {/* Calendar Subscription */}
+      <details className="mb-4">
+        <summary className="cursor-pointer text-sm opacity-70 hover:opacity-100 flex items-center gap-1">
+          <ChevronDown className="w-4 h-4" />
+          Sync to external calendar
+        </summary>
+        <div className="mt-3 p-4 bg-base-200 rounded-lg">
+          <CalendarSubscription />
+        </div>
+      </details>
 
       {/* Calendar Grid */}
       {view === "week" ? (
