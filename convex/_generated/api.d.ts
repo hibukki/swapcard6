@@ -14,10 +14,12 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as conferenceAttendees from "../conferenceAttendees.js";
+import type * as conferenceAttendeesUtils from "../conferenceAttendeesUtils.js";
 import type * as conferenceUtils from "../conferenceUtils.js";
 import type * as conferences from "../conferences.js";
 import type * as health from "../health.js";
 import type * as meetingParticipants from "../meetingParticipants.js";
+import type * as meetingParticipantsUtils from "../meetingParticipantsUtils.js";
 import type * as meetingUtils from "../meetingUtils.js";
 import type * as meetings from "../meetings.js";
 import type * as notifications from "../notifications.js";
@@ -35,10 +37,12 @@ import type * as users from "../users.js";
  */
 declare const fullApi: ApiFromModules<{
   conferenceAttendees: typeof conferenceAttendees;
+  conferenceAttendeesUtils: typeof conferenceAttendeesUtils;
   conferenceUtils: typeof conferenceUtils;
   conferences: typeof conferences;
   health: typeof health;
   meetingParticipants: typeof meetingParticipants;
+  meetingParticipantsUtils: typeof meetingParticipantsUtils;
   meetingUtils: typeof meetingUtils;
   meetings: typeof meetings;
   notifications: typeof notifications;

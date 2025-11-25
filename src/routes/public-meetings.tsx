@@ -8,7 +8,7 @@ import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
 
 const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
-const myParticipationsQuery = convexQuery(api.meetingParticipants.listByUser, {});
+const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
 
 export const Route = createFileRoute("/public-meetings")({
   loader: async ({ context: { queryClient } }) => {
@@ -40,11 +40,13 @@ function PublicMeetingsPage() {
 
   // Build set of meeting IDs I'm participating in
   const myMeetingIds = useMemo(() => {
-    return new Set(
-      myParticipations
-        .filter((p) => p.status === "accepted" || p.status === "creator")
-        .map((p) => p.meetingId)
-    );
+    const ids: Id<"meetings">[] = [];
+    for (const p of myParticipations) {
+      if (p.status === "accepted" || p.status === "creator") {
+        ids.push(p.meetingId);
+      }
+    }
+    return new Set(ids);
   }, [myParticipations]);
 
   const handleJoinMeeting = async (meetingId: Id<"meetings">) => {

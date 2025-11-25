@@ -1,21 +1,37 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUserOrCrash, getCurrentUserOrNull, getUserByIdOrCrash } from "./users";
-import { getMeetingOrCrash, getMeetingParticipation } from "./meetingUtils";
+import { getMeetingOrCrash } from "./meetingUtils";
+import { getMeetingParticipation } from "./meetingParticipantsUtils";
 import { meetingFields } from "./schema";
 
 // Queries
 
 export const get = query({
-  args: { participationId: v.id("meetingParticipants") },
+  args: { participantId: v.id("meetingParticipants") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.participationId);
+    return await ctx.db.get(args.participantId);
   },
 });
 
 export const listByMeeting = query({
   args: { meetingId: v.id("meetings") },
   handler: async (ctx, args) => {
+    const meeting = await getMeetingOrCrash(ctx, args.meetingId);
+
+    // Only allow seeing participants of public meetings or meetings the user is a participant of
+    if (!meeting.isPublic) {
+      const user = await getCurrentUserOrNull(ctx);
+      if (!user) {
+        throw new ConvexError("Not authorized to view participants of this meeting");
+      }
+
+      const participation = await getMeetingParticipation(ctx, args.meetingId, user._id);
+      if (!participation) {
+        throw new ConvexError("Not authorized to view participants of this meeting");
+      }
+    }
+
     return await ctx.db
       .query("meetingParticipants")
       .withIndex("by_meeting", (q) => q.eq("meetingId", args.meetingId))
@@ -23,13 +39,20 @@ export const listByMeeting = query({
   },
 });
 
-export const listByUser = query({
-  args: { userId: v.optional(v.id("users")) },
+export const listByParticipatingUser = query({
+  args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    const user = args.userId
-      ? await ctx.db.get(args.userId)
-      : await getCurrentUserOrNull(ctx);
+    return await ctx.db
+      .query("meetingParticipants")
+      .withIndex("by_user_only", (q) => q.eq("userId", args.userId))
+      .collect();
+  },
+});
 
+export const listMeetingsForCurrentUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUserOrNull(ctx);
     if (!user) return [];
 
     return await ctx.db
@@ -39,7 +62,7 @@ export const listByUser = query({
   },
 });
 
-export const getMyParticipation = query({
+export const getCurrentUserParticipation = query({
   args: { meetingId: v.id("meetings") },
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrNull(ctx);

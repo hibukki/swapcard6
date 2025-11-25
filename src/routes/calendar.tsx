@@ -8,7 +8,7 @@ import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
 import { z } from "zod";
 
-const myParticipationsQuery = convexQuery(api.meetingParticipants.listByUser, {});
+const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
 const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
 
 const calendarSearchSchema = z.object({

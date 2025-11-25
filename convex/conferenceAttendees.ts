@@ -1,15 +1,16 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUserOrCrash, getCurrentUserOrNull, getUserByIdOrCrash } from "./users";
-import { getConferenceOrCrash, getConferenceAttendance } from "./conferenceUtils";
+import { getConferenceOrCrash } from "./conferenceUtils";
+import { getConferenceAttendance } from "./conferenceAttendeesUtils";
 import { conferenceAttendeeRoleValidator } from "./schema";
 
 // Queries
 
 export const get = query({
-  args: { attendanceId: v.id("conferenceAttendees") },
+  args: { attendeeId: v.id("conferenceAttendees") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.attendanceId);
+    return await ctx.db.get(args.attendeeId);
   },
 });
 
@@ -23,13 +24,20 @@ export const listByConference = query({
   },
 });
 
-export const listByUser = query({
-  args: { userId: v.optional(v.id("users")) },
+export const listByAttendingUser = query({
+  args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    const user = args.userId
-      ? await ctx.db.get(args.userId)
-      : await getCurrentUserOrNull(ctx);
+    return await ctx.db
+      .query("conferenceAttendees")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+  },
+});
 
+export const listConferencesAttendedByCurrentUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUserOrNull(ctx);
     if (!user) return [];
 
     return await ctx.db
@@ -39,7 +47,7 @@ export const listByUser = query({
   },
 });
 
-export const getMyAttendance = query({
+export const getCurrentUserAttendance = query({
   args: { conferenceId: v.id("conferences") },
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrNull(ctx);

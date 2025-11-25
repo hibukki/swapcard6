@@ -7,7 +7,7 @@ import { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
 
-const myParticipationsQuery = convexQuery(api.meetingParticipants.listByUser, {});
+const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
 
 export const Route = createFileRoute("/agenda")({
   loader: async ({ context: { queryClient } }) => {
@@ -34,37 +34,44 @@ function AgendaPage() {
     return new Map(allUsers.map((u) => [u._id, u]));
   }, [allUsers]);
 
+  type Participation = Doc<"meetingParticipants">;
+  type EnrichedInvitation = { participation: Participation; meeting: Doc<"meetings">; requester: Doc<"users"> | null | undefined };
+  type EnrichedMeeting = { participation: Participation; meeting: Doc<"meetings"> };
+
   // Filter and enrich participations
-  const pendingInvitations = useMemo(() => {
-    return participations
-      .filter((p) => p.status === "pending")
-      .map((p) => {
-        const meeting = meetingsMap.get(p.meetingId);
-        const requester = meeting ? usersMap.get(meeting.creatorId) : null;
-        return { participation: p, meeting, requester };
-      })
-      .filter((item) => item.meeting != null);
+  const pendingInvitations = useMemo((): EnrichedInvitation[] => {
+    const results: EnrichedInvitation[] = [];
+    for (const p of participations) {
+      if (p.status !== "pending") continue;
+      const meeting = meetingsMap.get(p.meetingId);
+      if (!meeting) continue;
+      const requester = usersMap.get(meeting.creatorId);
+      results.push({ participation: p, meeting, requester });
+    }
+    return results;
   }, [participations, meetingsMap, usersMap]);
 
-  const sentRequests = useMemo(() => {
+  const sentRequests = useMemo((): EnrichedMeeting[] => {
     // Get meetings where I'm the creator and there are pending participants
-    return participations
-      .filter((p) => p.status === "creator")
-      .map((p) => {
-        const meeting = meetingsMap.get(p.meetingId);
-        return { participation: p, meeting };
-      })
-      .filter((item) => item.meeting != null && !item.meeting.isPublic);
+    const results: EnrichedMeeting[] = [];
+    for (const p of participations) {
+      if (p.status !== "creator") continue;
+      const meeting = meetingsMap.get(p.meetingId);
+      if (!meeting || meeting.isPublic) continue;
+      results.push({ participation: p, meeting });
+    }
+    return results;
   }, [participations, meetingsMap]);
 
-  const confirmedMeetings = useMemo(() => {
-    return participations
-      .filter((p) => p.status === "accepted" || p.status === "creator")
-      .map((p) => {
-        const meeting = meetingsMap.get(p.meetingId);
-        return { participation: p, meeting };
-      })
-      .filter((item) => item.meeting != null);
+  const confirmedMeetings = useMemo((): EnrichedMeeting[] => {
+    const results: EnrichedMeeting[] = [];
+    for (const p of participations) {
+      if (p.status !== "accepted" && p.status !== "creator") continue;
+      const meeting = meetingsMap.get(p.meetingId);
+      if (!meeting) continue;
+      results.push({ participation: p, meeting });
+    }
+    return results;
   }, [participations, meetingsMap]);
 
   if (!allMeetings || !allUsers) {
@@ -96,12 +103,12 @@ function AgendaPage() {
               {pendingInvitations.map(({ participation, meeting, requester }) => (
                 <IncomingRequestCard
                   key={participation._id}
-                  meetingId={meeting!._id}
+                  meetingId={meeting._id}
                   requester={requester}
-                  description={meeting!.description}
-                  location={meeting!.location}
-                  scheduledTime={meeting!.scheduledTime}
-                  duration={meeting!.duration}
+                  description={meeting.description}
+                  location={meeting.location}
+                  scheduledTime={meeting.scheduledTime}
+                  duration={meeting.duration}
                 />
               ))}
             </div>
@@ -128,22 +135,22 @@ function AgendaPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="font-semibold">
-                          {meeting!.title}
+                          {meeting.title}
                         </h3>
                         <p className="text-sm mt-2 opacity-80 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {new Date(meeting!.scheduledTime).toLocaleString()}
-                          {` (${meeting!.duration} min)`}
+                          {new Date(meeting.scheduledTime).toLocaleString()}
+                          {` (${meeting.duration} min)`}
                         </p>
-                        {meeting!.description && (
+                        {meeting.description && (
                           <p className="text-sm mt-2 opacity-80">
-                            {meeting!.description}
+                            {meeting.description}
                           </p>
                         )}
-                        {meeting!.location && (
+                        {meeting.location && (
                           <p className="text-sm mt-1 opacity-70 flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
-                            {meeting!.location}
+                            {meeting.location}
                           </p>
                         )}
                       </div>
@@ -177,30 +184,30 @@ function AgendaPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="font-semibold">
-                          {meeting!.title}
+                          {meeting.title}
                         </h3>
-                        {meeting!.description && (
+                        {meeting.description && (
                           <p className="text-sm opacity-70 mt-1">
-                            {meeting!.description}
+                            {meeting.description}
                           </p>
                         )}
                         <div className="mt-2 space-y-1">
                           <p className="text-sm flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {new Date(meeting!.scheduledTime).toLocaleString()} (
-                            {meeting!.duration} min)
+                            {new Date(meeting.scheduledTime).toLocaleString()} (
+                            {meeting.duration} min)
                           </p>
-                          {meeting!.location && (
+                          {meeting.location && (
                             <p className="text-sm flex items-center gap-1">
                               <MapPin className="w-3 h-3" />
-                              {meeting!.location}
+                              {meeting.location}
                             </p>
                           )}
                         </div>
                       </div>
                       <div className="flex flex-col gap-2 items-end">
                         <span className="badge badge-success">Confirmed</span>
-                        {meeting!.isPublic && (
+                        {meeting.isPublic && (
                           <span className="badge badge-info">Public</span>
                         )}
                         {participation.status === "creator" && (

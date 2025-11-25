@@ -19,28 +19,3 @@ export async function getMeetingOrCrash(
   }
   return meeting;
 }
-
-export async function getMeetingParticipation(
-  ctx: QueryCtx | MutationCtx,
-  meetingId: Id<"meetings">,
-  userId: Id<"users">,
-) {
-  return await ctx.db
-    .query("meetingParticipants")
-    .withIndex("by_user", (q) =>
-      q.eq("userId", userId).eq("meetingId", meetingId)
-    )
-    .unique();
-}
-
-export async function requireCreatorRole(
-  ctx: QueryCtx | MutationCtx,
-  meetingId: Id<"meetings">,
-  userId: Id<"users">,
-) {
-  const participation = await getMeetingParticipation(ctx, meetingId, userId);
-  if (!participation || participation.status !== "creator") {
-    throw new ConvexError("Only the meeting creator can perform this action");
-  }
-  return participation;
-}
