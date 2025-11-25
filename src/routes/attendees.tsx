@@ -24,6 +24,8 @@ function matchesSearch(user: Doc<"users">, query: string): boolean {
   if (user.company?.toLowerCase().includes(q)) return true;
   if (user.bio?.toLowerCase().includes(q)) return true;
   if (user.interests?.some((i) => i.toLowerCase().includes(q))) return true;
+  if (user.canHelpWith?.toLowerCase().includes(q)) return true;
+  if (user.needsHelpWith?.toLowerCase().includes(q)) return true;
   return false;
 }
 
@@ -126,6 +128,20 @@ function AttendeesPage() {
                         +{user.interests.length - 3}
                       </span>
                     )}
+                  </div>
+                )}
+
+                {user.canHelpWith && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium opacity-60 mb-1">Can help with</p>
+                    <p className="text-sm opacity-80 line-clamp-2">{user.canHelpWith}</p>
+                  </div>
+                )}
+
+                {user.needsHelpWith && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium opacity-60 mb-1">Looking for help with</p>
+                    <p className="text-sm opacity-80 line-clamp-2">{user.needsHelpWith}</p>
                   </div>
                 )}
 

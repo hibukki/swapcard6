@@ -22,6 +22,8 @@ const profileSchema = z.object({
   company: z.string().max(100),
   role: z.string().max(100),
   interests: z.string().max(500),
+  canHelpWith: z.string().max(500),
+  needsHelpWith: z.string().max(500),
 });
 
 function ProfilePage() {
@@ -36,6 +38,8 @@ function ProfilePage() {
       company: user?.company ?? "",
       role: user?.role ?? "",
       interests: user?.interests?.join(", ") ?? "",
+      canHelpWith: user?.canHelpWith ?? "",
+      needsHelpWith: user?.needsHelpWith ?? "",
     },
     validators: {
       onChange: profileSchema,
@@ -53,6 +57,8 @@ function ProfilePage() {
           company: value.company || undefined,
           role: value.role || undefined,
           interests: interests?.length ? interests : undefined,
+          canHelpWith: value.canHelpWith || undefined,
+          needsHelpWith: value.needsHelpWith || undefined,
         });
 
         void navigate({ to: "/attendees" });
@@ -183,6 +189,50 @@ function ProfilePage() {
                 <p className="text-sm opacity-70 mt-1">
                   Separate multiple interests with commas
                 </p>
+                {!field.state.meta.isValid && (
+                  <p className="text-error text-sm mt-1">
+                    {field.state.meta.errors.map((e) => e?.message).join(", ")}
+                  </p>
+                )}
+              </div>
+            )}
+          </form.Field>
+
+          <form.Field name="canHelpWith">
+            {(field) => (
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  How I can help others
+                </label>
+                <textarea
+                  className="textarea textarea-border w-full"
+                  rows={3}
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="Share your expertise, what you can offer to other attendees..."
+                />
+                {!field.state.meta.isValid && (
+                  <p className="text-error text-sm mt-1">
+                    {field.state.meta.errors.map((e) => e?.message).join(", ")}
+                  </p>
+                )}
+              </div>
+            )}
+          </form.Field>
+
+          <form.Field name="needsHelpWith">
+            {(field) => (
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  How others can help me
+                </label>
+                <textarea
+                  className="textarea textarea-border w-full"
+                  rows={3}
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="What are you looking to learn or get help with..."
+                />
                 {!field.state.meta.isValid && (
                   <p className="text-error text-sm mt-1">
                     {field.state.meta.errors.map((e) => e?.message).join(", ")}

@@ -111,6 +111,8 @@ export const updateProfile = mutation({
     company: v.optional(v.string()),
     role: v.optional(v.string()),
     interests: v.optional(v.array(v.string())),
+    canHelpWith: v.optional(v.string()),
+    needsHelpWith: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();

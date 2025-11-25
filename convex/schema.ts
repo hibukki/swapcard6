@@ -81,6 +81,8 @@ export default defineSchema({
     company: v.optional(v.string()),
     role: v.optional(v.string()),
     interests: v.optional(v.array(v.string())),
+    canHelpWith: v.optional(v.string()),
+    needsHelpWith: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
   })
     .index("by_clerkId", ["clerkId"])
