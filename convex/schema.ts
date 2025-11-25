@@ -13,7 +13,8 @@ export default defineSchema({
     imageUrl: v.optional(v.string()),
   })
     .index("by_clerkId", ["clerkId"])
-    .index("by_email", ["email"]),
+    .index("by_email", ["email"])
+    .index("by_name", ["name"]),
 
   meetings: defineTable({
     creatorId: v.id("users"),
@@ -28,7 +29,8 @@ export default defineSchema({
   })
     .index("by_creator", ["creatorId", "scheduledTime"])
     .index("by_time", ["scheduledTime"])
-    .index("by_public", ["isPublic", "scheduledTime"]),
+    .index("by_public", ["isPublic", "scheduledTime"])
+    .index("by_title_public", ["title", "isPublic"]),
 
   // Junction table for meeting participants
   meetingParticipants: defineTable({
