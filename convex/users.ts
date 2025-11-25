@@ -1,5 +1,6 @@
 import { mutation, query, QueryCtx, MutationCtx } from "./_generated/server";
 import { ConvexError, v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 
 export async function getCurrentUserOrNull(ctx: QueryCtx | MutationCtx) {
   const identity = await ctx.auth.getUserIdentity();
@@ -27,6 +28,26 @@ export async function getCurrentUserOrCrash(ctx: QueryCtx | MutationCtx) {
   if (!user) {
     throw new ConvexError("Not authenticated");
   }
+
+  return user;
+}
+
+export async function getUserById(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+) {
+  return await ctx.db.get(userId);
+}
+
+export async function getUserByIdOrCrash(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+) {
+  const user = await ctx.db.get(userId);
+  if (!user) {
+    throw new ConvexError("User not found");
+  }
+  return user;
 }
 
 export const ensureUser = mutation({
@@ -34,7 +55,7 @@ export const ensureUser = mutation({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Not authenticated");
+      throw new ConvexError("Not authenticated");
     }
 
     const existingUser = await ctx.db
@@ -111,6 +132,8 @@ export const updateProfile = mutation({
   },
 });
 
+// Note: This fetches all users and filters in the client. Acceptable for small user counts.
+// For large scale, consider pagination with .paginate() or a different approach.
 export const listUsers = query({
   args: {},
   handler: async (ctx) => {
