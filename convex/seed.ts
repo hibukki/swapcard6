@@ -175,11 +175,8 @@ export const seedData = internalMutation({
       // Check if this public meeting already exists
       const existing = await ctx.db
         .query("meetings")
-        .filter((q) =>
-          q.and(
-            q.eq(q.field("title"), template.title),
-            q.eq(q.field("isPublic"), true)
-          )
+        .withIndex("by_title_public", (q) =>
+          q.eq("title", template.title).eq("isPublic", true)
         )
         .first();
 
@@ -255,11 +252,12 @@ export const seedData = internalMutation({
         for (const meetingId of shuffledPublic) {
           if (added >= publicNeeded) break;
 
-          // Check if already participating
+          // Check if already participating (use by_user index which has both userId and meetingId)
           const existing = await ctx.db
             .query("meetingParticipants")
-            .withIndex("by_meeting", (q) => q.eq("meetingId", meetingId))
-            .filter((q) => q.eq(q.field("userId"), user._id))
+            .withIndex("by_user", (q) =>
+              q.eq("userId", user._id).eq("meetingId", meetingId)
+            )
             .first();
 
           if (!existing) {

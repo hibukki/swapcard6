@@ -1,5 +1,10 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import {
+  getCurrentUserOrNull,
+  getUserById,
+  getUserByIdOrCrash,
+} from "./users";
 
 // Send meeting request - creates meeting with requester as creator and recipient as pending
 export const sendMeetingRequest = mutation({
@@ -11,24 +16,12 @@ export const sendMeetingRequest = mutation({
     message: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const requester = await getCurrentUserOrNull(ctx);
+    if (!requester) {
       throw new ConvexError("Not authenticated");
     }
 
-    const requester = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
-    if (!requester) {
-      throw new ConvexError("User not found");
-    }
-
-    const recipient = await ctx.db.get(args.recipientId);
-    if (!recipient) {
-      throw new ConvexError("Recipient not found");
-    }
+    const recipient = await getUserByIdOrCrash(ctx, args.recipientId);
 
     // Check if a pending request already exists between these users
     const existingParticipations = await ctx.db
@@ -88,14 +81,7 @@ export const sendMeetingRequest = mutation({
 export const getPendingInvitations = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
+    const user = await getCurrentUserOrNull(ctx);
     if (!user) return [];
 
     // Get all pending participations
@@ -111,7 +97,7 @@ export const getPendingInvitations = query({
         const meeting = await ctx.db.get(participation.meetingId);
         if (!meeting) return null;
 
-        const creator = await ctx.db.get(meeting.creatorId);
+        const creator = await getUserById(ctx, meeting.creatorId);
 
         return {
           ...meeting,
@@ -129,14 +115,7 @@ export const getPendingInvitations = query({
 export const getSentRequests = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
+    const user = await getCurrentUserOrNull(ctx);
     if (!user) return [];
 
     // Get all meetings where user is creator
@@ -165,7 +144,7 @@ export const getSentRequests = query({
         if (pendingParticipations.length === 0) return null; // No pending invites
 
         const recipients = await Promise.all(
-          pendingParticipations.map((p) => ctx.db.get(p.userId))
+          pendingParticipations.map((p) => getUserById(ctx, p.userId))
         );
 
         return {
@@ -186,18 +165,9 @@ export const respondToInvitation = mutation({
     accept: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
+    const user = await getCurrentUserOrNull(ctx);
     if (!user) {
-      throw new ConvexError("User not found");
+      throw new ConvexError("Not authenticated");
     }
 
     const meeting = await ctx.db.get(args.meetingId);
@@ -232,14 +202,7 @@ export const respondToInvitation = mutation({
 export const getMyMeetings = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
+    const user = await getCurrentUserOrNull(ctx);
     if (!user) return [];
 
     // Get all participations where status is creator or accepted
@@ -269,7 +232,7 @@ export const getMyMeetings = query({
 
         const participants = await Promise.all(
           activeParticipations.map(async (p) => {
-            const u = await ctx.db.get(p.userId);
+            const u = await getUserById(ctx, p.userId);
             return u ? { ...u, role: p.status } : null;
           })
         );
@@ -299,18 +262,9 @@ export const createMeeting = mutation({
     maxParticipants: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
+    const user = await getCurrentUserOrNull(ctx);
     if (!user) {
-      throw new ConvexError("User not found");
+      throw new ConvexError("Not authenticated");
     }
 
     const meetingId = await ctx.db.insert("meetings", {
@@ -346,7 +300,7 @@ export const getPublicMeetings = query({
 
     const enriched = await Promise.all(
       publicMeetings.map(async (meeting) => {
-        const creator = await ctx.db.get(meeting.creatorId);
+        const creator = await getUserById(ctx, meeting.creatorId);
 
         // Count current participants (only accepted and creator)
         const participations = await ctx.db
@@ -360,7 +314,7 @@ export const getPublicMeetings = query({
 
         const participants = await Promise.all(
           activeParticipations.map(async (p) => {
-            const u = await ctx.db.get(p.userId);
+            const u = await getUserById(ctx, p.userId);
             return u ? { ...u, role: p.status } : null;
           })
         );
@@ -390,18 +344,9 @@ export const joinMeeting = mutation({
     meetingId: v.id("meetings"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
+    const user = await getCurrentUserOrNull(ctx);
     if (!user) {
-      throw new ConvexError("User not found");
+      throw new ConvexError("Not authenticated");
     }
 
     const meeting = await ctx.db.get(args.meetingId);
@@ -463,18 +408,9 @@ export const leaveMeeting = mutation({
     meetingId: v.id("meetings"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
+    const user = await getCurrentUserOrNull(ctx);
     if (!user) {
-      throw new ConvexError("User not found");
+      throw new ConvexError("Not authenticated");
     }
 
     const meeting = await ctx.db.get(args.meetingId);
