@@ -701,6 +701,8 @@ function MeetingDetailModal({
 }) {
   const join = useMutation(api.meetingParticipants.join);
   const leave = useMutation(api.meetingParticipants.leave);
+  const respond = useMutation(api.meetingParticipants.respond);
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleJoin = async () => {
@@ -729,7 +731,27 @@ function MeetingDetailModal({
     }
   };
 
+  const handleRespond = async (accept: boolean) => {
+    setIsLoading(true);
+    try {
+      await respond({ meetingId: meeting._id, accept });
+      onClose();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to respond");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreatorClick = () => {
+    if (creator) {
+      onClose();
+      void navigate({ to: "/attendees", search: { q: creator.name } });
+    }
+  };
+
   const isParticipant = meeting.isMyMeeting || meeting.userIsParticipant;
+  const isPendingIncoming = meeting.isPendingRequest && !meeting.isOutgoing;
 
   return (
     <dialog className="modal modal-open">
@@ -741,7 +763,9 @@ function MeetingDetailModal({
               <span className="badge badge-primary">Public</span>
             )}
             {meeting.isPendingRequest && (
-              <span className="badge badge-warning">Pending</span>
+              <span className="badge badge-warning">
+                {meeting.isOutgoing ? "Awaiting Response" : "Pending Request"}
+              </span>
             )}
           </div>
         </div>
@@ -774,7 +798,12 @@ function MeetingDetailModal({
           {creator && (
             <div className="text-sm">
               <span className="opacity-70">Hosted by: </span>
-              <span className="font-semibold">{creator.name}</span>
+              <button
+                onClick={handleCreatorClick}
+                className="font-semibold link link-hover link-primary"
+              >
+                {creator.name}
+              </button>
             </div>
           )}
         </div>
@@ -783,6 +812,28 @@ function MeetingDetailModal({
           <button type="button" className="btn" onClick={onClose}>
             Close
           </button>
+
+          {/* Accept/Decline buttons for incoming pending requests */}
+          {isPendingIncoming && (
+            <>
+              <button
+                className="btn btn-error"
+                onClick={() => void handleRespond(false)}
+                disabled={isLoading}
+              >
+                {isLoading ? "..." : "Decline"}
+              </button>
+              <button
+                className="btn btn-success"
+                onClick={() => void handleRespond(true)}
+                disabled={isLoading}
+              >
+                {isLoading ? "..." : "Accept"}
+              </button>
+            </>
+          )}
+
+          {/* Join/Leave buttons for public meetings (not pending) */}
           {meeting.isPublic && !meeting.isPendingRequest && (
             <>
               {isParticipant ? (

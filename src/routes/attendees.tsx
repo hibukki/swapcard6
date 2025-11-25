@@ -3,13 +3,19 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { MessageSquare, Search, UserPlus, X } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { z } from "zod";
 import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
 
 const usersQuery = convexQuery(api.users.listUsers, {});
 
+const attendeesSearchSchema = z.object({
+  q: z.string().optional(),
+});
+
 export const Route = createFileRoute("/attendees")({
+  validateSearch: attendeesSearchSchema,
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session)
       await queryClient.ensureQueryData(usersQuery);
@@ -32,7 +38,15 @@ function matchesSearch(user: Doc<"users">, query: string): boolean {
 function AttendeesPage() {
   const { data: users } = useSuspenseQuery(usersQuery);
   const [selectedUser, setSelectedUser] = useState<Id<"users"> | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const search = Route.useSearch();
+  const [searchQuery, setSearchQuery] = useState(search.q ?? "");
+
+  // Update search query when URL param changes
+  useEffect(() => {
+    if (search.q !== undefined) {
+      setSearchQuery(search.q);
+    }
+  }, [search.q]);
 
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users;
