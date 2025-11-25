@@ -22,6 +22,12 @@ And in another shell:
 pnpm run dev:frontend
 ```
 
+### Tests
+
+```bash
+pnpm run test:e2e
+```
+
 ## License
 
 MIT
