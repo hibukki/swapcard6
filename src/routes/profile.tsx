@@ -211,7 +211,50 @@ function ProfilePage() {
             </button>
           </div>
         </form>
+
+        <SeedDataSection />
       </div>
+    </div>
+  );
+}
+
+function SeedDataSection() {
+  const seedData = useMutation(api.seed.seedDataWithCurrentUser);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  const handleSeed = async () => {
+    setIsSeeding(true);
+    setResult(null);
+    try {
+      await seedData({});
+      setResult("Test data created successfully!");
+    } catch (error) {
+      setResult(error instanceof Error ? error.message : "Failed to seed data");
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  return (
+    <div className="mt-12 pt-8 border-t border-base-300">
+      <h2 className="text-lg font-semibold mb-2">Developer Tools</h2>
+      <p className="text-sm opacity-70 mb-4">
+        Generate test data including sample users, conferences, meetings, and notifications.
+        Your account will be included in the relationships.
+      </p>
+      <button
+        className="btn btn-outline btn-sm"
+        onClick={() => void handleSeed()}
+        disabled={isSeeding}
+      >
+        {isSeeding ? "Seeding..." : "Seed Test Data"}
+      </button>
+      {result && (
+        <p className={`text-sm mt-2 ${result.includes("success") ? "text-success" : "text-error"}`}>
+          {result}
+        </p>
+      )}
     </div>
   );
 }
