@@ -22,6 +22,12 @@ And in another shell:
 pnpm run dev:frontend
 ```
 
+### Lint
+
+```bash
+pnpm run lint
+```
+
 ### Tests
 
 ```bash
