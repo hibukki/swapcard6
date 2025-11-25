@@ -10,8 +10,16 @@ pnpm run init
 
 ## Development
 
+### Run the dev server
+
 ```bash
-pnpm dev
+pnpm dev:backend
+```
+
+And in another shell:
+
+```bash
+pnpm dev:frontend
 ```
 
 ## License
