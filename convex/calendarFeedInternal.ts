@@ -59,7 +59,9 @@ export const getCalendarFeed = internalQuery({
       (m): m is NonNullable<typeof m> => m !== null
     );
 
-    const icsContent = generateICSFeed(validMeetings, args.baseUrl);
+    const icsContent = generateICSFeed(validMeetings, {
+      baseUrl: args.baseUrl,
+    });
 
     return { icsContent };
   },
