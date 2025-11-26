@@ -1,12 +1,12 @@
-import { Link } from "@tanstack/react-router";
 import { Calendar } from "lucide-react";
-import type { Doc } from "../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../convex/_generated/dataModel";
 
 interface SharedMeetingsListProps {
   meetings: Doc<"meetings">[];
+  onMeetingClick?: (meetingId: Id<"meetings">) => void;
 }
 
-export function SharedMeetingsList({ meetings }: SharedMeetingsListProps) {
+export function SharedMeetingsList({ meetings, onMeetingClick }: SharedMeetingsListProps) {
   if (meetings.length === 0) {
     return null;
   }
@@ -20,11 +20,11 @@ export function SharedMeetingsList({ meetings }: SharedMeetingsListProps) {
         </h3>
         <div className="space-y-2">
           {meetings.map((meeting) => (
-            <Link
+            <button
               key={meeting._id}
-              to="/meeting/$meetingId"
-              params={{ meetingId: meeting._id }}
-              className="block p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
+              type="button"
+              onClick={() => onMeetingClick?.(meeting._id)}
+              className="block w-full text-left p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
             >
               <div className="font-semibold">{meeting.title}</div>
               <div className="text-sm opacity-70">
@@ -39,7 +39,7 @@ export function SharedMeetingsList({ meetings }: SharedMeetingsListProps) {
                 {meeting.duration} min
                 {meeting.location && ` · ${meeting.location}`}
               </div>
-            </Link>
+            </button>
           ))}
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ArrowLeft } from "lucide-react";
 import { api } from "../../convex/_generated/api";
@@ -22,6 +22,7 @@ export const Route = createFileRoute("/user/$userId")({
 
 function UserPage() {
   const { userId } = Route.useParams();
+  const navigate = useNavigate();
 
   const { data: user } = useSuspenseQuery(
     convexQuery(api.users.get, { userId: userId as Id<"users"> })
@@ -54,8 +55,16 @@ function UserPage() {
       </div>
 
       <div className="space-y-6">
-        <UserProfileCard user={user} />
-        {sharedMeetings && <SharedMeetingsList meetings={sharedMeetings} />}
+        <UserProfileCard
+          user={user}
+          onRequestMeeting={() => void navigate({ to: "/attendees", search: { q: user.name } })}
+        />
+        {sharedMeetings && (
+          <SharedMeetingsList
+            meetings={sharedMeetings}
+            onMeetingClick={(meetingId) => void navigate({ to: "/meeting/$meetingId", params: { meetingId } })}
+          />
+        )}
       </div>
     </div>
   );

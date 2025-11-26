@@ -1,0 +1,494 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`UserProfileCard > renders avatar placeholder when no image 1`] = `
+<div>
+  <div
+    class="card bg-base-200"
+  >
+    <div
+      class="card-body"
+    >
+      <div
+        class="flex items-start gap-4"
+      >
+        <div
+          class="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary"
+        >
+          A
+        </div>
+        <div
+          class="flex-1"
+        >
+          <h1
+            class="text-2xl font-bold"
+          >
+            Alice
+          </h1>
+        </div>
+      </div>
+      <div
+        class="divider"
+      />
+      <div
+        class="space-y-3"
+      >
+        <div
+          class="flex items-center gap-3"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-mail w-5 h-5 opacity-70"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"
+            />
+            <rect
+              height="16"
+              rx="2"
+              width="20"
+              x="2"
+              y="4"
+            />
+          </svg>
+          <a
+            class="link link-hover"
+            href="mailto:test@example.com"
+          >
+            test@example.com
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`UserProfileCard > renders minimal user 1`] = `
+<div>
+  <div
+    class="card bg-base-200"
+  >
+    <div
+      class="card-body"
+    >
+      <div
+        class="flex items-start gap-4"
+      >
+        <div
+          class="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary"
+        >
+          T
+        </div>
+        <div
+          class="flex-1"
+        >
+          <h1
+            class="text-2xl font-bold"
+          >
+            Test User
+          </h1>
+        </div>
+      </div>
+      <div
+        class="divider"
+      />
+      <div
+        class="space-y-3"
+      >
+        <div
+          class="flex items-center gap-3"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-mail w-5 h-5 opacity-70"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"
+            />
+            <rect
+              height="16"
+              rx="2"
+              width="20"
+              x="2"
+              y="4"
+            />
+          </svg>
+          <a
+            class="link link-hover"
+            href="mailto:test@example.com"
+          >
+            test@example.com
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`UserProfileCard > renders user with all fields 1`] = `
+<div>
+  <div
+    class="card bg-base-200"
+  >
+    <div
+      class="card-body"
+    >
+      <div
+        class="flex items-start gap-4"
+      >
+        <img
+          alt="Jane Doe"
+          class="w-20 h-20 rounded-full object-cover"
+          src="https://example.com/avatar.jpg"
+        />
+        <div
+          class="flex-1"
+        >
+          <h1
+            class="text-2xl font-bold"
+          >
+            Jane Doe
+          </h1>
+          <p
+            class="opacity-70"
+          >
+            Senior Developer
+             at 
+            Acme Corp
+          </p>
+        </div>
+      </div>
+      <div
+        class="divider"
+      />
+      <p
+        class="whitespace-pre-wrap"
+      >
+        Software engineer passionate about open source
+      </p>
+      <div
+        class="divider"
+      />
+      <div
+        class="space-y-3"
+      >
+        <div
+          class="flex items-center gap-3"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-mail w-5 h-5 opacity-70"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"
+            />
+            <rect
+              height="16"
+              rx="2"
+              width="20"
+              x="2"
+              y="4"
+            />
+          </svg>
+          <a
+            class="link link-hover"
+            href="mailto:jane@example.com"
+          >
+            jane@example.com
+          </a>
+        </div>
+        <div
+          class="flex items-center gap-3"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-building2 lucide-building-2 w-5 h-5 opacity-70"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"
+            />
+            <path
+              d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
+            />
+            <path
+              d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"
+            />
+            <path
+              d="M10 6h4"
+            />
+            <path
+              d="M10 10h4"
+            />
+            <path
+              d="M10 14h4"
+            />
+            <path
+              d="M10 18h4"
+            />
+          </svg>
+          <span>
+            Acme Corp
+          </span>
+        </div>
+        <div
+          class="flex items-center gap-3"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-briefcase w-5 h-5 opacity-70"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"
+            />
+            <rect
+              height="14"
+              rx="2"
+              width="20"
+              x="2"
+              y="6"
+            />
+          </svg>
+          <span>
+            Senior Developer
+          </span>
+        </div>
+        <div
+          class="flex items-start gap-3"
+        >
+          <span
+            class="opacity-70 text-sm"
+          >
+            Interests:
+          </span>
+          <div
+            class="flex flex-wrap gap-1"
+          >
+            <span
+              class="badge badge-sm badge-outline"
+            >
+              TypeScript
+            </span>
+            <span
+              class="badge badge-sm badge-outline"
+            >
+              React
+            </span>
+            <span
+              class="badge badge-sm badge-outline"
+            >
+              Convex
+            </span>
+          </div>
+        </div>
+        <div
+          class="flex items-start gap-3 p-3 bg-success/10 rounded-lg"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-hand-helping w-5 h-5 text-success flex-shrink-0 mt-0.5"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11 12h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 14"
+            />
+            <path
+              d="m7 18 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9"
+            />
+            <path
+              d="m2 13 6 6"
+            />
+          </svg>
+          <div>
+            <span
+              class="text-sm font-semibold text-success"
+            >
+              Can help with:
+            </span>
+            <p
+              class="text-sm mt-1 whitespace-pre-wrap"
+            >
+              Code reviews, architecture discussions
+            </p>
+          </div>
+        </div>
+        <div
+          class="flex items-start gap-3 p-3 bg-info/10 rounded-lg"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-circle-help w-5 h-5 text-info flex-shrink-0 mt-0.5"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+            />
+            <path
+              d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"
+            />
+            <path
+              d="M12 17h.01"
+            />
+          </svg>
+          <div>
+            <span
+              class="text-sm font-semibold text-info"
+            >
+              Looking for help with:
+            </span>
+            <p
+              class="text-sm mt-1 whitespace-pre-wrap"
+            >
+              Mobile development, DevOps
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`UserProfileCard > renders with request meeting button when callback provided 1`] = `
+<div>
+  <div
+    class="card bg-base-200"
+  >
+    <div
+      class="card-body"
+    >
+      <div
+        class="flex items-start gap-4"
+      >
+        <div
+          class="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary"
+        >
+          T
+        </div>
+        <div
+          class="flex-1"
+        >
+          <h1
+            class="text-2xl font-bold"
+          >
+            Test User
+          </h1>
+        </div>
+      </div>
+      <div
+        class="divider"
+      />
+      <div
+        class="space-y-3"
+      >
+        <div
+          class="flex items-center gap-3"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-mail w-5 h-5 opacity-70"
+            fill="none"
+            height="24"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"
+            />
+            <rect
+              height="16"
+              rx="2"
+              width="20"
+              x="2"
+              y="4"
+            />
+          </svg>
+          <a
+            class="link link-hover"
+            href="mailto:test@example.com"
+          >
+            test@example.com
+          </a>
+        </div>
+      </div>
+      <div
+        class="card-actions justify-end mt-6"
+      >
+        <button
+          class="btn btn-primary"
+        >
+          Request a Meeting
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;

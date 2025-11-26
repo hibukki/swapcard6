@@ -1,13 +1,12 @@
-import { Link } from "@tanstack/react-router";
 import { Building2, Briefcase, HandHelping, HelpCircle, Mail } from "lucide-react";
 import type { Doc } from "../../convex/_generated/dataModel";
 
 interface UserProfileCardProps {
   user: Doc<"users">;
-  showRequestMeeting?: boolean;
+  onRequestMeeting?: () => void;
 }
 
-export function UserProfileCard({ user, showRequestMeeting = true }: UserProfileCardProps) {
+export function UserProfileCard({ user, onRequestMeeting }: UserProfileCardProps) {
   return (
     <div className="card bg-base-200">
       <div className="card-body">
@@ -105,15 +104,11 @@ export function UserProfileCard({ user, showRequestMeeting = true }: UserProfile
         </div>
 
         {/* Request Meeting Button */}
-        {showRequestMeeting && (
+        {onRequestMeeting && (
           <div className="card-actions justify-end mt-6">
-            <Link
-              to="/attendees"
-              search={{ q: user.name }}
-              className="btn btn-primary"
-            >
+            <button onClick={onRequestMeeting} className="btn btn-primary">
               Request a Meeting
-            </Link>
+            </button>
           </div>
         )}
       </div>

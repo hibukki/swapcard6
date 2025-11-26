@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { Users } from "lucide-react";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 
@@ -13,7 +12,7 @@ interface ParticipantListProps {
   usersMap: Map<Id<"users">, Doc<"users">>;
   showHeader?: boolean;
   maxHeight?: string;
-  linkToProfile?: boolean;
+  onUserClick?: (userId: Id<"users">) => void;
 }
 
 const statusBadgeConfig = {
@@ -28,7 +27,7 @@ export function ParticipantList({
   usersMap,
   showHeader = true,
   maxHeight = "max-h-40",
-  linkToProfile = false,
+  onUserClick,
 }: ParticipantListProps) {
   if (!participants || participants.length === 0) {
     return null;
@@ -51,14 +50,14 @@ export function ParticipantList({
 
             return (
               <li key={p._id} className="flex items-center justify-between px-3 py-2">
-                {linkToProfile && user ? (
-                  <Link
-                    to="/user/$userId"
-                    params={{ userId: p.userId }}
+                {onUserClick && user ? (
+                  <button
+                    type="button"
+                    onClick={() => onUserClick(p.userId)}
                     className="text-sm link link-hover link-primary"
                   >
                     {userName}
-                  </Link>
+                  </button>
                 ) : (
                   <span className="text-sm">{userName}</span>
                 )}

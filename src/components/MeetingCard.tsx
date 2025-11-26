@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { Clock, MapPin, Users, ExternalLink } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -34,6 +34,7 @@ export function MeetingCard({
   onActionComplete,
 }: MeetingCardProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const join = useMutation(api.meetingParticipants.join);
   const leave = useMutation(api.meetingParticipants.leave);
@@ -220,7 +221,7 @@ export function MeetingCard({
                 participants={participants}
                 usersMap={usersMap}
                 maxHeight={isCompact ? "max-h-32" : "max-h-60"}
-                linkToProfile={!isCompact}
+                onUserClick={!isCompact ? (userId) => void navigate({ to: "/user/$userId", params: { userId } }) : undefined}
               />
             </div>
           </>

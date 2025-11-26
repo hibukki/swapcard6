@@ -1,0 +1,395 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ParticipantList > renders Unknown for missing user 1`] = `
+<div>
+  <div>
+    <h4
+      class="font-semibold text-sm mb-2 flex items-center gap-2"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-users w-4 h-4"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+        />
+        <path
+          d="M16 3.128a4 4 0 0 1 0 7.744"
+        />
+        <path
+          d="M22 21v-2a4 4 0 0 0-3-3.87"
+        />
+        <circle
+          cx="9"
+          cy="7"
+          r="4"
+        />
+      </svg>
+      Participants (
+      1
+      )
+    </h4>
+    <div
+      class="max-h-40 overflow-y-auto border border-base-300 rounded-lg"
+    >
+      <ul
+        class="divide-y divide-base-300"
+      >
+        <li
+          class="flex items-center justify-between px-3 py-2"
+        >
+          <span
+            class="text-sm"
+          >
+            Unknown
+          </span>
+          <span
+            class="badge badge-sm badge-success"
+          >
+            Accepted
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ParticipantList > renders multiple participants with different statuses 1`] = `
+<div>
+  <div>
+    <h4
+      class="font-semibold text-sm mb-2 flex items-center gap-2"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-users w-4 h-4"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+        />
+        <path
+          d="M16 3.128a4 4 0 0 1 0 7.744"
+        />
+        <path
+          d="M22 21v-2a4 4 0 0 0-3-3.87"
+        />
+        <circle
+          cx="9"
+          cy="7"
+          r="4"
+        />
+      </svg>
+      Participants (
+      4
+      )
+    </h4>
+    <div
+      class="max-h-40 overflow-y-auto border border-base-300 rounded-lg"
+    >
+      <ul
+        class="divide-y divide-base-300"
+      >
+        <li
+          class="flex items-center justify-between px-3 py-2"
+        >
+          <span
+            class="text-sm"
+          >
+            Alice (Host)
+          </span>
+          <span
+            class="badge badge-sm badge-primary"
+          >
+            Host
+          </span>
+        </li>
+        <li
+          class="flex items-center justify-between px-3 py-2"
+        >
+          <span
+            class="text-sm"
+          >
+            Bob
+          </span>
+          <span
+            class="badge badge-sm badge-success"
+          >
+            Accepted
+          </span>
+        </li>
+        <li
+          class="flex items-center justify-between px-3 py-2"
+        >
+          <span
+            class="text-sm"
+          >
+            Charlie
+          </span>
+          <span
+            class="badge badge-sm badge-warning"
+          >
+            Pending
+          </span>
+        </li>
+        <li
+          class="flex items-center justify-between px-3 py-2"
+        >
+          <span
+            class="text-sm"
+          >
+            Diana
+          </span>
+          <span
+            class="badge badge-sm badge-error"
+          >
+            Declined
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ParticipantList > renders nothing when participants array is empty 1`] = `<div />`;
+
+exports[`ParticipantList > renders single participant 1`] = `
+<div>
+  <div>
+    <h4
+      class="font-semibold text-sm mb-2 flex items-center gap-2"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-users w-4 h-4"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+        />
+        <path
+          d="M16 3.128a4 4 0 0 1 0 7.744"
+        />
+        <path
+          d="M22 21v-2a4 4 0 0 0-3-3.87"
+        />
+        <circle
+          cx="9"
+          cy="7"
+          r="4"
+        />
+      </svg>
+      Participants (
+      1
+      )
+    </h4>
+    <div
+      class="max-h-40 overflow-y-auto border border-base-300 rounded-lg"
+    >
+      <ul
+        class="divide-y divide-base-300"
+      >
+        <li
+          class="flex items-center justify-between px-3 py-2"
+        >
+          <span
+            class="text-sm"
+          >
+            Alice
+          </span>
+          <span
+            class="badge badge-sm badge-success"
+          >
+            Accepted
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ParticipantList > renders with clickable user names when onUserClick provided 1`] = `
+<div>
+  <div>
+    <h4
+      class="font-semibold text-sm mb-2 flex items-center gap-2"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-users w-4 h-4"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+        />
+        <path
+          d="M16 3.128a4 4 0 0 1 0 7.744"
+        />
+        <path
+          d="M22 21v-2a4 4 0 0 0-3-3.87"
+        />
+        <circle
+          cx="9"
+          cy="7"
+          r="4"
+        />
+      </svg>
+      Participants (
+      1
+      )
+    </h4>
+    <div
+      class="max-h-40 overflow-y-auto border border-base-300 rounded-lg"
+    >
+      <ul
+        class="divide-y divide-base-300"
+      >
+        <li
+          class="flex items-center justify-between px-3 py-2"
+        >
+          <button
+            class="text-sm link link-hover link-primary"
+            type="button"
+          >
+            Alice
+          </button>
+          <span
+            class="badge badge-sm badge-success"
+          >
+            Accepted
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ParticipantList > renders with custom maxHeight 1`] = `
+<div>
+  <div>
+    <h4
+      class="font-semibold text-sm mb-2 flex items-center gap-2"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-users w-4 h-4"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+        />
+        <path
+          d="M16 3.128a4 4 0 0 1 0 7.744"
+        />
+        <path
+          d="M22 21v-2a4 4 0 0 0-3-3.87"
+        />
+        <circle
+          cx="9"
+          cy="7"
+          r="4"
+        />
+      </svg>
+      Participants (
+      1
+      )
+    </h4>
+    <div
+      class="max-h-96 overflow-y-auto border border-base-300 rounded-lg"
+    >
+      <ul
+        class="divide-y divide-base-300"
+      >
+        <li
+          class="flex items-center justify-between px-3 py-2"
+        >
+          <span
+            class="text-sm"
+          >
+            Alice
+          </span>
+          <span
+            class="badge badge-sm badge-success"
+          >
+            Accepted
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ParticipantList > renders without header when showHeader is false 1`] = `
+<div>
+  <div>
+    <div
+      class="max-h-40 overflow-y-auto border border-base-300 rounded-lg"
+    >
+      <ul
+        class="divide-y divide-base-300"
+      >
+        <li
+          class="flex items-center justify-between px-3 py-2"
+        >
+          <span
+            class="text-sm"
+          >
+            Alice
+          </span>
+          <span
+            class="badge badge-sm badge-success"
+          >
+            Accepted
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+`;

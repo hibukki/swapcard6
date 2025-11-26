@@ -1,0 +1,311 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SharedMeetingsList > renders meeting with location 1`] = `
+<div>
+  <div
+    class="card bg-base-200"
+  >
+    <div
+      class="card-body"
+    >
+      <h3
+        class="font-semibold mb-3 flex items-center gap-2"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-calendar w-5 h-5"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M8 2v4"
+          />
+          <path
+            d="M16 2v4"
+          />
+          <rect
+            height="18"
+            rx="2"
+            width="18"
+            x="3"
+            y="4"
+          />
+          <path
+            d="M3 10h18"
+          />
+        </svg>
+        Shared Meetings (
+        1
+        )
+      </h3>
+      <div
+        class="space-y-2"
+      >
+        <button
+          class="block w-full text-left p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
+          type="button"
+        >
+          <div
+            class="font-semibold"
+          >
+            Office Hours
+          </div>
+          <div
+            class="text-sm opacity-70"
+          >
+            Wed, Jan 15, 2:00 PM
+             · 
+            30
+             min
+             · Room 101
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`SharedMeetingsList > renders multiple meetings 1`] = `
+<div>
+  <div
+    class="card bg-base-200"
+  >
+    <div
+      class="card-body"
+    >
+      <h3
+        class="font-semibold mb-3 flex items-center gap-2"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-calendar w-5 h-5"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M8 2v4"
+          />
+          <path
+            d="M16 2v4"
+          />
+          <rect
+            height="18"
+            rx="2"
+            width="18"
+            x="3"
+            y="4"
+          />
+          <path
+            d="M3 10h18"
+          />
+        </svg>
+        Shared Meetings (
+        2
+        )
+      </h3>
+      <div
+        class="space-y-2"
+      >
+        <button
+          class="block w-full text-left p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
+          type="button"
+        >
+          <div
+            class="font-semibold"
+          >
+            Morning Standup
+          </div>
+          <div
+            class="text-sm opacity-70"
+          >
+            Wed, Jan 15, 9:00 AM
+             · 
+            15
+             min
+          </div>
+        </button>
+        <button
+          class="block w-full text-left p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
+          type="button"
+        >
+          <div
+            class="font-semibold"
+          >
+            Lunch Discussion
+          </div>
+          <div
+            class="text-sm opacity-70"
+          >
+            Wed, Jan 15, 12:00 PM
+             · 
+            60
+             min
+             · Cafeteria
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`SharedMeetingsList > renders nothing when meetings array is empty 1`] = `<div />`;
+
+exports[`SharedMeetingsList > renders single meeting 1`] = `
+<div>
+  <div
+    class="card bg-base-200"
+  >
+    <div
+      class="card-body"
+    >
+      <h3
+        class="font-semibold mb-3 flex items-center gap-2"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-calendar w-5 h-5"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M8 2v4"
+          />
+          <path
+            d="M16 2v4"
+          />
+          <rect
+            height="18"
+            rx="2"
+            width="18"
+            x="3"
+            y="4"
+          />
+          <path
+            d="M3 10h18"
+          />
+        </svg>
+        Shared Meetings (
+        1
+        )
+      </h3>
+      <div
+        class="space-y-2"
+      >
+        <button
+          class="block w-full text-left p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
+          type="button"
+        >
+          <div
+            class="font-semibold"
+          >
+            Coffee Chat
+          </div>
+          <div
+            class="text-sm opacity-70"
+          >
+            Wed, Jan 15, 10:00 AM
+             · 
+            30
+             min
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`SharedMeetingsList > renders with click handler 1`] = `
+<div>
+  <div
+    class="card bg-base-200"
+  >
+    <div
+      class="card-body"
+    >
+      <h3
+        class="font-semibold mb-3 flex items-center gap-2"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-calendar w-5 h-5"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M8 2v4"
+          />
+          <path
+            d="M16 2v4"
+          />
+          <rect
+            height="18"
+            rx="2"
+            width="18"
+            x="3"
+            y="4"
+          />
+          <path
+            d="M3 10h18"
+          />
+        </svg>
+        Shared Meetings (
+        1
+        )
+      </h3>
+      <div
+        class="space-y-2"
+      >
+        <button
+          class="block w-full text-left p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
+          type="button"
+        >
+          <div
+            class="font-semibold"
+          >
+            Test Meeting
+          </div>
+          <div
+            class="text-sm opacity-70"
+          >
+            Thu, Nov 27, 2:36 AM
+             · 
+            30
+             min
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;
