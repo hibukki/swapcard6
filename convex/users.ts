@@ -192,3 +192,100 @@ export const listUsers = query({
     return users.filter((u) => u._id !== currentUser._id);
   },
 });
+
+// Find users who might be good connections based on text matching
+// Matches: current user's needsHelpWith vs others' canHelpWith, and vice versa
+// Also matches interests
+export const findRecommendedUsers = query({
+  args: {
+    needsHelpWith: v.optional(v.string()),
+    canHelpWith: v.optional(v.string()),
+    interests: v.optional(v.array(v.string())),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) return [];
+
+    const allUsers = await ctx.db.query("users").collect();
+    const otherUsers = allUsers.filter((u) => u._id !== currentUser._id);
+
+    // Build search terms from the input (what the user is currently typing)
+    const searchTerms: string[] = [];
+    if (args.needsHelpWith) {
+      searchTerms.push(...args.needsHelpWith.toLowerCase().split(/\s+/));
+    }
+    if (args.canHelpWith) {
+      searchTerms.push(...args.canHelpWith.toLowerCase().split(/\s+/));
+    }
+    if (args.interests) {
+      searchTerms.push(...args.interests.map(i => i.toLowerCase()));
+    }
+
+    // Filter out common words
+    const stopWords = new Set(["and", "or", "the", "a", "an", "in", "on", "at", "to", "for", "with", "i", "my"]);
+    const meaningfulTerms = searchTerms.filter(t => t.length > 2 && !stopWords.has(t));
+
+    if (meaningfulTerms.length === 0) {
+      // No search terms - return users with filled profiles
+      return otherUsers
+        .filter(u => u.canHelpWith || u.needsHelpWith || (u.interests && u.interests.length > 0))
+        .slice(0, args.limit ?? 5);
+    }
+
+    // Score each user based on matches
+    const scoredUsers = otherUsers.map(user => {
+      let score = 0;
+      const userText = [
+        user.canHelpWith ?? "",
+        user.needsHelpWith ?? "",
+        user.bio ?? "",
+        user.role ?? "",
+        ...(user.interests ?? []),
+      ].join(" ").toLowerCase();
+
+      for (const term of meaningfulTerms) {
+        if (userText.includes(term)) {
+          score += 1;
+        }
+      }
+
+      // Bonus: if user's canHelpWith matches our needsHelpWith (or vice versa)
+      if (args.needsHelpWith && user.canHelpWith) {
+        const needsTerms = args.needsHelpWith.toLowerCase().split(/\s+/);
+        const canTerms = user.canHelpWith.toLowerCase();
+        for (const term of needsTerms) {
+          if (term.length > 2 && !stopWords.has(term) && canTerms.includes(term)) {
+            score += 2; // Bonus for direct match
+          }
+        }
+      }
+
+      if (args.canHelpWith && user.needsHelpWith) {
+        const canTerms = args.canHelpWith.toLowerCase().split(/\s+/);
+        const needsTerms = user.needsHelpWith.toLowerCase();
+        for (const term of canTerms) {
+          if (term.length > 2 && !stopWords.has(term) && needsTerms.includes(term)) {
+            score += 2; // Bonus for direct match
+          }
+        }
+      }
+
+      return { user, score };
+    });
+
+    // Sort by score and return top matches
+    return scoredUsers
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, args.limit ?? 5)
+      .map(({ user }) => user);
+  },
+});

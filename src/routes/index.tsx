@@ -1,9 +1,19 @@
 import { SignInButton } from "@clerk/clerk-react";
-import { createFileRoute } from "@tanstack/react-router";
+import { convexQuery } from "@convex-dev/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { Users } from "lucide-react";
+import { useEffect } from "react";
+import { api } from "../../convex/_generated/api";
+
+const currentUserQuery = convexQuery(api.users.getCurrentUser, {});
 
 export const Route = createFileRoute("/")({
+  loader: async ({ context: { queryClient } }) => {
+    if ((window as any).Clerk?.session)
+      await queryClient.ensureQueryData(currentUserQuery);
+  },
   component: HomePage,
 });
 
@@ -24,9 +34,31 @@ function HomePage() {
       </Unauthenticated>
 
       <Authenticated>
-        <h1 className="mt-0">Welcome to SwapCard6</h1>
-        <p>Browse attendees, send meeting requests, and manage your agenda</p>
+        <AuthenticatedHome />
       </Authenticated>
+    </div>
+  );
+}
+
+function AuthenticatedHome() {
+  const { data: user } = useSuspenseQuery(currentUserQuery);
+  const navigate = useNavigate();
+
+  // Redirect to profile if user hasn't completed their profile
+  const needsOnboarding = !user?.bio && !user?.role && !user?.canHelpWith;
+
+  useEffect(() => {
+    if (needsOnboarding) {
+      void navigate({ to: "/profile" });
+    } else {
+      void navigate({ to: "/attendees" });
+    }
+  }, [needsOnboarding, navigate]);
+
+  return (
+    <div>
+      <div className="loading loading-spinner loading-lg"></div>
+      <p className="mt-4 opacity-70">Redirecting...</p>
     </div>
   );
 }

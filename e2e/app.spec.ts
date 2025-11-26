@@ -90,7 +90,7 @@ async function signOut(page: import("@playwright/test").Page) {
 }
 
 test.describe("E2E User Flow", () => {
-  test("complete user journey", async ({ page }) => {
+  test("complete user journey with onboarding", async ({ page }) => {
     // Clear screenshots directory before generating new ones
     clearScreenshotsDir();
 
@@ -102,32 +102,12 @@ test.describe("E2E User Flow", () => {
 
     await signIn(page);
 
-    await page.goto("/agenda", { waitUntil: "networkidle" });
-    await expect(page.getByRole("heading", { name: "My Agenda" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Incoming Requests/ })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Sent Requests/ })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Scheduled Meetings/ })).toBeVisible();
+    // New user should be redirected to profile with welcome message
+    await expect(page.getByRole("heading", { name: "Complete Your Profile" })).toBeVisible({ timeout: AUTH_TIMEOUT });
+    await expect(page.getByText("Welcome!")).toBeVisible();
+    await screenshot(page, "profile-new-user");
 
-    await page.goto("/public-meetings", { waitUntil: "networkidle" });
-    await expect(page.getByRole("heading", { name: "Public Meetings" })).toBeVisible();
-    await expect(page.getByText("Upcoming Meetings")).toBeVisible();
-    await expect(page.getByRole("button", { name: /Create Public Meeting/i })).toBeVisible();
-
-    await page.goto("/attendees", { waitUntil: "networkidle" });
-    await expect(page.getByRole("heading", { name: "Attendees" })).toBeVisible();
-
-    await page.goto("/calendar", { waitUntil: "networkidle" });
-    await expect(page.getByRole("button", { name: "Today" })).toBeVisible();
-
-    await page.goto("/profile", { waitUntil: "networkidle" });
-    await expect(page.getByRole("heading", { name: "Edit Your Profile" })).toBeVisible();
-    await expect(page.getByText("Company")).toBeVisible();
-    await expect(page.getByText("Role")).toBeVisible();
-    await expect(page.getByText("Bio")).toBeVisible();
-    await expect(page.getByText("Developer Tools")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Seed Test Data" })).toBeVisible();
-
-    // Seed via testing API with fixed timestamp for deterministic screenshots
+    // Seed data now that the user is created - this creates other sample users to match against
     await convex.mutation(api.testingFunctions.seedWithFixedTimestamp, {
       baseTimestamp: SEED_BASE_TIMESTAMP,
       userName: TEST_USER_NAME,
@@ -135,20 +115,51 @@ test.describe("E2E User Flow", () => {
     // Wait for scheduled seed data to complete
     await page.waitForTimeout(2000);
 
-    // Take screenshots of main pages with seeded data
-    // Wait for content to load BEFORE taking screenshot
+    // Fill in profile fields and see live preview update
+    await page.getByLabel("Company / Organization").fill("Effective Ventures");
+    await page.getByLabel("Role / Title").fill("Operations Manager");
+    await page.getByLabel("About You").fill("Interested in high-impact careers and community building.");
+    await page.getByLabel("Interests").fill("AI Safety, Career Planning");
+
+    // Click a suggestion for "can help with"
+    await page.getByRole("button", { name: "Community building" }).click();
+
+    // Type in "needs help with"
+    await page.getByLabel("How others can help me").fill("product design and strategy");
+
+    // Save the profile
+    await page.getByRole("button", { name: "Save & Find Connections" }).click();
+
+    // Should redirect to attendees page after save
+    await expect(page.getByRole("heading", { name: "Attendees" })).toBeVisible({ timeout: AUTH_TIMEOUT });
+
+    // Navigate explicitly to ensure page is at top for screenshot
+    await page.goto("/attendees", { waitUntil: "networkidle" });
+    await expect(page.getByText("Alice Johnson")).toBeVisible();
+    await screenshot(page, "attendees");
+
+    // Verify profile is now filled by going back to profile page
+    await page.goto("/profile", { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { name: "Edit Your Profile" })).toBeVisible();
+    await expect(page.getByLabel("Company / Organization")).toHaveValue("Effective Ventures");
+    // Recommendations should now appear based on saved profile
+    await expect(page.getByText("People You Might Want to Meet")).toBeVisible({ timeout: 5000 });
+    await screenshot(page, "profile-with-recommendations");
+
+    // Browse other pages
     await page.goto("/agenda", { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { name: "My Agenda" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Incoming Requests/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Sent Requests/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Scheduled Meetings/ })).toBeVisible();
     await expect(page.getByText("Incoming Requests (2)")).toBeVisible();
     await screenshot(page, "agenda");
 
     await page.goto("/public-meetings", { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { name: "Public Meetings" })).toBeVisible();
+    await expect(page.getByText("Upcoming Meetings")).toBeVisible();
     await expect(page.getByText("Opening Keynote: Future of Tech")).toBeVisible();
     await screenshot(page, "public-meetings");
-
-    await page.goto("/attendees", { waitUntil: "networkidle" });
-    await expect(page.getByText("Alice Johnson")).toBeVisible();
-    await expect(page.getByText("Bob Smith")).toBeVisible();
-    await screenshot(page, "attendees");
 
     await page.goto("/calendar", { waitUntil: "networkidle" });
     await expect(page.getByRole("button", { name: "Today" })).toBeVisible();
@@ -169,8 +180,12 @@ test.describe("E2E User Flow", () => {
     await expect(page.getByRole("heading", { name: "David Chen" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Request a Meeting" })).toBeVisible();
     await screenshot(page, "user-profile");
-    await page.getByRole("link", { name: "Back to Attendees" }).click();
+
+    // Clicking "Request a Meeting" navigates to attendees page with user pre-filled
+    await page.getByRole("button", { name: "Request a Meeting" }).click();
     await expect(page.getByRole("heading", { name: "Attendees" })).toBeVisible();
+    // The search should be pre-filled with the user's name
+    await expect(page.getByRole("textbox")).toHaveValue("David Chen");
 
     await signOut(page);
   });
