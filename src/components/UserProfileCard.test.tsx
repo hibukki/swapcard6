@@ -1,15 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
+import { render } from "@testing-library/react";
 import { UserProfileCard } from "./UserProfileCard";
 import { createMockUser } from "../test/mocks";
-import { renderWithPreview } from "../test/preview";
 
 describe("UserProfileCard", () => {
   it("renders minimal user", () => {
     const user = createMockUser();
-    const { container } = renderWithPreview(
-      <UserProfileCard user={user} />,
-      "UserProfileCard-minimal"
-    );
+    const { container } = render(<UserProfileCard user={user} />);
     expect(container).toMatchSnapshot();
   });
 
@@ -25,29 +22,22 @@ describe("UserProfileCard", () => {
       needsHelpWith: "Mobile development, DevOps",
       imageUrl: "https://example.com/avatar.jpg",
     });
-    const { container } = renderWithPreview(
-      <UserProfileCard user={user} />,
-      "UserProfileCard-full"
-    );
+    const { container } = render(<UserProfileCard user={user} />);
     expect(container).toMatchSnapshot();
   });
 
   it("renders with request meeting button when callback provided", () => {
     const user = createMockUser({ name: "Bob Smith" });
     const handleClick = vi.fn();
-    const { container } = renderWithPreview(
-      <UserProfileCard user={user} onRequestMeeting={handleClick} />,
-      "UserProfileCard-with-button"
+    const { container } = render(
+      <UserProfileCard user={user} onRequestMeeting={handleClick} />
     );
     expect(container).toMatchSnapshot();
   });
 
   it("renders avatar placeholder when no image", () => {
     const user = createMockUser({ name: "Alice", imageUrl: undefined });
-    const { container } = renderWithPreview(
-      <UserProfileCard user={user} />,
-      "UserProfileCard-avatar-placeholder"
-    );
+    const { container } = render(<UserProfileCard user={user} />);
     expect(container).toMatchSnapshot();
   });
 });
