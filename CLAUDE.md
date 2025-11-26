@@ -3,7 +3,17 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
 ## Project Overview
 
 - Full-stack TypeScript app: React + Vite + TanStack Router (frontend), Convex (backend), Clerk (auth)
-- Development: Run `pnpm dev:frontend` and `pnpm dev:backend` with the `run_in_background` parameter to start both frontend and backend servers. Monitor output using the BashOutput tool
+
+- Import alias: `@/` maps to `src/` directory
+- Tailwind CSS 4, daisyUI 5: All config in `src/index.css` via CSS syntax, NOT tailwind.config.js
+- Typography: Uses `@tailwindcss/typography` with `prose prose-invert` at root level, use `not-prose` to escape (e.g., for buttons/tables)
+- Environment variables: Client vars need `VITE_` prefix, Convex vars set in dashboard
+- Package manager: Always use `pnpm` and `pnpx`, NOT `npm` or `npx`
+- See @README.md for project-specific information
+
+### Dev server
+
+- You can run `pnpm dev:frontend` and `pnpm dev:backend` with `run_in_background`, and they'll be available for you to monitor (using the BashOutput tool?).
 - If `pnpm dev:backend` fails due to requiring interactive input, possible solutions:
   - Ask the user to run `pnpm convex dev --once` first in a separate terminal
   - Make sure `.env.local` exists
@@ -12,14 +22,8 @@ Always follow the guidelines in this file, unless explicitly told otherwise by t
       - `CONVEX_DEPLOYMENT`
       - `VITE_CONVEX_URL` (for a local deployment, suitable e.g for running in a github action, you can use `http://127.0.0.1:3210`)
     - Values for this project might be found in `.env.claude` or `.env.example`
-- Import alias: `@/` maps to `src/` directory
-- Tailwind CSS 4, daisyUI 5: All config in `src/index.css` via CSS syntax, NOT tailwind.config.js
-- Typography: Uses `@tailwindcss/typography` with `prose prose-invert` at root level, use `not-prose` to escape (e.g., for buttons/tables)
-- Environment variables: Client vars need `VITE_` prefix, Convex vars set in dashboard
-- Package manager: Always use `pnpm` and `pnpx`, NOT `npm` or `npx`
-- See @README.md for project-specific information
 
-### When running in an Anthropic environment
+#### When running in an Anthropic environment
 
 You can't run a local backend, but you can deploy a convex preview deployment:
 
@@ -35,22 +39,16 @@ pnpx convex deploy --cmd 'npm run build' --cmd-url-env-var-name CUSTOM_CONVEX_UR
 
 Then, before running `pnpm run dev:frontend`, you'll need to set the `VITE_CONVEX_URL`.
 
-## Git Workflow
-
-- Commit at logical checkpoints (feature complete, major milestone, before risky changes)
-- If user requests rollback: use `git log` or `git reflog` to find commit, then `git reset --hard [commit-hash]`
-- Before pushing: run `pnpm lint`, review with `git diff origin/main`, commit with `"feat: [complete feature description]"`
-
 ## Convex
 
 - `_creationTime` and `_id` are automatically added to all documents.
-- Adding required fields breaks existing data - if early in development, ask the user to clear the database. Otherwise, plan migration.
-- Use `ConvexError` for client-friendly errors, not generic Error
-- Queries have 16MB/10s limits - always use indexes, never full table scans
+- Adding required fields breaks existing data, you could ask the user to clear the database or plan a migration.
+- Convex functions throw `ConvexError`, not generic `Error`
+- Queries have 16MB/10s limits - prefer to use indexes, not full table scans
 - Paginated queries: use `.paginate(paginationOpts)` with `paginationOptsValidator`
 - Scheduled tasks: `ctx.scheduler.runAfter(delay, internal.module.function, args)` or `ctx.scheduler.runAt(timestamp, ...)`
 - Unique fields: enforce in mutation logic, indexes don't guarantee uniqueness
-- Soft delete: add `deletedAt: v.optional(v.number())` field instead of `.delete()`
+- Soft delete: you can add `deletedAt: v.optional(v.number())` field instead of `.delete()`
 - System tables: access `_scheduled_functions` and `_storage` with `ctx.db.system.get` and `ctx.db.system.query`
 - Default query order is ascending by `_creationTime`
 - Transactions are per-mutation - can't span multiple mutations. Calling multiple queries/mutation in a single action may introduce race conditions.
@@ -215,9 +213,8 @@ Then, before running `pnpm run dev:frontend`, you'll need to set the `VITE_CONVE
 
 ## Other Guidelines
 
-- When stuck: check official docs first (docs.convex.dev, tanstack.com, daisyui.com)
+- When stuck: consider official docs (docs.convex.dev, tanstack.com, daisyui.com)
 - Verify responsive design at multiple breakpoints
-- Document non-obvious implementation choices in this file
 - Import icons from `lucide-react`
 - When making identical changes to multiple occurrences, use Edit with `replace_all: true` instead of MultiEdit. Avoid MultiEdit whenever possible, it is unreliable.
 - Never leave floating promisses, use void when needed
