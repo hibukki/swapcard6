@@ -23,7 +23,29 @@ interface MeetingWithDetails {
 const ALARM_MINUTES_BEFORE = 10;
 const REFRESH_INTERVAL_SECONDS = 5 * 60;
 
-export function generateICSFeed(meetings: MeetingWithDetails[], baseUrl?: string): string {
+interface FeedOptions {
+  baseUrl?: string;
+  timezone?: string;
+}
+
+function formatLastUpdated(date: Date, timezone?: string): string {
+  if (!timezone) {
+    return date.toISOString();
+  }
+  return date.toLocaleString("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+}
+
+export function generateICSFeed(meetings: MeetingWithDetails[], options: FeedOptions = {}): string {
+  const { baseUrl, timezone } = options;
+
   const calendar = ical({
     name: "OpenCon Meetings",
     prodId: { company: "OpenCon", product: "Calendar", language: "EN" },
@@ -31,7 +53,7 @@ export function generateICSFeed(meetings: MeetingWithDetails[], baseUrl?: string
     ttl: REFRESH_INTERVAL_SECONDS,
   });
 
-  const lastUpdated = new Date().toISOString();
+  const lastUpdated = formatLastUpdated(new Date(), timezone);
   const calendarUrl = baseUrl ? `${baseUrl}/calendar` : undefined;
 
   for (const { meeting, creatorName, creatorEmail, attendees } of meetings) {
