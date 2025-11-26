@@ -1,11 +1,12 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery } from "convex/react";
-import { Calendar, Clock, MapPin, UserPlus, Plus } from "lucide-react";
+import { useMutation } from "convex/react";
+import { Calendar, Plus } from "lucide-react";
 import { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
-import type { Id, Doc } from "../../convex/_generated/dataModel";
+import type { Id } from "../../convex/_generated/dataModel";
+import { MeetingCard } from "../components/MeetingCard";
 
 const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
 const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
@@ -25,64 +26,21 @@ export const Route = createFileRoute("/public-meetings")({
 function PublicMeetingsPage() {
   const { data: meetings } = useSuspenseQuery(publicMeetingsQuery);
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
-  const allUsers = useQuery(api.users.listUsers, {});
-
-  const join = useMutation(api.meetingParticipants.join);
-  const leave = useMutation(api.meetingParticipants.leave);
-  const [joiningMeetingId, setJoiningMeetingId] = useState<Id<"meetings"> | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Build user lookup map
-  const usersMap = useMemo(() => {
-    if (!allUsers) return new Map<Id<"users">, Doc<"users">>();
-    return new Map(allUsers.map((u) => [u._id, u]));
-  }, [allUsers]);
-
-  // Build set of meeting IDs I'm participating in
-  const myMeetingIds = useMemo(() => {
-    const ids: Id<"meetings">[] = [];
+  // Build map of meetingId -> user's status
+  const statusByMeetingId = useMemo(() => {
+    const map = new Map<Id<"meetings">, "creator" | "accepted" | "pending" | "declined">();
     for (const p of myParticipations) {
-      if (p.status === "accepted" || p.status === "creator") {
-        ids.push(p.meetingId);
-      }
+      map.set(p.meetingId, p.status);
     }
-    return new Set(ids);
+    return map;
   }, [myParticipations]);
-
-  const handleJoinMeeting = async (meetingId: Id<"meetings">) => {
-    setJoiningMeetingId(meetingId);
-    try {
-      await join({ meetingId });
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to join meeting");
-    } finally {
-      setJoiningMeetingId(null);
-    }
-  };
-
-  const handleLeaveMeeting = async (meetingId: Id<"meetings">) => {
-    setJoiningMeetingId(meetingId);
-    try {
-      await leave({ meetingId });
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to leave meeting");
-    } finally {
-      setJoiningMeetingId(null);
-    }
-  };
 
   // Separate upcoming and past meetings
   const now = Date.now();
   const upcomingMeetings = meetings.filter((m) => m.scheduledTime >= now);
   const pastMeetings = meetings.filter((m) => m.scheduledTime < now);
-
-  if (!allUsers) {
-    return (
-      <div className="flex justify-center p-8">
-        <span className="loading loading-spinner loading-lg" />
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -113,22 +71,15 @@ function PublicMeetingsPage() {
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {upcomingMeetings.map((meeting) => {
-                const isParticipant = myMeetingIds.has(meeting._id);
-                const creator = usersMap.get(meeting.creatorId);
-
-                return (
-                  <PublicMeetingCard
-                    key={meeting._id}
-                    meeting={meeting}
-                    creator={creator}
-                    isParticipant={isParticipant}
-                    isLoading={joiningMeetingId === meeting._id}
-                    onJoin={() => void handleJoinMeeting(meeting._id)}
-                    onLeave={() => void handleLeaveMeeting(meeting._id)}
-                  />
-                );
-              })}
+              {upcomingMeetings.map((meeting) => (
+                <MeetingCard
+                  key={meeting._id}
+                  meeting={meeting}
+                  userStatus={statusByMeetingId.get(meeting._id)}
+                  variant="compact"
+                  showMeetingLink
+                />
+              ))}
             </div>
           )}
         </section>
@@ -140,25 +91,16 @@ function PublicMeetingsPage() {
               <Calendar className="w-5 h-5 opacity-50" />
               Past Meetings ({pastMeetings.length})
             </h2>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 opacity-60">
               {pastMeetings.map((meeting) => (
-                <div
+                <MeetingCard
                   key={meeting._id}
-                  className="card card-border bg-base-200 opacity-60"
-                >
-                  <div className="card-body">
-                    <h3 className="font-semibold">{meeting.title}</h3>
-                    {meeting.description && (
-                      <p className="text-sm opacity-80">{meeting.description}</p>
-                    )}
-                    <div className="text-sm mt-2 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        {new Date(meeting.scheduledTime).toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  meeting={meeting}
+                  userStatus={statusByMeetingId.get(meeting._id)}
+                  variant="compact"
+                  showActions={false}
+                  showMeetingLink
+                />
               ))}
             </div>
           </section>
@@ -169,84 +111,6 @@ function PublicMeetingsPage() {
       {showCreateModal && (
         <CreatePublicMeetingModal onClose={() => setShowCreateModal(false)} />
       )}
-    </div>
-  );
-}
-
-function PublicMeetingCard({
-  meeting,
-  creator,
-  isParticipant,
-  isLoading,
-  onJoin,
-  onLeave,
-}: {
-  meeting: Doc<"meetings">;
-  creator: Doc<"users"> | undefined;
-  isParticipant: boolean;
-  isLoading: boolean;
-  onJoin: () => void;
-  onLeave: () => void;
-}) {
-  return (
-    <div className="card card-border bg-base-200">
-      <div className="card-body">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-lg">{meeting.title}</h3>
-          {meeting.maxParticipants && (
-            <span className="badge badge-warning">
-              Max {meeting.maxParticipants}
-            </span>
-          )}
-        </div>
-
-        {meeting.description && (
-          <p className="text-sm opacity-80 mt-1">{meeting.description}</p>
-        )}
-
-        <div className="mt-3 space-y-2">
-          <div className="text-sm flex items-center gap-2">
-            <Clock className="w-4 h-4 opacity-70" />
-            <span>{new Date(meeting.scheduledTime).toLocaleString()}</span>
-            <span className="opacity-70">({meeting.duration} min)</span>
-          </div>
-
-          {meeting.location && (
-            <div className="text-sm flex items-center gap-2">
-              <MapPin className="w-4 h-4 opacity-70" />
-              <span>{meeting.location}</span>
-            </div>
-          )}
-
-          {creator && (
-            <div className="text-sm">
-              <span className="opacity-70">Hosted by: </span>
-              <span className="font-semibold">{creator.name}</span>
-            </div>
-          )}
-        </div>
-
-        <div className="card-actions mt-4">
-          {isParticipant ? (
-            <button
-              className="btn btn-error btn-sm w-full"
-              onClick={onLeave}
-              disabled={isLoading}
-            >
-              Leave Meeting
-            </button>
-          ) : (
-            <button
-              className="btn btn-primary btn-sm w-full gap-2"
-              onClick={onJoin}
-              disabled={isLoading}
-            >
-              <UserPlus className="w-4 h-4" />
-              {isLoading ? "Joining..." : "Join Meeting"}
-            </button>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

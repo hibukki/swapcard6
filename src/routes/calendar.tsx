@@ -1,14 +1,14 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQuery } from "convex/react";
-import { ChevronDown, ChevronLeft, ChevronRight, Clock, MapPin, Users } from "lucide-react";
+import { useQuery } from "convex/react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
 import { z } from "zod";
 import { CalendarSubscription } from "../components/CalendarSubscription";
-import { ParticipantList } from "../components/ParticipantList";
+import { MeetingCard as MeetingCardComponent } from "../components/MeetingCard";
 
 const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
 const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
@@ -369,7 +369,6 @@ function CalendarPage() {
       {selectedMeeting && (
         <MeetingDetailModal
           meeting={selectedMeeting}
-          creator={usersMap.get(selectedMeeting.creatorId)}
           onClose={() => setSelectedMeeting(null)}
         />
       )}
@@ -693,187 +692,34 @@ function MeetingCard({ meeting, onClick }: { meeting: CalendarMeeting; onClick: 
 
 function MeetingDetailModal({
   meeting,
-  creator,
   onClose,
 }: {
   meeting: CalendarMeeting;
-  creator: Doc<"users"> | undefined;
   onClose: () => void;
 }) {
-  const join = useMutation(api.meetingParticipants.join);
-  const leave = useMutation(api.meetingParticipants.leave);
-  const respond = useMutation(api.meetingParticipants.respond);
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-
-  const participants = useQuery(api.meetingParticipants.listByMeeting, { meetingId: meeting._id });
-  const allUsers = useQuery(api.users.listUsers, {});
-
-  const usersMap = useMemo(() => {
-    if (!allUsers) return new Map<Id<"users">, Doc<"users">>();
-    return new Map(allUsers.map((u) => [u._id, u]));
-  }, [allUsers]);
-
-  const handleJoin = async () => {
-    setIsLoading(true);
-    try {
-      await join({ meetingId: meeting._id });
-      onClose();
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to join meeting");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLeave = async () => {
-    setIsLoading(true);
-    try {
-      await leave({ meetingId: meeting._id });
-      onClose();
-    } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Failed to leave meeting"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRespond = async (accept: boolean) => {
-    setIsLoading(true);
-    try {
-      await respond({ meetingId: meeting._id, accept });
-      onClose();
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to respond");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCreatorClick = () => {
-    if (creator) {
-      onClose();
-      void navigate({ to: "/attendees", search: { q: creator.name } });
-    }
-  };
-
-  const isParticipant = meeting.isMyMeeting || meeting.userIsParticipant;
-  const isPendingIncoming = meeting.isPendingRequest && !meeting.isOutgoing;
+  // Derive userStatus from CalendarMeeting flags
+  const userStatus = meeting.userRole ?? (
+    meeting.isPendingRequest && !meeting.isOutgoing ? "pending" :
+    meeting.isMyMeeting || meeting.userIsParticipant ? "accepted" :
+    null
+  );
 
   return (
     <dialog className="modal modal-open">
-      <div className="modal-box max-w-2xl">
-        <div className="flex items-start justify-between gap-2 mb-4">
-          <h3 className="font-bold text-lg">{meeting.title}</h3>
-          <div className="flex gap-2">
-            {meeting.isPublic && (
-              <span className="badge badge-primary">Public</span>
-            )}
-            {meeting.isPendingRequest && (
-              <span className="badge badge-warning">
-                {meeting.isOutgoing ? "Awaiting Response" : "Pending Request"}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {meeting.description && (
-          <p className="text-sm opacity-80 mb-4">{meeting.description}</p>
-        )}
-
-        <div className="space-y-3 mb-6">
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="w-4 h-4 opacity-70" />
-            <span>{new Date(meeting.scheduledTime).toLocaleString()}</span>
-            <span className="opacity-70">({meeting.duration} min)</span>
-          </div>
-
-          {meeting.location && (
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin className="w-4 h-4 opacity-70" />
-              <span>{meeting.location}</span>
-            </div>
-          )}
-
-          {meeting.maxParticipants && (
-            <div className="flex items-center gap-2 text-sm">
-              <Users className="w-4 h-4 opacity-70" />
-              <span>Max {meeting.maxParticipants} participants</span>
-            </div>
-          )}
-
-          {creator && (
-            <div className="text-sm">
-              <span className="opacity-70">Hosted by: </span>
-              <button
-                onClick={handleCreatorClick}
-                className="font-semibold link link-hover link-primary"
-              >
-                {creator.name}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Participants List */}
-        {participants && participants.length > 0 && (
-          <div className="mb-6">
-            <ParticipantList
-              participants={participants}
-              usersMap={usersMap}
-            />
-          </div>
-        )}
-
-        <div className="modal-action">
-          <button type="button" className="btn" onClick={onClose}>
+      <div className="modal-box max-w-2xl p-0">
+        <MeetingCardComponent
+          meeting={meeting}
+          userStatus={userStatus}
+          variant="full"
+          showParticipants
+          showActions
+          showMeetingLink
+          onActionComplete={onClose}
+        />
+        <div className="px-6 pb-6">
+          <button type="button" className="btn btn-block" onClick={onClose}>
             Close
           </button>
-
-          {/* Accept/Decline buttons for incoming pending requests */}
-          {isPendingIncoming && (
-            <>
-              <button
-                className="btn btn-error"
-                onClick={() => void handleRespond(false)}
-                disabled={isLoading}
-              >
-                {isLoading ? "..." : "Decline"}
-              </button>
-              <button
-                className="btn btn-success"
-                onClick={() => void handleRespond(true)}
-                disabled={isLoading}
-              >
-                {isLoading ? "..." : "Accept"}
-              </button>
-            </>
-          )}
-
-          {/* Join/Leave buttons for public meetings (not pending) */}
-          {meeting.isPublic && !meeting.isPendingRequest && (
-            <>
-              {isParticipant ? (
-                <button
-                  className="btn btn-error"
-                  onClick={() => void handleLeave()}
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Leaving..." : "Leave Meeting"}
-                </button>
-              ) : (
-                <button
-                  className="btn btn-primary"
-                  onClick={() => void handleJoin()}
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Joining..." : "Join Meeting"}
-                </button>
-              )}
-            </>
-          )}
         </div>
       </div>
       <form method="dialog" className="modal-backdrop" onClick={onClose}>
