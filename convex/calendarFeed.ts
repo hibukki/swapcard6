@@ -31,19 +31,37 @@ export function generateICSFeed(meetings: MeetingWithDetails[], baseUrl?: string
     ttl: REFRESH_INTERVAL_SECONDS,
   });
 
+  const lastUpdated = new Date().toISOString();
+  const calendarUrl = baseUrl ? `${baseUrl}/calendar` : undefined;
+
   for (const { meeting, creatorName, creatorEmail, attendees } of meetings) {
     const meetingUrl = baseUrl ? `${baseUrl}/meeting/${meeting._id}` : undefined;
+
+    const descriptionParts: string[] = [];
+    if (meeting.description) {
+      descriptionParts.push(meeting.description);
+    }
+    descriptionParts.push("");
+    descriptionParts.push("---");
+    if (meetingUrl) {
+      descriptionParts.push(`View event: ${meetingUrl}`);
+    }
+    if (calendarUrl) {
+      descriptionParts.push(`Your calendar: ${calendarUrl}`);
+    }
+    descriptionParts.push(`Last updated: ${lastUpdated}`);
 
     calendar.createEvent({
       id: `meeting-${meeting._id}@opencon`,
       start: new Date(meeting.scheduledTime),
       end: new Date(meeting.scheduledTime + meeting.duration * 60 * 1000),
       summary: meeting.title,
-      description: meeting.description ?? undefined,
+      description: descriptionParts.join("\n"),
       location: meeting.location ?? undefined,
       url: meetingUrl,
       status: ICalEventStatus.CONFIRMED,
       created: new Date(meeting._creationTime),
+      lastModified: new Date(),
       organizer: { name: creatorName, email: creatorEmail },
       attendees: attendees.map((a) => ({
         name: a.name,
