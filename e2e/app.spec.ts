@@ -110,6 +110,24 @@ test.describe("E2E User Flow", () => {
     await expect(page.getByText("Alice Johnson")).toBeVisible();
     await expect(page.getByText("Bob Smith")).toBeVisible();
 
+    // Test meeting detail page (MeetingCard with ParticipantList)
+    await page.goto("/public-meetings", { waitUntil: "networkidle" });
+    // Click the "Open meeting page" link on the first meeting card
+    await page.getByRole("link", { name: "Open meeting page" }).first().click();
+    // Should be on a meeting detail page showing MeetingCard in full mode
+    await expect(page.getByRole("link", { name: "Back to Calendar" })).toBeVisible();
+    await expect(page.getByText(/Participants/)).toBeVisible();
+
+    // Test user profile page via host link (UserProfileCard component)
+    await page.getByText("Hosted by:").locator("..").getByRole("link").click();
+    // Should show the UserProfileCard with basic profile info
+    await expect(page.getByRole("link", { name: "Back to Attendees" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Request a Meeting" })).toBeVisible();
+    // Verify it's a user profile page by checking for profile elements
+    await expect(page.locator("text=/Interests:/")).toBeVisible();
+    await page.getByRole("link", { name: "Back to Attendees" }).click();
+    await expect(page.getByRole("heading", { name: "Attendees" })).toBeVisible();
+
     await signOut(page);
   });
 });
