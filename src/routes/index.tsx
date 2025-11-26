@@ -24,7 +24,7 @@ function HomePage() {
         <div className="not-prose flex justify-center mb-6">
           <Users className="w-20 h-20 text-primary" />
         </div>
-        <h1 className="mt-0">SwapCard6</h1>
+        <h1 className="mt-0">OpenCon</h1>
         <p className="text-lg">Connect with conference attendees and schedule 1-on-1 meetings</p>
         <div className="not-prose mt-8">
           <SignInButton mode="modal">

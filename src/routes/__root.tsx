@@ -74,7 +74,7 @@ function RootComponent() {
                         to="/"
                         className="btn btn-ghost normal-case text-xl"
                       >
-                        SwapCard6
+                        OpenCon
                       </Link>
                     </div>
                     <div className="navbar-center hidden lg:flex">
@@ -135,7 +135,7 @@ function RootComponent() {
                     <Outlet />
                   </main>
                   <footer className="footer footer-center p-4 text-base-content">
-                    <p>© {new Date().getFullYear()} SwapCard6</p>
+                    <p>© {new Date().getFullYear()} OpenCon</p>
                   </footer>
                 </div>
                 {/* Sidebar content for mobile */}
@@ -238,7 +238,7 @@ function UnauthenticatedView() {
       <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
         <div className="container mx-auto flex justify-between w-full">
           <div className="navbar-start">
-            <h1 className="font-semibold">SwapCard6</h1>
+            <h1 className="font-semibold">OpenCon</h1>
           </div>
           <div className="navbar-center">
             <span className="text-xs opacity-70">
@@ -259,7 +259,7 @@ function UnauthenticatedView() {
         <Outlet />
       </main>
       <footer className="footer footer-center p-4 text-base-content">
-        <p>© {new Date().getFullYear()} SwapCard6</p>
+        <p>© {new Date().getFullYear()} OpenCon</p>
       </footer>
     </>
   );
