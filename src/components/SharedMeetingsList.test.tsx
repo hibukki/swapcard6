@@ -1,12 +1,15 @@
-import { render } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { SharedMeetingsList } from "./SharedMeetingsList";
 import { createMockMeeting } from "../test/mocks";
+import { renderWithPreview } from "../test/preview";
 import type { Id } from "../../convex/_generated/dataModel";
 
 describe("SharedMeetingsList", () => {
   it("renders nothing when meetings array is empty", () => {
-    const { container } = render(<SharedMeetingsList meetings={[]} />);
+    const { container } = renderWithPreview(
+      <SharedMeetingsList meetings={[]} />,
+      "SharedMeetingsList-empty"
+    );
     expect(container).toMatchSnapshot();
   });
 
@@ -19,7 +22,10 @@ describe("SharedMeetingsList", () => {
         duration: 30,
       }),
     ];
-    const { container } = render(<SharedMeetingsList meetings={meetings} />);
+    const { container } = renderWithPreview(
+      <SharedMeetingsList meetings={meetings} />,
+      "SharedMeetingsList-single"
+    );
     expect(container).toMatchSnapshot();
   });
 
@@ -38,8 +44,18 @@ describe("SharedMeetingsList", () => {
         duration: 60,
         location: "Cafeteria",
       }),
+      createMockMeeting({
+        _id: "meeting_3" as Id<"meetings">,
+        title: "Afternoon Review",
+        scheduledTime: new Date("2025-01-15T15:30:00Z").getTime(),
+        duration: 45,
+        location: "Conference Room B",
+      }),
     ];
-    const { container } = render(<SharedMeetingsList meetings={meetings} />);
+    const { container } = renderWithPreview(
+      <SharedMeetingsList meetings={meetings} />,
+      "SharedMeetingsList-multiple"
+    );
     expect(container).toMatchSnapshot();
   });
 
@@ -51,15 +67,19 @@ describe("SharedMeetingsList", () => {
         scheduledTime: new Date("2025-01-15T14:00:00Z").getTime(),
       }),
     ];
-    const { container } = render(<SharedMeetingsList meetings={meetings} />);
+    const { container } = renderWithPreview(
+      <SharedMeetingsList meetings={meetings} />,
+      "SharedMeetingsList-with-location"
+    );
     expect(container).toMatchSnapshot();
   });
 
   it("renders with click handler", () => {
-    const meetings = [createMockMeeting()];
+    const meetings = [createMockMeeting({ title: "Clickable Meeting" })];
     const handleClick = vi.fn();
-    const { container } = render(
-      <SharedMeetingsList meetings={meetings} onMeetingClick={handleClick} />
+    const { container } = renderWithPreview(
+      <SharedMeetingsList meetings={meetings} onMeetingClick={handleClick} />,
+      "SharedMeetingsList-clickable"
     );
     expect(container).toMatchSnapshot();
   });

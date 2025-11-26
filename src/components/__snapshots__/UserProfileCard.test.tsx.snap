@@ -426,7 +426,7 @@ exports[`UserProfileCard > renders with request meeting button when callback pro
         <div
           class="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary"
         >
-          T
+          B
         </div>
         <div
           class="flex-1"
@@ -434,7 +434,7 @@ exports[`UserProfileCard > renders with request meeting button when callback pro
           <h1
             class="text-2xl font-bold"
           >
-            Test User
+            Bob Smith
           </h1>
         </div>
       </div>

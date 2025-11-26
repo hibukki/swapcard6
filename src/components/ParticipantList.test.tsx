@@ -1,7 +1,7 @@
-import { render } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { ParticipantList } from "./ParticipantList";
 import { createMockUser } from "../test/mocks";
+import { renderWithPreview } from "../test/preview";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
 
 function createUsersMap(users: Doc<"users">[]): Map<Id<"users">, Doc<"users">> {
@@ -10,8 +10,9 @@ function createUsersMap(users: Doc<"users">[]): Map<Id<"users">, Doc<"users">> {
 
 describe("ParticipantList", () => {
   it("renders nothing when participants array is empty", () => {
-    const { container } = render(
-      <ParticipantList participants={[]} usersMap={new Map()} />
+    const { container } = renderWithPreview(
+      <ParticipantList participants={[]} usersMap={new Map()} />,
+      "ParticipantList-empty"
     );
     expect(container).toMatchSnapshot();
   });
@@ -21,8 +22,9 @@ describe("ParticipantList", () => {
     const participants = [
       { _id: "p1" as Id<"meetingParticipants">, userId: user._id, status: "accepted" as const },
     ];
-    const { container } = render(
-      <ParticipantList participants={participants} usersMap={createUsersMap([user])} />
+    const { container } = renderWithPreview(
+      <ParticipantList participants={participants} usersMap={createUsersMap([user])} />,
+      "ParticipantList-single"
     );
     expect(container).toMatchSnapshot();
   });
@@ -40,8 +42,9 @@ describe("ParticipantList", () => {
       { _id: "p3" as Id<"meetingParticipants">, userId: users[2]._id, status: "pending" as const },
       { _id: "p4" as Id<"meetingParticipants">, userId: users[3]._id, status: "declined" as const },
     ];
-    const { container } = render(
-      <ParticipantList participants={participants} usersMap={createUsersMap(users)} />
+    const { container } = renderWithPreview(
+      <ParticipantList participants={participants} usersMap={createUsersMap(users)} />,
+      "ParticipantList-all-statuses"
     );
     expect(container).toMatchSnapshot();
   });
@@ -51,12 +54,13 @@ describe("ParticipantList", () => {
     const participants = [
       { _id: "p1" as Id<"meetingParticipants">, userId: user._id, status: "accepted" as const },
     ];
-    const { container } = render(
+    const { container } = renderWithPreview(
       <ParticipantList
         participants={participants}
         usersMap={createUsersMap([user])}
         showHeader={false}
-      />
+      />,
+      "ParticipantList-no-header"
     );
     expect(container).toMatchSnapshot();
   });
@@ -66,12 +70,13 @@ describe("ParticipantList", () => {
     const participants = [
       { _id: "p1" as Id<"meetingParticipants">, userId: user._id, status: "accepted" as const },
     ];
-    const { container } = render(
+    const { container } = renderWithPreview(
       <ParticipantList
         participants={participants}
         usersMap={createUsersMap([user])}
         maxHeight="max-h-96"
-      />
+      />,
+      "ParticipantList-custom-height"
     );
     expect(container).toMatchSnapshot();
   });
@@ -82,12 +87,13 @@ describe("ParticipantList", () => {
       { _id: "p1" as Id<"meetingParticipants">, userId: user._id, status: "accepted" as const },
     ];
     const handleClick = vi.fn();
-    const { container } = render(
+    const { container } = renderWithPreview(
       <ParticipantList
         participants={participants}
         usersMap={createUsersMap([user])}
         onUserClick={handleClick}
-      />
+      />,
+      "ParticipantList-clickable"
     );
     expect(container).toMatchSnapshot();
   });
@@ -96,8 +102,9 @@ describe("ParticipantList", () => {
     const participants = [
       { _id: "p1" as Id<"meetingParticipants">, userId: "missing_user" as Id<"users">, status: "accepted" as const },
     ];
-    const { container } = render(
-      <ParticipantList participants={participants} usersMap={new Map()} />
+    const { container } = renderWithPreview(
+      <ParticipantList participants={participants} usersMap={new Map()} />,
+      "ParticipantList-unknown-user"
     );
     expect(container).toMatchSnapshot();
   });

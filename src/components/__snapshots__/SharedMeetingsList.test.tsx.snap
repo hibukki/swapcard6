@@ -115,7 +115,7 @@ exports[`SharedMeetingsList > renders multiple meetings 1`] = `
           />
         </svg>
         Shared Meetings (
-        2
+        3
         )
       </h3>
       <div
@@ -156,6 +156,25 @@ exports[`SharedMeetingsList > renders multiple meetings 1`] = `
             60
              min
              · Cafeteria
+          </div>
+        </button>
+        <button
+          class="block w-full text-left p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
+          type="button"
+        >
+          <div
+            class="font-semibold"
+          >
+            Afternoon Review
+          </div>
+          <div
+            class="text-sm opacity-70"
+          >
+            Wed, Jan 15, 3:30 PM
+             · 
+            45
+             min
+             · Conference Room B
           </div>
         </button>
       </div>
@@ -293,12 +312,12 @@ exports[`SharedMeetingsList > renders with click handler 1`] = `
           <div
             class="font-semibold"
           >
-            Test Meeting
+            Clickable Meeting
           </div>
           <div
             class="text-sm opacity-70"
           >
-            Thu, Nov 27, 2:36 AM
+            Thu, Nov 27, 2:52 AM
              · 
             30
              min
