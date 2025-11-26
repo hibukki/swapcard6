@@ -20,12 +20,10 @@ function clearScreenshotsDir() {
   fs.mkdirSync(SCREENSHOTS_DIR, { recursive: true });
 }
 
-async function navigateAndScreenshot(
+async function screenshot(
   page: import("@playwright/test").Page,
-  url: string,
   screenshotName: string
 ) {
-  await page.goto(url, { waitUntil: "networkidle" });
   await page.screenshot({
     path: path.join(SCREENSHOTS_DIR, `${screenshotName}.png`),
     fullPage: false,
@@ -96,6 +94,9 @@ test.describe("E2E User Flow", () => {
     // Clear screenshots directory before generating new ones
     clearScreenshotsDir();
 
+    // Freeze browser clock for deterministic calendar screenshots
+    await page.clock.install({ time: new Date(SEED_BASE_TIMESTAMP) });
+
     await page.goto("/");
     await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
 
@@ -135,35 +136,39 @@ test.describe("E2E User Flow", () => {
     await page.waitForTimeout(2000);
 
     // Take screenshots of main pages with seeded data
-    await navigateAndScreenshot(page, "/agenda", "agenda");
+    // Wait for content to load BEFORE taking screenshot
+    await page.goto("/agenda", { waitUntil: "networkidle" });
     await expect(page.getByText("Incoming Requests (2)")).toBeVisible();
+    await screenshot(page, "agenda");
 
-    await navigateAndScreenshot(page, "/public-meetings", "public-meetings");
+    await page.goto("/public-meetings", { waitUntil: "networkidle" });
     await expect(page.getByText("Opening Keynote: Future of Tech")).toBeVisible();
+    await screenshot(page, "public-meetings");
 
-    await navigateAndScreenshot(page, "/attendees", "attendees");
+    await page.goto("/attendees", { waitUntil: "networkidle" });
     await expect(page.getByText("Alice Johnson")).toBeVisible();
     await expect(page.getByText("Bob Smith")).toBeVisible();
+    await screenshot(page, "attendees");
 
-    await navigateAndScreenshot(page, "/calendar", "calendar");
+    await page.goto("/calendar", { waitUntil: "networkidle" });
+    await expect(page.getByRole("button", { name: "Today" })).toBeVisible();
+    await screenshot(page, "calendar");
 
-    // Test meeting detail page (MeetingCard with ParticipantList)
-    await navigateAndScreenshot(page, "/public-meetings", "public-meetings");
-    // Click the "Open meeting page" link on the first meeting card
-    await page.getByRole("link", { name: "Open meeting page" }).first().click();
-    // Should be on a meeting detail page showing MeetingCard in full mode
+    // Test meeting detail page - use specific meeting for determinism
+    await page.goto("/public-meetings", { waitUntil: "networkidle" });
+    // Click on "Opening Keynote" specifically (not .first() which may vary)
+    await page.getByRole("heading", { name: "Opening Keynote: Future of Tech" })
+      .locator("..").getByRole("link", { name: "Open meeting page" }).click();
     await expect(page.getByRole("link", { name: "Back to Calendar" })).toBeVisible();
     await expect(page.getByText(/Participants/)).toBeVisible();
-    await page.screenshot({ path: path.join(SCREENSHOTS_DIR, "meeting-detail.png") });
+    await screenshot(page, "meeting-detail");
 
-    // Test user profile page via host link (UserProfileCard component)
+    // Test user profile page - click on the host (David Chen for Opening Keynote)
     await page.getByText("Hosted by:").locator("..").getByRole("link").click();
-    // Should show the UserProfileCard with basic profile info
     await expect(page.getByRole("link", { name: "Back to Attendees" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "David Chen" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Request a Meeting" })).toBeVisible();
-    // Verify it's a user profile page by checking for profile elements
-    await expect(page.locator("text=/Interests:/")).toBeVisible();
-    await page.screenshot({ path: path.join(SCREENSHOTS_DIR, "user-profile.png") });
+    await screenshot(page, "user-profile");
     await page.getByRole("link", { name: "Back to Attendees" }).click();
     await expect(page.getByRole("heading", { name: "Attendees" })).toBeVisible();
 

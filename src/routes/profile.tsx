@@ -282,7 +282,7 @@ function SeedDataSection() {
     setIsSeeding(true);
     setResult(null);
     try {
-      await seedData({});
+      await seedData({ baseTimestamp: Date.now() });
       setResult("Test data created successfully!");
     } catch (error) {
       setResult(error instanceof Error ? error.message : "Failed to seed data");

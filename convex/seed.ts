@@ -51,10 +51,10 @@ export const clearAllData = internalMutation({
 
 export const seedData = internalMutation({
   args: {
-    baseTimestamp: v.optional(v.number()),
+    baseTimestamp: v.number(),
   },
   handler: async (ctx, args) => {
-    const now = args.baseTimestamp ?? Date.now();
+    const now = args.baseTimestamp;
     const oneHour = 60 * 60 * 1000;
     const oneDay = 24 * oneHour;
 
@@ -329,11 +329,11 @@ export const seedData = internalMutation({
 // Main seeding mutation that includes the current authenticated user
 export const seedDataWithCurrentUser = mutation({
   args: {
-    baseTimestamp: v.optional(v.number()),
+    baseTimestamp: v.number(),
   },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUserOrCrash(ctx);
-    const now = args.baseTimestamp ?? Date.now();
+    const now = args.baseTimestamp;
     const oneHour = 60 * 60 * 1000;
     const oneDay = 24 * oneHour;
 
