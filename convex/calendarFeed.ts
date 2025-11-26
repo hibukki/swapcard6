@@ -1,68 +1,76 @@
+import ical, {
+  ICalAlarmType,
+  ICalAttendeeRole,
+  ICalAttendeeStatus,
+  ICalCalendarMethod,
+  ICalEventStatus,
+} from "ical-generator";
 import { Doc } from "./_generated/dataModel";
+
+interface Attendee {
+  name: string;
+  email: string;
+  status: "creator" | "accepted" | "pending" | "declined";
+}
 
 interface MeetingWithDetails {
   meeting: Doc<"meetings">;
   creatorName: string;
+  creatorEmail: string;
+  attendees: Attendee[];
 }
 
-function formatICSDate(timestamp: number): string {
-  const date = new Date(timestamp);
-  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-}
-
-function escapeICSText(text: string): string {
-  return text
-    .replace(/\\/g, "\\\\")
-    .replace(/;/g, "\\;")
-    .replace(/,/g, "\\,")
-    .replace(/\n/g, "\\n");
-}
-
-function generateVEvent(item: MeetingWithDetails): string {
-  const { meeting, creatorName } = item;
-  const startTime = formatICSDate(meeting.scheduledTime);
-  const endTime = formatICSDate(meeting.scheduledTime + meeting.duration * 60 * 1000);
-
-  const lines = [
-    "BEGIN:VEVENT",
-    `UID:meeting-${meeting._id}@swapcard`,
-    `DTSTAMP:${formatICSDate(Date.now())}`,
-    `DTSTART:${startTime}`,
-    `DTEND:${endTime}`,
-    `SUMMARY:${escapeICSText(meeting.title)}`,
-  ];
-
-  if (meeting.description) {
-    lines.push(`DESCRIPTION:${escapeICSText(meeting.description)}`);
-  }
-
-  if (meeting.location) {
-    lines.push(`LOCATION:${escapeICSText(meeting.location)}`);
-  }
-
-  lines.push(`ORGANIZER;CN=${escapeICSText(creatorName)}:mailto:noreply@swapcard.local`);
-  lines.push("END:VEVENT");
-
-  return lines.join("\r\n");
-}
+const ALARM_MINUTES_BEFORE = 10;
+const REFRESH_INTERVAL_SECONDS = 5 * 60;
 
 export function generateICSFeed(meetings: MeetingWithDetails[]): string {
-  const header = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//SwapCard//Calendar//EN",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-    "X-WR-CALNAME:SwapCard Meetings",
-  ].join("\r\n");
+  const calendar = ical({
+    name: "OpenCon Meetings",
+    prodId: { company: "OpenCon", product: "Calendar", language: "EN" },
+    method: ICalCalendarMethod.PUBLISH,
+    ttl: REFRESH_INTERVAL_SECONDS,
+  });
 
-  const events = meetings.map(generateVEvent).join("\r\n");
-
-  const footer = "END:VCALENDAR";
-
-  if (meetings.length === 0) {
-    return `${header}\r\n${footer}`;
+  for (const { meeting, creatorName, creatorEmail, attendees } of meetings) {
+    calendar.createEvent({
+      id: `meeting-${meeting._id}@opencon`,
+      start: new Date(meeting.scheduledTime),
+      end: new Date(meeting.scheduledTime + meeting.duration * 60 * 1000),
+      summary: meeting.title,
+      description: meeting.description ?? undefined,
+      location: meeting.location ?? undefined,
+      status: ICalEventStatus.CONFIRMED,
+      created: new Date(meeting._creationTime),
+      organizer: { name: creatorName, email: creatorEmail },
+      attendees: attendees.map((a) => ({
+        name: a.name,
+        email: a.email,
+        role: ICalAttendeeRole.REQ,
+        status: mapAttendeeStatus(a.status),
+      })),
+      alarms: [
+        {
+          type: ICalAlarmType.display,
+          trigger: ALARM_MINUTES_BEFORE * 60,
+          description: `${meeting.title} starts in ${ALARM_MINUTES_BEFORE} minutes`,
+        },
+      ],
+    });
   }
 
-  return `${header}\r\n${events}\r\n${footer}`;
+  return calendar.toString();
+}
+
+function mapAttendeeStatus(
+  status: Attendee["status"]
+): ICalAttendeeStatus | undefined {
+  switch (status) {
+    case "creator":
+    case "accepted":
+      return ICalAttendeeStatus.ACCEPTED;
+    case "pending":
+      return ICalAttendeeStatus.NEEDSACTION;
+    case "declined":
+      return ICalAttendeeStatus.DECLINED;
+  }
 }
