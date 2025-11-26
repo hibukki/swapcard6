@@ -1,6 +1,6 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useState, useMemo } from "react";
@@ -669,9 +669,14 @@ function MeetingCard({ meeting, onClick }: { meeting: CalendarMeeting; onClick: 
       className={`${bgColor} border-l-4 ${borderColor} p-1 rounded text-xs mb-1 cursor-pointer hover:opacity-80 transition-opacity`}
       onClick={onClick}
     >
-      <div className={`font-semibold ${textColor} truncate`}>
+      <Link
+        to="/meeting/$meetingId"
+        params={{ meetingId: meeting._id }}
+        className={`font-semibold ${textColor} truncate block hover:underline`}
+        onClick={(e) => e.stopPropagation()}
+      >
         {meeting.title}
-      </div>
+      </Link>
       <div className="text-base-content/80">
         {startTime.toLocaleTimeString("en-US", {
           hour: "numeric",
