@@ -12,7 +12,7 @@ export default defineConfig({
     baseURL: "http://localhost:5173",
     actionTimeout: 1000,
     screenshot: "only-on-failure",
-    video: "on-first-retry",
+    video: "on",
     trace: "on",
   },
   retries: 1,
