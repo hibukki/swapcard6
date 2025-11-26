@@ -1,4 +1,4 @@
-Always follow the guidelines in this file, unless explicitly told otherwise by the user or overided in the CLAUDE.local.md file.
+These are suggestions/preferences. If you don't like them, I prefer if you said so explicitly, and we can hopefully gradually improve them. (some were copied from other places and are phrased as orders, gradually changing that)
 
 ## Project Overview
 
@@ -210,6 +210,12 @@ Then, before running `pnpm run dev:frontend`, you'll need to set the `VITE_CONVE
 - Status colors: `info`, `success`, `warning`, `error`
 - Each color has matching `-content` variant for contrasting text
 - Custom themes use OKLCH format, create at [theme generator](https://daisyui.com/theme-generator/)
+
+## Creating pull requests
+
+Please add the requested feature (as the user requested it) and not only what-was-done.
+Ideally, quote all relevant user messages and put them in the PR description.
+This is like adding the product-manager request, and not only the engineering solution.
 
 ## Other Guidelines
 
