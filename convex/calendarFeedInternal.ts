@@ -59,21 +59,8 @@ export const getCalendarFeed = internalQuery({
       (m): m is NonNullable<typeof m> => m !== null
     );
 
-    // Get timezone from the first meeting's conference
-    let timezone: string | undefined;
-    for (const { meeting } of validMeetings) {
-      if (meeting.conferenceId) {
-        const conference = await ctx.db.get(meeting.conferenceId);
-        if (conference?.timezone) {
-          timezone = conference.timezone;
-          break;
-        }
-      }
-    }
-
     const icsContent = generateICSFeed(validMeetings, {
       baseUrl: args.baseUrl,
-      timezone,
     });
 
     return { icsContent };

@@ -25,26 +25,14 @@ const REFRESH_INTERVAL_SECONDS = 5 * 60;
 
 interface FeedOptions {
   baseUrl?: string;
-  timezone?: string;
 }
 
-function formatLastUpdated(date: Date, timezone?: string): string {
-  if (!timezone) {
-    return date.toISOString();
-  }
-  return date.toLocaleString("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
+function formatLastUpdated(date: Date): string {
+  return date.toISOString().replace(/\.\d{3}Z$/, "Z") + " (UTC)";
 }
 
 export function generateICSFeed(meetings: MeetingWithDetails[], options: FeedOptions = {}): string {
-  const { baseUrl, timezone } = options;
+  const { baseUrl } = options;
 
   const calendar = ical({
     name: "OpenCon Meetings",
@@ -53,7 +41,7 @@ export function generateICSFeed(meetings: MeetingWithDetails[], options: FeedOpt
     ttl: REFRESH_INTERVAL_SECONDS,
   });
 
-  const lastUpdated = formatLastUpdated(new Date(), timezone);
+  const lastUpdated = formatLastUpdated(new Date());
   const calendarUrl = baseUrl ? `${baseUrl}/calendar` : undefined;
 
   for (const { meeting, creatorName, creatorEmail, attendees } of meetings) {
