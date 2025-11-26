@@ -4,6 +4,10 @@
 
 A conference networking platform focused on low-friction 1-on-1 meetings between attendees.
 
+## Screenshots
+
+Auto-generated from e2e tests - see [docs/screenshots](docs/screenshots/) for current app views.
+
 ## Getting Started
 
 ```bash
