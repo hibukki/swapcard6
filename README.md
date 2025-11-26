@@ -2,6 +2,8 @@
 
 [![Lint](https://github.com/hibukki/swapcard6/actions/workflows/lint.yml/badge.svg)](https://github.com/hibukki/swapcard6/actions/workflows/lint.yml)
 
+[![Tests](https://github.com/hibukki/swapcard6/actions/workflows/test.yml/badge.svg)](https://github.com/hibukki/swapcard6/actions/workflows/test.yml)
+
 A conference networking platform focused on low-friction 1-on-1 meetings between attendees.
 
 ## Screenshots
