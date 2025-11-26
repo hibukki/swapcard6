@@ -9,6 +9,7 @@ import type { Id, Doc } from "../../convex/_generated/dataModel";
 import { z } from "zod";
 import { CalendarSubscription } from "../components/CalendarSubscription";
 import { MeetingCard as MeetingCardComponent } from "../components/MeetingCard";
+import { type CalendarMeetingView, getMeetingDisplayCategory, categoryStyles } from "../types/calendar";
 
 const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
 const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
@@ -32,27 +33,6 @@ export const Route = createFileRoute("/calendar")({
   component: CalendarPage,
 });
 
-// Enriched meeting type for calendar display
-interface CalendarMeeting {
-  _id: Id<"meetings">;
-  _creationTime: number;
-  title: string;
-  scheduledTime: number;
-  duration: number;
-  location?: string;
-  description?: string;
-  isPublic: boolean;
-  maxParticipants?: number;
-  creatorId: Id<"users">;
-  notes?: string;
-  // UI flags
-  isMyMeeting?: boolean;
-  isPublicMeeting?: boolean;
-  isPendingRequest?: boolean;
-  isOutgoing?: boolean;
-  userRole?: "creator" | "accepted" | "pending" | "declined" | "participant";
-  userIsParticipant?: boolean;
-}
 
 function CalendarPage() {
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
@@ -115,7 +95,7 @@ function CalendarPage() {
     });
   };
 
-  const [selectedMeeting, setSelectedMeeting] = useState<CalendarMeeting | null>(null);
+  const [selectedMeeting, setSelectedMeeting] = useState<CalendarMeetingView | null>(null);
 
   const setView = (newView: "week" | "month") => updateSearch({ view: newView });
   const setCalendarMode = (newMode: "my" | "public" | "combined") => updateSearch({ mode: newMode });
@@ -133,53 +113,69 @@ function CalendarPage() {
   }, [allUsers]);
 
   // Build my meetings with enrichment
-  const myMeetings = useMemo((): CalendarMeeting[] => {
-    const results: CalendarMeeting[] = [];
+  const myMeetings = useMemo((): CalendarMeetingView[] => {
+    const results: CalendarMeetingView[] = [];
     for (const p of myParticipations) {
       if (p.status !== "accepted" && p.status !== "creator") continue;
       const meeting = meetingsMap.get(p.meetingId);
       if (!meeting) continue;
       results.push({
-        ...meeting,
-        isMyMeeting: true,
-        userRole: p.status,
+        meeting,
+        userStatus: {
+          participationStatus: p.status,
+          isPendingRequest: false,
+          isOutgoing: false,
+        },
+        display: {
+          category: getMeetingDisplayCategory(meeting, p.status, false),
+        },
       });
     }
     return results;
   }, [myParticipations, meetingsMap]);
 
   // Get pending invitations (incoming)
-  const pendingInvitations = useMemo((): CalendarMeeting[] => {
-    const results: CalendarMeeting[] = [];
+  const pendingInvitations = useMemo((): CalendarMeetingView[] => {
+    const results: CalendarMeetingView[] = [];
     for (const p of myParticipations) {
       if (p.status !== "pending") continue;
       const meeting = meetingsMap.get(p.meetingId);
       if (!meeting) continue;
       const requester = usersMap.get(meeting.creatorId);
+      const displayTitle = `Meeting Request from ${requester?.name || "Unknown"}`;
       results.push({
-        ...meeting,
-        title: `Meeting Request from ${requester?.name || "Unknown"}`,
-        isPendingRequest: true,
-        isOutgoing: false,
-        userRole: "pending" as const,
+        meeting: { ...meeting, title: displayTitle },
+        userStatus: {
+          participationStatus: "pending",
+          isPendingRequest: true,
+          isOutgoing: false,
+        },
+        display: {
+          category: "pending-incoming",
+        },
       });
     }
     return results;
   }, [myParticipations, meetingsMap, usersMap]);
 
   // Get sent requests (outgoing - meetings I created that are not public)
-  const sentRequests = useMemo((): CalendarMeeting[] => {
-    const results: CalendarMeeting[] = [];
+  const sentRequests = useMemo((): CalendarMeetingView[] => {
+    const results: CalendarMeetingView[] = [];
     for (const p of myParticipations) {
       if (p.status !== "creator") continue;
       const meeting = meetingsMap.get(p.meetingId);
       if (!meeting || meeting.isPublic) continue;
+      const displayTitle = `Meeting Request: ${meeting.title}`;
       results.push({
-        ...meeting,
-        title: `Meeting Request: ${meeting.title}`,
-        isPendingRequest: true,
-        isOutgoing: true,
-        userRole: "creator" as const,
+        meeting: { ...meeting, title: displayTitle },
+        userStatus: {
+          participationStatus: "creator",
+          isPendingRequest: true,
+          isOutgoing: true,
+        },
+        display: {
+          category: "pending-outgoing",
+        },
       });
     }
     return results;
@@ -187,29 +183,35 @@ function CalendarPage() {
 
   // Get IDs of meetings the user is already in
   const myMeetingIds = useMemo(() => {
-    return new Set(myMeetings.map((m) => m._id));
+    return new Set(myMeetings.map((m) => m.meeting._id));
   }, [myMeetings]);
 
   // Transform public meetings, marking those the user is in
-  const publicMeetings = useMemo((): CalendarMeeting[] => {
-    return publicMeetingsData.map((meeting): CalendarMeeting => {
+  const publicMeetings = useMemo((): CalendarMeetingView[] => {
+    return publicMeetingsData.map((meeting): CalendarMeetingView => {
       const userIsParticipant = myMeetingIds.has(meeting._id);
+      const participationStatus = userIsParticipant ? ("accepted" as const) : undefined;
       return {
-        ...meeting,
-        isPublicMeeting: true,
-        userIsParticipant,
-        userRole: userIsParticipant ? ("participant" as const) : undefined,
+        meeting,
+        userStatus: {
+          participationStatus,
+          isPendingRequest: false,
+          isOutgoing: false,
+        },
+        display: {
+          category: getMeetingDisplayCategory(meeting, participationStatus, false),
+        },
       };
     });
   }, [publicMeetingsData, myMeetingIds]);
 
   // Pending requests for calendar display
-  const pendingRequests: CalendarMeeting[] = useMemo(() => {
+  const pendingRequests: CalendarMeetingView[] = useMemo(() => {
     return [...sentRequests, ...pendingInvitations];
   }, [sentRequests, pendingInvitations]);
 
   // Determine which meetings to show
-  let meetings: CalendarMeeting[];
+  let meetings: CalendarMeetingView[];
   if (calendarMode === "my") {
     meetings = [...myMeetings, ...pendingRequests];
   } else if (calendarMode === "public") {
@@ -217,7 +219,7 @@ function CalendarPage() {
     meetings = publicMeetings;
   } else {
     // Combined view - show my meetings + public meetings I'm NOT in + pending requests
-    const publicMeetingsNotIn = publicMeetings.filter((m) => !m.userIsParticipant);
+    const publicMeetingsNotIn = publicMeetings.filter((m) => !m.userStatus.participationStatus);
     meetings = [...myMeetings, ...publicMeetingsNotIn, ...pendingRequests];
   }
 
@@ -368,7 +370,7 @@ function CalendarPage() {
       {/* Meeting Detail Modal */}
       {selectedMeeting && (
         <MeetingDetailModal
-          meeting={selectedMeeting}
+          calendarMeeting={selectedMeeting}
           onClose={() => setSelectedMeeting(null)}
         />
       )}
@@ -381,9 +383,9 @@ function WeekView({
   currentDate,
   onMeetingClick,
 }: {
-  meetings: CalendarMeeting[];
+  meetings: CalendarMeetingView[];
   currentDate: Date;
-  onMeetingClick: (meeting: CalendarMeeting) => void;
+  onMeetingClick: (meeting: CalendarMeetingView) => void;
 }) {
   // Get the start of the week (Sunday)
   const startOfWeek = new Date(currentDate);
@@ -453,10 +455,10 @@ function WeekView({
               const slotEnd = new Date(date);
               slotEnd.setHours(hour + 1, 0, 0, 0);
 
-              const slotMeetings = meetings.filter((meeting) => {
-                const meetingStart = new Date(meeting.scheduledTime);
+              const slotMeetings = meetings.filter((calendarMeeting) => {
+                const meetingStart = new Date(calendarMeeting.meeting.scheduledTime);
                 const meetingEnd = new Date(
-                  meeting.scheduledTime + meeting.duration * 60000
+                  calendarMeeting.meeting.scheduledTime + calendarMeeting.meeting.duration * 60000
                 );
                 return meetingStart < slotEnd && meetingEnd > slotStart;
               });
@@ -466,17 +468,17 @@ function WeekView({
                   key={`${hour}-${dayIndex}`}
                   className="border-b border-l border-base-300 p-1 min-h-[60px] relative hover:bg-base-200/50 transition-colors"
                 >
-                  {slotMeetings.map((meeting) => {
-                    const meetingStart = new Date(meeting.scheduledTime);
+                  {slotMeetings.map((calendarMeeting) => {
+                    const meetingStart = new Date(calendarMeeting.meeting.scheduledTime);
                     const isFirstSlot = meetingStart.getHours() === hour;
 
                     if (!isFirstSlot) return null;
 
                     return (
-                      <MeetingCard
-                        key={meeting._id}
-                        meeting={meeting}
-                        onClick={() => onMeetingClick(meeting)}
+                      <CalendarGridCard
+                        key={calendarMeeting.meeting._id}
+                        calendarMeeting={calendarMeeting}
+                        onClick={() => onMeetingClick(calendarMeeting)}
                       />
                     );
                   })}
@@ -495,9 +497,9 @@ function MonthView({
   currentDate,
   onMeetingClick,
 }: {
-  meetings: CalendarMeeting[];
+  meetings: CalendarMeetingView[];
   currentDate: Date;
-  onMeetingClick: (meeting: CalendarMeeting) => void;
+  onMeetingClick: (meeting: CalendarMeetingView) => void;
 }) {
   // Get first day of month
   const firstDay = new Date(
@@ -560,8 +562,8 @@ function MonthView({
           const isToday = date.toDateString() === new Date().toDateString();
 
           // Get meetings for this day
-          const dayMeetings = meetings.filter((meeting) => {
-            const meetingDate = new Date(meeting.scheduledTime);
+          const dayMeetings = meetings.filter((calendarMeeting) => {
+            const meetingDate = new Date(calendarMeeting.meeting.scheduledTime);
             return meetingDate.toDateString() === date.toDateString();
           });
 
@@ -576,42 +578,23 @@ function MonthView({
                 {day}
               </div>
               <div className="space-y-1">
-                {dayMeetings.slice(0, 3).map((meeting) => {
-                  const isMyMeeting = meeting.isMyMeeting;
-                  const isPublicMeeting = meeting.isPublicMeeting;
-                  const isPendingRequest = meeting.isPendingRequest;
-
-                  let bgColor = "bg-primary/20";
-                  let textColor = "text-primary-content";
-
-                  if (isPendingRequest) {
-                    bgColor = "bg-warning/20";
-                    textColor = "text-warning-content";
-                  } else if (isMyMeeting && !isPublicMeeting) {
-                    bgColor = "bg-primary/20";
-                    textColor = "text-primary-content";
-                  } else if (isPublicMeeting && !isMyMeeting) {
-                    bgColor = "bg-secondary/20";
-                    textColor = "text-secondary-content";
-                  } else if (isMyMeeting && isPublicMeeting) {
-                    bgColor = "bg-success/20";
-                    textColor = "text-success-content";
-                  }
+                {dayMeetings.slice(0, 3).map((calendarMeeting) => {
+                  const styles = categoryStyles[calendarMeeting.display.category];
 
                   return (
                     <div
-                      key={meeting._id}
-                      className={`text-xs ${bgColor} ${textColor} p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity`}
-                      onClick={() => onMeetingClick(meeting)}
+                      key={calendarMeeting.meeting._id}
+                      className={`text-xs ${styles.bg} ${styles.text} p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity`}
+                      onClick={() => onMeetingClick(calendarMeeting)}
                     >
-                      {new Date(meeting.scheduledTime).toLocaleTimeString(
+                      {new Date(calendarMeeting.meeting.scheduledTime).toLocaleTimeString(
                         "en-US",
                         {
                           hour: "numeric",
                           minute: "2-digit",
                         }
                       )}{" "}
-                      {meeting.title}
+                      {calendarMeeting.meeting.title}
                     </div>
                   );
                 })}
@@ -629,50 +612,22 @@ function MonthView({
   );
 }
 
-function MeetingCard({ meeting, onClick }: { meeting: CalendarMeeting; onClick: () => void }) {
+function CalendarGridCard({ calendarMeeting, onClick }: { calendarMeeting: CalendarMeetingView; onClick: () => void }) {
+  const { meeting, display } = calendarMeeting;
   const startTime = new Date(meeting.scheduledTime);
   const endTime = new Date(meeting.scheduledTime + meeting.duration * 60000);
-
-  // Determine color based on meeting type
-  const isMyMeeting = meeting.isMyMeeting;
-  const isPublicMeeting = meeting.isPublicMeeting;
-  const isPendingRequest = meeting.isPendingRequest;
-
-  let bgColor = "bg-primary/20";
-  let borderColor = "border-primary";
-  let textColor = "text-primary-content";
-
-  if (isPendingRequest) {
-    // Pending requests - warning/orange color
-    bgColor = "bg-warning/20";
-    borderColor = "border-warning";
-    textColor = "text-warning-content";
-  } else if (isMyMeeting && !isPublicMeeting) {
-    // My private meetings - primary blue
-    bgColor = "bg-primary/20";
-    borderColor = "border-primary";
-    textColor = "text-primary-content";
-  } else if (isPublicMeeting && !isMyMeeting) {
-    // Public meetings I'm not in - secondary/accent color
-    bgColor = "bg-secondary/20";
-    borderColor = "border-secondary";
-    textColor = "text-secondary-content";
-  } else if (isMyMeeting && isPublicMeeting) {
-    // Public meetings I'm in - success green
-    bgColor = "bg-success/20";
-    borderColor = "border-success";
-    textColor = "text-success-content";
-  }
+  const styles = categoryStyles[display.category];
+  const isPublicNotParticipant = display.category === "public-available";
 
   return (
     <div
-      className={`${bgColor} border-l-4 ${borderColor} p-1 rounded text-xs mb-1 cursor-pointer hover:opacity-80 transition-opacity`}
+      className={`${styles.bg} border-l-4 ${styles.border} p-1 rounded text-xs mb-1 cursor-pointer hover:opacity-80 transition-opacity`}
       onClick={onClick}
     >
       <Link
         to="/meeting/$meetingId"
         params={{ meetingId: meeting._id }}
-        className={`font-semibold ${textColor} truncate block hover:underline`}
+        className={`font-semibold ${styles.text} truncate block hover:underline`}
         onClick={(e) => e.stopPropagation()}
       >
         {meeting.title}
@@ -688,7 +643,7 @@ function MeetingCard({ meeting, onClick }: { meeting: CalendarMeeting; onClick: 
           minute: "2-digit",
         })}
       </div>
-      {isPublicMeeting && !isMyMeeting && (
+      {isPublicNotParticipant && (
         <div className="text-xs opacity-70 mt-0.5">📢 Public</div>
       )}
     </div>
@@ -696,16 +651,16 @@ function MeetingCard({ meeting, onClick }: { meeting: CalendarMeeting; onClick: 
 }
 
 function MeetingDetailModal({
-  meeting,
+  calendarMeeting,
   onClose,
 }: {
-  meeting: CalendarMeeting;
+  calendarMeeting: CalendarMeetingView;
   onClose: () => void;
 }) {
-  // Derive userStatus from CalendarMeeting flags
-  const userStatus = meeting.userRole ?? (
-    meeting.isPendingRequest && !meeting.isOutgoing ? "pending" :
-    meeting.isMyMeeting || meeting.userIsParticipant ? "accepted" :
+  const { meeting, userStatus } = calendarMeeting;
+  const status = userStatus.participationStatus ?? (
+    userStatus.isPendingRequest && !userStatus.isOutgoing ? "pending" :
+    userStatus.participationStatus === "accepted" || userStatus.participationStatus === "creator" ? "accepted" :
     null
   );
 
@@ -714,7 +669,7 @@ function MeetingDetailModal({
       <div className="modal-box max-w-2xl p-0">
         <MeetingCardComponent
           meeting={meeting}
-          userStatus={userStatus}
+          userStatus={status}
           variant="full"
           showParticipants
           showActions
