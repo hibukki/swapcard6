@@ -88,6 +88,47 @@ export const update = mutation({
   },
 });
 
+export const listSharedWith = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const currentUser = await getCurrentUserOrCrash(ctx);
+
+    // Get all meeting participations for the target user
+    const targetUserParticipations = await ctx.db
+      .query("meetingParticipants")
+      .withIndex("by_user_only", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    // Get all meeting participations for the current user
+    const currentUserParticipations = await ctx.db
+      .query("meetingParticipants")
+      .withIndex("by_user_only", (q) => q.eq("userId", currentUser._id))
+      .collect();
+
+    const targetMeetingIds = new Set(
+      targetUserParticipations
+        .filter((p) => p.status === "creator" || p.status === "accepted")
+        .map((p) => p.meetingId)
+    );
+    const currentUserMeetingIds = new Set(
+      currentUserParticipations
+        .filter((p) => p.status === "creator" || p.status === "accepted")
+        .map((p) => p.meetingId)
+    );
+
+    // Find meetings both users are in
+    const sharedMeetingIds = [...targetMeetingIds].filter((id) =>
+      currentUserMeetingIds.has(id)
+    );
+
+    const meetings = await Promise.all(
+      sharedMeetingIds.map((id) => ctx.db.get(id))
+    );
+
+    return meetings.filter((m) => m !== null);
+  },
+});
+
 export const remove = mutation({
   args: { meetingId: v.id("meetings") },
   handler: async (ctx, args) => {

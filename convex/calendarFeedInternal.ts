@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { generateICSFeed } from "./calendarFeed";
 
 export const getCalendarFeed = internalQuery({
-  args: { token: v.string() },
+  args: { token: v.string(), baseUrl: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
@@ -59,7 +59,7 @@ export const getCalendarFeed = internalQuery({
       (m): m is NonNullable<typeof m> => m !== null
     );
 
-    const icsContent = generateICSFeed(validMeetings);
+    const icsContent = generateICSFeed(validMeetings, args.baseUrl);
 
     return { icsContent };
   },

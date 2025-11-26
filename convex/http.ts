@@ -16,7 +16,12 @@ http.route({
       return new Response("Missing calendar token", { status: 400 });
     }
 
-    const result = await ctx.runQuery(internal.calendarFeedInternal.getCalendarFeed, { token });
+    const baseUrl = process.env.SITE_URL;
+
+    const result = await ctx.runQuery(internal.calendarFeedInternal.getCalendarFeed, {
+      token,
+      baseUrl,
+    });
 
     if (!result) {
       return new Response("Invalid calendar token", { status: 404 });

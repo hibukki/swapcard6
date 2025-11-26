@@ -23,7 +23,7 @@ interface MeetingWithDetails {
 const ALARM_MINUTES_BEFORE = 10;
 const REFRESH_INTERVAL_SECONDS = 5 * 60;
 
-export function generateICSFeed(meetings: MeetingWithDetails[]): string {
+export function generateICSFeed(meetings: MeetingWithDetails[], baseUrl?: string): string {
   const calendar = ical({
     name: "OpenCon Meetings",
     prodId: { company: "OpenCon", product: "Calendar", language: "EN" },
@@ -32,6 +32,8 @@ export function generateICSFeed(meetings: MeetingWithDetails[]): string {
   });
 
   for (const { meeting, creatorName, creatorEmail, attendees } of meetings) {
+    const meetingUrl = baseUrl ? `${baseUrl}/meeting/${meeting._id}` : undefined;
+
     calendar.createEvent({
       id: `meeting-${meeting._id}@opencon`,
       start: new Date(meeting.scheduledTime),
@@ -39,6 +41,7 @@ export function generateICSFeed(meetings: MeetingWithDetails[]): string {
       summary: meeting.title,
       description: meeting.description ?? undefined,
       location: meeting.location ?? undefined,
+      url: meetingUrl,
       status: ICalEventStatus.CONFIRMED,
       created: new Date(meeting._creationTime),
       organizer: { name: creatorName, email: creatorEmail },

@@ -166,6 +166,13 @@ export async function getUserByCalendarToken(ctx: QueryCtx, token: string) {
     .unique();
 }
 
+export const get = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId);
+  },
+});
+
 // Note: This fetches all users and filters in the client. Acceptable for small user counts.
 // For large scale, consider pagination with .paginate() or a different approach.
 export const listUsers = query({

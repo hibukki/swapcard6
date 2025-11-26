@@ -8,6 +8,7 @@ import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
 import { z } from "zod";
 import { CalendarSubscription } from "../components/CalendarSubscription";
+import { ParticipantList } from "../components/ParticipantList";
 
 const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
 const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
@@ -819,32 +820,10 @@ function MeetingDetailModal({
         {/* Participants List */}
         {participants && participants.length > 0 && (
           <div className="mb-6">
-            <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Participants ({participants.length})
-            </h4>
-            <div className="max-h-40 overflow-y-auto border border-base-300 rounded-lg">
-              <ul className="divide-y divide-base-300">
-                {participants.map((p) => {
-                  const user = usersMap.get(p.userId);
-                  const statusBadge = {
-                    creator: { class: "badge-primary", label: "Host" },
-                    accepted: { class: "badge-success", label: "Accepted" },
-                    pending: { class: "badge-warning", label: "Pending" },
-                    declined: { class: "badge-error", label: "Declined" },
-                  }[p.status] || { class: "badge-ghost", label: p.status };
-
-                  return (
-                    <li key={p._id} className="flex items-center justify-between px-3 py-2">
-                      <span className="text-sm">{user?.name || "Unknown"}</span>
-                      <span className={`badge badge-sm ${statusBadge.class}`}>
-                        {statusBadge.label}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+            <ParticipantList
+              participants={participants}
+              usersMap={usersMap}
+            />
           </div>
         )}
 
