@@ -705,6 +705,14 @@ function MeetingDetailModal({
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
+  const participants = useQuery(api.meetingParticipants.listByMeeting, { meetingId: meeting._id });
+  const allUsers = useQuery(api.users.listUsers, {});
+
+  const usersMap = useMemo(() => {
+    if (!allUsers) return new Map<Id<"users">, Doc<"users">>();
+    return new Map(allUsers.map((u) => [u._id, u]));
+  }, [allUsers]);
+
   const handleJoin = async () => {
     setIsLoading(true);
     try {
@@ -807,6 +815,38 @@ function MeetingDetailModal({
             </div>
           )}
         </div>
+
+        {/* Participants List */}
+        {participants && participants.length > 0 && (
+          <div className="mb-6">
+            <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Participants ({participants.length})
+            </h4>
+            <div className="max-h-40 overflow-y-auto border border-base-300 rounded-lg">
+              <ul className="divide-y divide-base-300">
+                {participants.map((p) => {
+                  const user = usersMap.get(p.userId);
+                  const statusBadge = {
+                    creator: { class: "badge-primary", label: "Host" },
+                    accepted: { class: "badge-success", label: "Accepted" },
+                    pending: { class: "badge-warning", label: "Pending" },
+                    declined: { class: "badge-error", label: "Declined" },
+                  }[p.status] || { class: "badge-ghost", label: p.status };
+
+                  return (
+                    <li key={p._id} className="flex items-center justify-between px-3 py-2">
+                      <span className="text-sm">{user?.name || "Unknown"}</span>
+                      <span className={`badge badge-sm ${statusBadge.class}`}>
+                        {statusBadge.label}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+        )}
 
         <div className="modal-action">
           <button type="button" className="btn" onClick={onClose}>
