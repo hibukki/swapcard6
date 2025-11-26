@@ -31,7 +31,7 @@ http.route({
       status: 200,
       headers: {
         "Content-Type": "text/calendar; charset=utf-8",
-        "Content-Disposition": 'attachment; filename="swapcard.ics"',
+        "Content-Disposition": 'attachment; filename="opencon.ics"',
       },
     });
   }),

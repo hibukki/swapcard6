@@ -1,4 +1,4 @@
-# SwapCard6
+# OpenCon
 
 [![Lint](https://github.com/hibukki/swapcard6/actions/workflows/lint.yml/badge.svg)](https://github.com/hibukki/swapcard6/actions/workflows/lint.yml)
 
