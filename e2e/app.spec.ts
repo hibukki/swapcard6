@@ -132,10 +132,9 @@ test.describe("E2E User Flow", () => {
 
     // Should redirect to attendees page after save
     await expect(page.getByRole("heading", { name: "Attendees" })).toBeVisible({ timeout: AUTH_TIMEOUT });
-
-    // Navigate explicitly to ensure page is at top for screenshot
-    await page.goto("/attendees", { waitUntil: "networkidle" });
     await expect(page.getByText("Alice Johnson")).toBeVisible();
+    // Scroll to top for consistent screenshot
+    await page.evaluate(() => window.scrollTo(0, 0));
     await screenshot(page, "attendees");
 
     // Verify profile is now filled by going back to profile page
