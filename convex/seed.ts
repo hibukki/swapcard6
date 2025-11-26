@@ -1,5 +1,6 @@
 import { internalMutation, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { getCurrentUserOrCrash } from "./users";
 
@@ -49,9 +50,11 @@ export const clearAllData = internalMutation({
 });
 
 export const seedData = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const now = Date.now();
+  args: {
+    baseTimestamp: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const now = args.baseTimestamp ?? Date.now();
     const oneHour = 60 * 60 * 1000;
     const oneDay = 24 * oneHour;
 
@@ -325,15 +328,17 @@ export const seedData = internalMutation({
 
 // Main seeding mutation that includes the current authenticated user
 export const seedDataWithCurrentUser = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    baseTimestamp: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
     const currentUser = await getCurrentUserOrCrash(ctx);
-    const now = Date.now();
+    const now = args.baseTimestamp ?? Date.now();
     const oneHour = 60 * 60 * 1000;
     const oneDay = 24 * oneHour;
 
     // First, run the base seed data
-    await ctx.scheduler.runAfter(0, internal.seed.seedData, {});
+    await ctx.scheduler.runAfter(0, internal.seed.seedData, { baseTimestamp: now });
 
     // Create sample users for relationships (if they don't exist)
     const sampleUserData = [

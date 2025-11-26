@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 import dotenv from "dotenv";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { api } from "../convex/_generated/api";
@@ -9,6 +10,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
 
 const SCREENSHOTS_DIR = path.resolve(__dirname, "../docs/screenshots");
+
+function clearScreenshotsDir() {
+  if (fs.existsSync(SCREENSHOTS_DIR)) {
+    for (const file of fs.readdirSync(SCREENSHOTS_DIR)) {
+      fs.unlinkSync(path.join(SCREENSHOTS_DIR, file));
+    }
+  }
+  fs.mkdirSync(SCREENSHOTS_DIR, { recursive: true });
+}
 
 async function navigateAndScreenshot(
   page: import("@playwright/test").Page,
@@ -26,6 +36,8 @@ const TEST_EMAIL = "e2e+clerk_test@example.com";
 const TEST_USER_NAME = "E2E";
 const CLERK_TEST_CODE = "424242";
 const AUTH_TIMEOUT = 15000;
+// Fixed timestamp for deterministic screenshots: 2025-01-15T10:00:00Z
+const SEED_BASE_TIMESTAMP = 1736935200000;
 
 let convex: ConvexTestingHelper;
 
@@ -81,6 +93,9 @@ async function signOut(page: import("@playwright/test").Page) {
 
 test.describe("E2E User Flow", () => {
   test("complete user journey", async ({ page }) => {
+    // Clear screenshots directory before generating new ones
+    clearScreenshotsDir();
+
     await page.goto("/");
     await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
 
@@ -111,8 +126,13 @@ test.describe("E2E User Flow", () => {
     await expect(page.getByText("Developer Tools")).toBeVisible();
     await expect(page.getByRole("button", { name: "Seed Test Data" })).toBeVisible();
 
-    await page.getByRole("button", { name: "Seed Test Data" }).click();
-    await expect(page.getByText("Test data created successfully!")).toBeVisible({ timeout: AUTH_TIMEOUT });
+    // Seed via testing API with fixed timestamp for deterministic screenshots
+    await convex.mutation(api.testingFunctions.seedWithFixedTimestamp, {
+      baseTimestamp: SEED_BASE_TIMESTAMP,
+      userName: TEST_USER_NAME,
+    });
+    // Wait for scheduled seed data to complete
+    await page.waitForTimeout(2000);
 
     // Take screenshots of main pages with seeded data
     await navigateAndScreenshot(page, "/agenda", "agenda");
