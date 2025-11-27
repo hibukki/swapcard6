@@ -46,6 +46,7 @@ jobs:
             - Security concerns (are security assumptions grouped in one place which is simple to review?)
             - DRY
             - Scope creep (is the PR trying to solve too many problems at once?)
+            - API changes / function signature changes (clean readable APIs are more important than the implementation)
 
             Things that don't matter:
             - Performance (it is better to keep simple maintainable code. avoid premature optimization.)
