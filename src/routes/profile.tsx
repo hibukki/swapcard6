@@ -2,14 +2,15 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useForm } from "@tanstack/react-form";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMutation } from "convex/react";
-import { Users } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useAction, useMutation, useQuery as useConvexQuery } from "convex/react";
+import { Sparkles, Users } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { z } from "zod";
 import { api } from "../../convex/_generated/api";
 import { CalendarSubscription } from "../components/CalendarSubscription";
 import { UserProfileCard } from "../components/UserProfileCard";
 import type { Doc } from "../../convex/_generated/dataModel";
+import type { RecommendationsResponse } from "../../convex/llm";
 
 const currentUserQuery = convexQuery(api.users.getCurrentUser, {});
 
@@ -332,8 +333,16 @@ function ProfilePage() {
         </div>
       </div>
 
-      {/* Recommendations Section */}
-      {hasSearchCriteria && (
+      {/* AI Recommendations for new users (based on form input) */}
+      {isNewUser && (
+        <AIRecommendations
+          currentUserProfile={previewUser}
+          currentUserId={user._id}
+        />
+      )}
+
+      {/* Text-based Recommendations for existing users (based on saved profile) */}
+      {!isNewUser && hasSearchCriteria && (
         <div className="not-prose mt-8 pt-8 border-t border-base-300">
           <div className="flex items-center gap-2 mb-4">
             <Users className="w-5 h-5 text-primary" />
@@ -444,6 +453,186 @@ function SeedDataSection() {
           {result}
         </p>
       )}
+    </div>
+  );
+}
+
+interface AIRecommendationsProps {
+  currentUserProfile: {
+    name: string;
+    bio?: string;
+    role?: string;
+    company?: string;
+    interests?: string[];
+    canHelpWith?: string;
+    needsHelpWith?: string;
+  };
+  currentUserId: string;
+}
+
+function AIRecommendations({ currentUserProfile, currentUserId }: AIRecommendationsProps) {
+  const getAIRecommendations = useAction(api.llm.getAIRecommendations);
+  const allUsers = useConvexQuery(api.users.listUsers);
+
+  const [recommendations, setRecommendations] = useState<RecommendationsResponse["recommendations"]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const lastRequestRef = useRef<string>("");
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hasProfileContent = !!(
+    currentUserProfile.canHelpWith ||
+    currentUserProfile.needsHelpWith ||
+    (currentUserProfile.interests && currentUserProfile.interests.length > 0)
+  );
+
+  const fetchRecommendations = useCallback(async () => {
+    if (!allUsers || allUsers.length === 0) return;
+    if (!hasProfileContent) return;
+
+    // Create a key to avoid duplicate requests
+    const requestKey = JSON.stringify({
+      canHelpWith: currentUserProfile.canHelpWith,
+      needsHelpWith: currentUserProfile.needsHelpWith,
+      interests: currentUserProfile.interests,
+    });
+
+    if (requestKey === lastRequestRef.current) return;
+    lastRequestRef.current = requestKey;
+
+    // Filter out current user and prepare candidate data
+    const candidates = allUsers
+      .filter((u) => u._id !== currentUserId)
+      .map((u) => ({
+        _id: u._id,
+        name: u.name,
+        bio: u.bio,
+        role: u.role,
+        company: u.company,
+        interests: u.interests,
+        canHelpWith: u.canHelpWith,
+        needsHelpWith: u.needsHelpWith,
+      }));
+
+    if (candidates.length === 0) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await getAIRecommendations({
+        currentUserProfile: {
+          name: currentUserProfile.name,
+          bio: currentUserProfile.bio,
+          role: currentUserProfile.role,
+          company: currentUserProfile.company,
+          interests: currentUserProfile.interests,
+          canHelpWith: currentUserProfile.canHelpWith,
+          needsHelpWith: currentUserProfile.needsHelpWith,
+        },
+        candidateUsers: candidates,
+        limit: 3,
+      });
+      setRecommendations(result.recommendations);
+    } catch (err) {
+      console.error("AI recommendations error:", err);
+      setError("Couldn't get AI recommendations");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [allUsers, currentUserId, currentUserProfile, hasProfileContent, getAIRecommendations]);
+
+  // Debounced fetch when profile changes
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    if (hasProfileContent) {
+      debounceTimerRef.current = setTimeout(() => {
+        void fetchRecommendations();
+      }, 1500); // 1.5 second debounce
+    }
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [fetchRecommendations, hasProfileContent]);
+
+  if (!hasProfileContent) {
+    return null;
+  }
+
+  // Find the full user data for each recommendation
+  const recommendedUsersWithData = recommendations
+    .map((rec) => {
+      const user = allUsers?.find((u) => u._id === rec.userId);
+      if (!user) return null;
+      return { ...rec, user };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
+
+  return (
+    <div className="not-prose mt-8 pt-8 border-t border-base-300">
+      <div className="flex items-center gap-2 mb-4">
+        <Sparkles className="w-5 h-5 text-secondary" />
+        <h2 className="text-lg font-semibold">AI-Suggested Connections</h2>
+        {isLoading && <span className="loading loading-spinner loading-sm"></span>}
+      </div>
+      <p className="text-sm opacity-70 mb-4">
+        Based on what you can offer and what you're looking for
+      </p>
+
+      {error && (
+        <p className="text-sm text-error mb-4">{error}</p>
+      )}
+
+      {recommendedUsersWithData.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {recommendedUsersWithData.map(({ userId, reason, score, user }) => (
+            <Link
+              key={userId}
+              to="/user/$userId"
+              params={{ userId }}
+              className="card bg-base-200 hover:bg-base-300 transition-colors"
+            >
+              <div className="card-body p-4">
+                <div className="flex items-center gap-3">
+                  {user.imageUrl ? (
+                    <img
+                      src={user.imageUrl}
+                      alt={user.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center text-lg font-bold text-secondary">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold truncate">{user.name}</h3>
+                    {(user.role || user.company) && (
+                      <p className="text-sm opacity-70 truncate">
+                        {user.role}
+                        {user.role && user.company && " at "}
+                        {user.company}
+                      </p>
+                    )}
+                  </div>
+                  <div className="badge badge-secondary badge-sm">{score}%</div>
+                </div>
+                <p className="text-sm mt-2 opacity-80">{reason}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : !isLoading ? (
+        <p className="text-sm opacity-50">
+          Fill in what you can help with or what you need to see AI recommendations.
+        </p>
+      ) : null}
     </div>
   );
 }
