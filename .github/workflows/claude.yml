@@ -88,6 +88,9 @@ jobs:
           echo "CONVEX_DEPLOY_KEY=$CONVEX_DEPLOY_KEY" >> .env.local
           cat .env.local
 
+      - name: Stash local changes before branch switch
+        run: git stash --include-untracked || true
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
