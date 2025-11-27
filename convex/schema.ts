@@ -56,6 +56,13 @@ export type NotificationType =
   | "meeting_reminder"
   | "conference_announcement";
 
+export const llmRateLimitWindowValidator = v.union(
+  v.literal("minute"),
+  v.literal("hour"),
+  v.literal("day")
+);
+export type LlmRateLimitWindow = "minute" | "hour" | "day";
+
 export default defineSchema({
   conferences: defineTable({
     ...conferenceFields,
@@ -122,4 +129,11 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_and_read", ["userId", "isRead"]),
+
+  // LLM rate limiting - tracks usage per window (minute/hour/day)
+  llmRateLimits: defineTable({
+    window: llmRateLimitWindowValidator,
+    windowStart: v.number(), // UTC timestamp of window start
+    count: v.number(),
+  }).index("by_window_and_start", ["window", "windowStart"]),
 });
