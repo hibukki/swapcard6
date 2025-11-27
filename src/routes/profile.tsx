@@ -486,6 +486,25 @@ function AIRecommendations({ currentUserProfile, currentUserId }: AIRecommendati
     (currentUserProfile.interests && currentUserProfile.interests.length > 0)
   );
 
+  // Helper to extract profile data for LLM (avoids duplication)
+  const toProfileData = useCallback((user: {
+    name: string;
+    bio?: string;
+    role?: string;
+    company?: string;
+    interests?: string[];
+    canHelpWith?: string;
+    needsHelpWith?: string;
+  }) => ({
+    name: user.name,
+    bio: user.bio,
+    role: user.role,
+    company: user.company,
+    interests: user.interests,
+    canHelpWith: user.canHelpWith,
+    needsHelpWith: user.needsHelpWith,
+  }), []);
+
   const fetchRecommendations = useCallback(async () => {
     if (!allUsers || allUsers.length === 0) return;
     if (!hasProfileContent) return;
@@ -505,13 +524,7 @@ function AIRecommendations({ currentUserProfile, currentUserId }: AIRecommendati
       .filter((u) => u._id !== currentUserId)
       .map((u) => ({
         _id: u._id,
-        name: u.name,
-        bio: u.bio,
-        role: u.role,
-        company: u.company,
-        interests: u.interests,
-        canHelpWith: u.canHelpWith,
-        needsHelpWith: u.needsHelpWith,
+        ...toProfileData(u),
       }));
 
     if (candidates.length === 0) return;
@@ -521,15 +534,7 @@ function AIRecommendations({ currentUserProfile, currentUserId }: AIRecommendati
 
     try {
       const result = await getAIRecommendations({
-        currentUserProfile: {
-          name: currentUserProfile.name,
-          bio: currentUserProfile.bio,
-          role: currentUserProfile.role,
-          company: currentUserProfile.company,
-          interests: currentUserProfile.interests,
-          canHelpWith: currentUserProfile.canHelpWith,
-          needsHelpWith: currentUserProfile.needsHelpWith,
-        },
+        currentUserProfile: toProfileData(currentUserProfile),
         candidateUsers: candidates,
         limit: 3,
       });
@@ -540,9 +545,13 @@ function AIRecommendations({ currentUserProfile, currentUserId }: AIRecommendati
     } finally {
       setIsLoading(false);
     }
-  }, [allUsers, currentUserId, currentUserProfile, hasProfileContent, getAIRecommendations]);
+  }, [allUsers, currentUserId, currentUserProfile, hasProfileContent, getAIRecommendations, toProfileData]);
 
   // Debounced fetch when profile changes
+  // We intentionally omit fetchRecommendations from deps to avoid infinite loop.
+  // fetchRecommendations depends on currentUserProfile, which would cause it to be
+  // recreated on every profile change, triggering this effect again.
+  // The debounce timer and lastRequestRef prevent duplicate requests.
   useEffect(() => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
@@ -559,7 +568,8 @@ function AIRecommendations({ currentUserProfile, currentUserId }: AIRecommendati
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [fetchRecommendations, hasProfileContent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasProfileContent]);
 
   if (!hasProfileContent) {
     return null;

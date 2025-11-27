@@ -1,6 +1,10 @@
 import { internalMutation, internalQuery } from "./_generated/server";
 import type { LlmRateLimitWindow } from "./schema";
 
+// Note: These limits are not exact due to the separate check/increment pattern.
+// In high concurrency scenarios, a few extra requests might slip through.
+// This is acceptable - these limits are primarily to catch bugs and prevent runaway costs,
+// not to enforce strict quotas.
 const LIMITS: Record<LlmRateLimitWindow, { duration: number; max: number }> = {
   minute: { duration: 60 * 1000, max: 5 },
   hour: { duration: 60 * 60 * 1000, max: 60 },
@@ -18,7 +22,7 @@ export const checkRateLimit = internalQuery({
     const now = Date.now();
 
     for (const window of ["minute", "hour", "day"] as const) {
-      const { max } = LIMITS[window];
+      const { max, duration } = LIMITS[window];
       const windowStart = getWindowStart(window, now);
 
       const record = await ctx.db
@@ -28,7 +32,8 @@ export const checkRateLimit = internalQuery({
         )
         .unique();
 
-      if (record && record.count >= max) {
+      // Ignore expired records (automatic cleanup without cron jobs)
+      if (record && windowStart + duration >= now && record.count >= max) {
         return {
           allowed: false,
           reason: `Rate limit exceeded: ${max} requests per ${window}`,
@@ -46,6 +51,7 @@ export const incrementUsage = internalMutation({
     const now = Date.now();
 
     for (const window of ["minute", "hour", "day"] as const) {
+      const { duration } = LIMITS[window];
       const windowStart = getWindowStart(window, now);
 
       const record = await ctx.db
@@ -63,6 +69,18 @@ export const incrementUsage = internalMutation({
           windowStart,
           count: 1,
         });
+      }
+
+      // Clean up old records for this window type (automatic cleanup)
+      const expiredThreshold = now - duration * 2; // Keep 2 windows of history
+      const oldRecords = await ctx.db
+        .query("llmRateLimits")
+        .withIndex("by_window_and_start", (q) => q.eq("window", window))
+        .filter((q) => q.lt(q.field("windowStart"), expiredThreshold))
+        .collect();
+
+      for (const oldRecord of oldRecords) {
+        await ctx.db.delete(oldRecord._id);
       }
     }
   },

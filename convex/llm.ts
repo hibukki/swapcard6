@@ -12,7 +12,12 @@ const MODEL = "gemini-2.0-flash-lite";
 function getClient() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY environment variable is not set");
+    // This error is only thrown in internal actions, so it's safe to be descriptive
+    // It won't be exposed to clients, only logged server-side
+    throw new Error(
+      "GEMINI_API_KEY environment variable is not set. " +
+      "Please set it in your Convex dashboard under Settings > Environment Variables."
+    );
   }
   return new GoogleGenerativeAI(apiKey);
 }
