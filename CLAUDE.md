@@ -27,9 +27,12 @@ These are suggestions/preferences. If you don't like them, I prefer if you said 
 
 You can't run a local backend, but you can deploy a Convex preview deployment. This requires a `CONVEX_DEPLOY_KEY` environment variable (should be pre-configured).
 
+See [Convex Preview Deployments docs](https://docs.convex.dev/production/hosting/preview-deployments).
+
 **Step 1: Deploy the preview**
 ```sh
-pnpx convex deploy --preview-create claude-preview-test
+# Use a unique name (e.g., branch name or feature name)
+pnpx convex deploy --preview-create my-unique-preview-name
 ```
 
 This will output the preview URL, e.g., `https://aware-tapir-512.convex.cloud`
@@ -50,7 +53,7 @@ pnpm run dev:frontend
 **Verify the backend is working:**
 ```sh
 # Via CLI:
-pnpx convex run health:check --preview-name claude-preview-test
+pnpx convex run health:check --preview-name my-unique-preview-name
 
 # Via HTTP:
 curl -s https://YOUR-PREVIEW-URL.convex.cloud/api/query \
@@ -60,10 +63,13 @@ curl -s https://YOUR-PREVIEW-URL.convex.cloud/api/query \
 
 **Re-deploy after changes:**
 ```sh
-pnpx convex deploy --preview-name claude-preview-test
+pnpx convex deploy --preview-name my-unique-preview-name
 ```
 
-**Note:** The `--preview-create` flag creates a new preview, while `--preview-name` uses an existing one.
+**Notes:**
+- `--preview-create` creates a new preview, `--preview-name` uses an existing one
+- Previews auto-expire after 5 days (14 days on Professional plan)
+- To delete earlier, use the [Convex dashboard](https://dashboard.convex.dev/)
 
 ## Convex
 
