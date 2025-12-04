@@ -1,13 +1,42 @@
 import { expect, test } from "@playwright/test";
 import { ConvexTestingHelper } from "convex-helpers/testing";
+import { ConvexHttpClient } from "convex/browser";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
+import { ProxyAgent, setGlobalDispatcher } from "undici";
 import { fileURLToPath } from "url";
 import { api } from "../convex/_generated/api";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
+
+// Enable proxy support for Node.js fetch (required in sandbox environments)
+const isProxyEnvironment = Boolean(process.env.https_proxy);
+if (isProxyEnvironment) {
+  setGlobalDispatcher(new ProxyAgent(process.env.https_proxy!));
+}
+
+// HTTP-based testing helper for cloud/proxy environments (ConvexTestingHelper uses WebSocket which doesn't work through proxies)
+class ConvexHttpTestingHelper {
+  private client: ConvexHttpClient;
+
+  constructor(backendUrl: string) {
+    this.client = new ConvexHttpClient(backendUrl);
+  }
+
+  async query<T>(functionReference: unknown, args: Record<string, unknown>): Promise<T> {
+    return this.client.query(functionReference as never, args as never);
+  }
+
+  async mutation<T>(functionReference: unknown, args: Record<string, unknown>): Promise<T> {
+    return this.client.mutation(functionReference as never, args as never);
+  }
+
+  async close(): Promise<void> {
+    // HTTP client doesn't need explicit close
+  }
+}
 
 const SCREENSHOTS_DIR = path.resolve(__dirname, "../docs/screenshots");
 
@@ -37,12 +66,19 @@ const AUTH_TIMEOUT = 15000;
 // Fixed timestamp for deterministic screenshots: 2025-01-15T10:00:00Z
 const SEED_BASE_TIMESTAMP = 1736935200000;
 
-let convex: ConvexTestingHelper;
+let convex: ConvexTestingHelper | ConvexHttpTestingHelper;
 
 test.beforeAll(async () => {
-  convex = new ConvexTestingHelper({
-    backendUrl: process.env.VITE_CONVEX_URL!,
-  });
+  // Use HTTP client in proxy environments (WebSocket doesn't work through proxies)
+  if (isProxyEnvironment) {
+    convex = new ConvexHttpTestingHelper(process.env.VITE_CONVEX_URL!);
+  } else {
+    convex = new ConvexTestingHelper({
+      backendUrl: process.env.VITE_CONVEX_URL!,
+      // Use CONVEX_DEPLOY_KEY for cloud/preview deployments, otherwise use default local key
+      ...(process.env.CONVEX_DEPLOY_KEY && { adminKey: process.env.CONVEX_DEPLOY_KEY }),
+    });
+  }
 
   try {
     await convex.query(api.testingFunctions.verifyTestEnvironment, {});
