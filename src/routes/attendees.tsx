@@ -2,7 +2,16 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-import { MessageCircle, MessageSquare, Search, UserPlus, X, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import {
+  MessageCircle,
+  MessageSquare,
+  Search,
+  UserPlus,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
 import { z } from "zod";
@@ -58,9 +67,6 @@ function AttendeesPage() {
 
   return (
     <div>
-      <h1 className="mt-0">Attendees</h1>
-      <p>Browse conference attendees and send meeting requests</p>
-
       <div className="not-prose mt-6 mb-6">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" />
@@ -82,7 +88,8 @@ function AttendeesPage() {
         </div>
         {searchQuery && (
           <p className="text-sm opacity-70 mt-2">
-            {filteredUsers.length} {filteredUsers.length === 1 ? "result" : "results"}
+            {filteredUsers.length}{" "}
+            {filteredUsers.length === 1 ? "result" : "results"}
           </p>
         )}
       </div>
@@ -150,15 +157,23 @@ function AttendeesPage() {
 
                 {user.canHelpWith && (
                   <div className="mt-3">
-                    <p className="text-xs font-medium opacity-60 mb-1">Can help with</p>
-                    <p className="text-sm opacity-80 line-clamp-2">{user.canHelpWith}</p>
+                    <p className="text-xs font-medium opacity-60 mb-1">
+                      Can help with
+                    </p>
+                    <p className="text-sm opacity-80 line-clamp-2">
+                      {user.canHelpWith}
+                    </p>
                   </div>
                 )}
 
                 {user.needsHelpWith && (
                   <div className="mt-3">
-                    <p className="text-xs font-medium opacity-60 mb-1">Looking for help with</p>
-                    <p className="text-sm opacity-80 line-clamp-2">{user.needsHelpWith}</p>
+                    <p className="text-xs font-medium opacity-60 mb-1">
+                      Looking for help with
+                    </p>
+                    <p className="text-sm opacity-80 line-clamp-2">
+                      {user.needsHelpWith}
+                    </p>
                   </div>
                 )}
 
@@ -202,7 +217,7 @@ function generateTimeSlots(
   date: Date,
   duration: number,
   myBusySlots: BusySlot[],
-  theirBusySlots: BusySlot[]
+  theirBusySlots: BusySlot[],
 ): number[] {
   const allBusySlots = [...myBusySlots, ...theirBusySlots];
   const slots: number[] = [];
@@ -214,12 +229,16 @@ function generateTimeSlots(
   const dayEnd = new Date(date);
   dayEnd.setHours(18, 0, 0, 0);
 
-  for (let time = dayStart.getTime(); time < dayEnd.getTime(); time += 30 * 60 * 1000) {
+  for (
+    let time = dayStart.getTime();
+    time < dayEnd.getTime();
+    time += 30 * 60 * 1000
+  ) {
     const slotEnd = time + duration * 60 * 1000;
     if (slotEnd > dayEnd.getTime()) break;
 
     const isAvailable = !allBusySlots.some(
-      (busy) => time < busy.end && slotEnd > busy.start
+      (busy) => time < busy.end && slotEnd > busy.start,
     );
     if (isAvailable) {
       slots.push(time);
@@ -266,7 +285,9 @@ function MeetingRequestModal({
   // Get conference date bounds
   const conference = conferences?.[0];
   const minDate = conference ? new Date(conference.startDate) : new Date();
-  const maxDate = conference ? new Date(conference.endDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const maxDate = conference
+    ? new Date(conference.endDate)
+    : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   // Initialize selected date to conference start (or today if within range)
   useEffect(() => {
@@ -289,19 +310,25 @@ function MeetingRequestModal({
   }, [conference, selectedDate]);
 
   // Fetch busy slots for both users
-  const dayStart = selectedDate ? new Date(selectedDate).setHours(0, 0, 0, 0) : 0;
-  const dayEnd = selectedDate ? new Date(selectedDate).setHours(23, 59, 59, 999) : 0;
+  const dayStart = selectedDate
+    ? new Date(selectedDate).setHours(0, 0, 0, 0)
+    : 0;
+  const dayEnd = selectedDate
+    ? new Date(selectedDate).setHours(23, 59, 59, 999)
+    : 0;
 
   const myBusySlots = useQuery(
     api.meetings.getBusySlots,
     currentUser && selectedDate
       ? { userId: currentUser._id, startDate: dayStart, endDate: dayEnd }
-      : "skip"
+      : "skip",
   );
 
   const theirBusySlots = useQuery(
     api.meetings.getBusySlots,
-    selectedDate ? { userId: recipientId, startDate: dayStart, endDate: dayEnd } : "skip"
+    selectedDate
+      ? { userId: recipientId, startDate: dayStart, endDate: dayEnd }
+      : "skip",
   );
 
   // ESC key handler
@@ -318,7 +345,12 @@ function MeetingRequestModal({
   // Generate available time slots
   const availableSlots = useMemo(() => {
     if (!selectedDate || !myBusySlots || !theirBusySlots) return [];
-    return generateTimeSlots(selectedDate, duration, myBusySlots, theirBusySlots);
+    return generateTimeSlots(
+      selectedDate,
+      duration,
+      myBusySlots,
+      theirBusySlots,
+    );
   }, [selectedDate, duration, myBusySlots, theirBusySlots]);
 
   // Auto-select first available slot when slots change
@@ -374,7 +406,11 @@ function MeetingRequestModal({
     }
   };
 
-  const isLoading = !currentUser || !conferences || myBusySlots === undefined || theirBusySlots === undefined;
+  const isLoading =
+    !currentUser ||
+    !conferences ||
+    myBusySlots === undefined ||
+    theirBusySlots === undefined;
 
   return (
     <dialog open className="modal modal-open">
