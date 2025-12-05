@@ -11,12 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicMeetingsRouteImport } from './routes/public-meetings'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ChatsRouteImport } from './routes/chats'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AttendeesRouteImport } from './routes/attendees'
 import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserUserIdRouteImport } from './routes/user.$userId'
 import { Route as MeetingMeetingIdRouteImport } from './routes/meeting.$meetingId'
+import { Route as ChatChatRoomIdRouteImport } from './routes/chat.$chatRoomId'
 
 const PublicMeetingsRoute = PublicMeetingsRouteImport.update({
   id: '/public-meetings',
@@ -26,6 +28,11 @@ const PublicMeetingsRoute = PublicMeetingsRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatsRoute = ChatsRouteImport.update({
+  id: '/chats',
+  path: '/chats',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CalendarRoute = CalendarRouteImport.update({
@@ -58,14 +65,21 @@ const MeetingMeetingIdRoute = MeetingMeetingIdRouteImport.update({
   path: '/meeting/$meetingId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChatChatRoomIdRoute = ChatChatRoomIdRouteImport.update({
+  id: '/chat/$chatRoomId',
+  path: '/chat/$chatRoomId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/attendees': typeof AttendeesRoute
   '/calendar': typeof CalendarRoute
+  '/chats': typeof ChatsRoute
   '/profile': typeof ProfileRoute
   '/public-meetings': typeof PublicMeetingsRoute
+  '/chat/$chatRoomId': typeof ChatChatRoomIdRoute
   '/meeting/$meetingId': typeof MeetingMeetingIdRoute
   '/user/$userId': typeof UserUserIdRoute
 }
@@ -74,8 +88,10 @@ export interface FileRoutesByTo {
   '/agenda': typeof AgendaRoute
   '/attendees': typeof AttendeesRoute
   '/calendar': typeof CalendarRoute
+  '/chats': typeof ChatsRoute
   '/profile': typeof ProfileRoute
   '/public-meetings': typeof PublicMeetingsRoute
+  '/chat/$chatRoomId': typeof ChatChatRoomIdRoute
   '/meeting/$meetingId': typeof MeetingMeetingIdRoute
   '/user/$userId': typeof UserUserIdRoute
 }
@@ -85,8 +101,10 @@ export interface FileRoutesById {
   '/agenda': typeof AgendaRoute
   '/attendees': typeof AttendeesRoute
   '/calendar': typeof CalendarRoute
+  '/chats': typeof ChatsRoute
   '/profile': typeof ProfileRoute
   '/public-meetings': typeof PublicMeetingsRoute
+  '/chat/$chatRoomId': typeof ChatChatRoomIdRoute
   '/meeting/$meetingId': typeof MeetingMeetingIdRoute
   '/user/$userId': typeof UserUserIdRoute
 }
@@ -97,8 +115,10 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/attendees'
     | '/calendar'
+    | '/chats'
     | '/profile'
     | '/public-meetings'
+    | '/chat/$chatRoomId'
     | '/meeting/$meetingId'
     | '/user/$userId'
   fileRoutesByTo: FileRoutesByTo
@@ -107,8 +127,10 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/attendees'
     | '/calendar'
+    | '/chats'
     | '/profile'
     | '/public-meetings'
+    | '/chat/$chatRoomId'
     | '/meeting/$meetingId'
     | '/user/$userId'
   id:
@@ -117,8 +139,10 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/attendees'
     | '/calendar'
+    | '/chats'
     | '/profile'
     | '/public-meetings'
+    | '/chat/$chatRoomId'
     | '/meeting/$meetingId'
     | '/user/$userId'
   fileRoutesById: FileRoutesById
@@ -128,8 +152,10 @@ export interface RootRouteChildren {
   AgendaRoute: typeof AgendaRoute
   AttendeesRoute: typeof AttendeesRoute
   CalendarRoute: typeof CalendarRoute
+  ChatsRoute: typeof ChatsRoute
   ProfileRoute: typeof ProfileRoute
   PublicMeetingsRoute: typeof PublicMeetingsRoute
+  ChatChatRoomIdRoute: typeof ChatChatRoomIdRoute
   MeetingMeetingIdRoute: typeof MeetingMeetingIdRoute
   UserUserIdRoute: typeof UserUserIdRoute
 }
@@ -148,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chats': {
+      id: '/chats'
+      path: '/chats'
+      fullPath: '/chats'
+      preLoaderRoute: typeof ChatsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/calendar': {
@@ -192,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MeetingMeetingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/chat/$chatRoomId': {
+      id: '/chat/$chatRoomId'
+      path: '/chat/$chatRoomId'
+      fullPath: '/chat/$chatRoomId'
+      preLoaderRoute: typeof ChatChatRoomIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -200,8 +240,10 @@ const rootRouteChildren: RootRouteChildren = {
   AgendaRoute: AgendaRoute,
   AttendeesRoute: AttendeesRoute,
   CalendarRoute: CalendarRoute,
+  ChatsRoute: ChatsRoute,
   ProfileRoute: ProfileRoute,
   PublicMeetingsRoute: PublicMeetingsRoute,
+  ChatChatRoomIdRoute: ChatChatRoomIdRoute,
   MeetingMeetingIdRoute: MeetingMeetingIdRoute,
   UserUserIdRoute: UserUserIdRoute,
 }

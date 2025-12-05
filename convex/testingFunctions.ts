@@ -83,6 +83,24 @@ export const clearAllData = testingMutation({
       await ctx.db.delete(m._id);
     }
 
+    // Delete chat messages
+    const chatMessages = await ctx.db.query("chatRoomMessages").collect();
+    for (const m of chatMessages) {
+      await ctx.db.delete(m._id);
+    }
+
+    // Delete chat room users
+    const chatRoomUsers = await ctx.db.query("chatRoomUsers").collect();
+    for (const u of chatRoomUsers) {
+      await ctx.db.delete(u._id);
+    }
+
+    // Delete chat rooms
+    const chatRooms = await ctx.db.query("chatRooms").collect();
+    for (const r of chatRooms) {
+      await ctx.db.delete(r._id);
+    }
+
     // Delete users
     const users = await ctx.db.query("users").collect();
     for (const u of users) {

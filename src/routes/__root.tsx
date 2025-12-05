@@ -116,6 +116,15 @@ function RootComponent() {
                           Agenda
                         </Link>
                         <Link
+                          to="/chats"
+                          className="btn btn-ghost"
+                          activeProps={{
+                            className: "btn btn-ghost btn-active",
+                          }}
+                        >
+                          Chat
+                        </Link>
+                        <Link
                           to="/profile"
                           className="btn btn-ghost"
                           activeProps={{
@@ -195,6 +204,18 @@ function RootComponent() {
                             className="flex items-center p-2"
                           >
                             Agenda
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/chats"
+                            onClick={() => setIsSidebarOpen(false)}
+                            activeProps={{
+                              className: "active",
+                            }}
+                            className="flex items-center p-2"
+                          >
+                            Chat
                           </Link>
                         </li>
                         <li>
