@@ -70,6 +70,7 @@ export const seedData = internalMutation({
         interests: ["Product Design", "User Research", "Agile"],
         canHelpWith: "Product strategy, roadmap planning, stakeholder management, user interviews, and prioritization frameworks",
         needsHelpWith: "Technical architecture decisions, scaling engineering teams, and understanding ML/AI capabilities",
+        isDemoBot: true,
       },
       {
         clerkId: "seed_user_2",
@@ -81,6 +82,7 @@ export const seedData = internalMutation({
         interests: ["React", "Node.js", "Cloud Architecture"],
         canHelpWith: "System design, code reviews, React performance optimization, and building scalable APIs",
         needsHelpWith: "Product thinking, understanding user needs, and design feedback for developer tools",
+        isDemoBot: true,
       },
       {
         clerkId: "seed_user_3",
@@ -92,6 +94,7 @@ export const seedData = internalMutation({
         interests: ["Content Marketing", "SEO", "Brand Strategy"],
         canHelpWith: "Go-to-market strategy, content marketing, brand positioning, and growth experiments",
         needsHelpWith: "Understanding technical products, analytics implementation, and developer marketing",
+        isDemoBot: true,
       },
       {
         clerkId: "seed_user_4",
@@ -103,6 +106,7 @@ export const seedData = internalMutation({
         interests: ["UI/UX", "Design Systems", "Accessibility"],
         canHelpWith: "Design critiques, building design systems, accessibility audits, and user testing facilitation",
         needsHelpWith: "Frontend implementation best practices, motion design, and 3D/WebGL experiences",
+        isDemoBot: true,
       },
       {
         clerkId: "seed_user_5",
@@ -114,6 +118,7 @@ export const seedData = internalMutation({
         interests: ["Machine Learning", "Python", "Data Visualization"],
         canHelpWith: "Data analysis, ML model selection, experiment design, and building data pipelines",
         needsHelpWith: "Deploying ML models to production, MLOps best practices, and communicating insights to non-technical stakeholders",
+        isDemoBot: true,
       },
     ];
 
@@ -129,6 +134,10 @@ export const seedData = internalMutation({
         const id = await ctx.db.insert("users", userData);
         seedUserIds.push(id);
       } else {
+        // Ensure isDemoBot is set on existing seed users
+        if (existing.isDemoBot !== true) {
+          await ctx.db.patch(existing._id, { isDemoBot: true });
+        }
         seedUserIds.push(existing._id);
       }
     }
