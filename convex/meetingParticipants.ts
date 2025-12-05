@@ -1,7 +1,11 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
-import { getCurrentUserOrCrash, getCurrentUserOrNull, getUserByIdOrCrash } from "./users";
+import {
+  getCurrentUserOrCrash,
+  getCurrentUserOrNull,
+  getUserByIdOrCrash,
+} from "./users";
 import { getMeetingOrCrash, getViewableMeetingOrCrash } from "./meetingUtils";
 import { getMeetingParticipation } from "./meetingParticipantsUtils";
 import { meetingFields } from "./schema";
@@ -18,20 +22,7 @@ export const get = query({
 export const listByMeeting = query({
   args: { meetingId: v.id("meetings") },
   handler: async (ctx, args) => {
-    const meeting = await getMeetingOrCrash(ctx, args.meetingId);
-
-    // Only allow seeing participants of public meetings or meetings the user is a participant of
-    if (!meeting.isPublic) {
-      const user = await getCurrentUserOrNull(ctx);
-      if (!user) {
-        throw new ConvexError("Not authorized to view participants of this meeting");
-      }
-
-      const participation = await getMeetingParticipation(ctx, args.meetingId, user._id);
-      if (!participation) {
-        throw new ConvexError("Not authorized to view participants of this meeting");
-      }
-    }
+    const _ = await getViewableMeetingOrCrash(ctx, args.meetingId);
 
     return await ctx.db
       .query("meetingParticipants")
@@ -130,7 +121,11 @@ export const respond = mutation({
     const user = await getCurrentUserOrCrash(ctx);
     await getMeetingOrCrash(ctx, args.meetingId);
 
-    const participation = await getMeetingParticipation(ctx, args.meetingId, user._id);
+    const participation = await getMeetingParticipation(
+      ctx,
+      args.meetingId,
+      user._id,
+    );
 
     if (!participation) {
       throw new ConvexError("You are not invited to this meeting");
@@ -156,10 +151,17 @@ export const join = mutation({
       throw new ConvexError("This meeting is not public");
     }
 
-    const existingParticipation = await getMeetingParticipation(ctx, args.meetingId, user._id);
+    const existingParticipation = await getMeetingParticipation(
+      ctx,
+      args.meetingId,
+      user._id,
+    );
 
     if (existingParticipation) {
-      if (existingParticipation.status === "accepted" || existingParticipation.status === "creator") {
+      if (
+        existingParticipation.status === "accepted" ||
+        existingParticipation.status === "creator"
+      ) {
         throw new ConvexError("You are already a participant of this meeting");
       } else if (existingParticipation.status === "declined") {
         // Re-accept if previously declined
@@ -175,7 +177,7 @@ export const join = mutation({
         .collect();
 
       const activeCount = currentParticipants.filter(
-        (p) => p.status === "accepted" || p.status === "creator"
+        (p) => p.status === "accepted" || p.status === "creator",
       ).length;
 
       if (activeCount >= meeting.maxParticipants) {
@@ -198,10 +200,16 @@ export const leave = mutation({
     const meeting = await getMeetingOrCrash(ctx, args.meetingId);
 
     if (meeting.creatorId === user._id) {
-      throw new ConvexError("Creator cannot leave their own meeting. Delete it instead.");
+      throw new ConvexError(
+        "Creator cannot leave their own meeting. Delete it instead.",
+      );
     }
 
-    const participation = await getMeetingParticipation(ctx, args.meetingId, user._id);
+    const participation = await getMeetingParticipation(
+      ctx,
+      args.meetingId,
+      user._id,
+    );
 
     if (!participation) {
       throw new ConvexError("You are not a participant of this meeting");
@@ -224,7 +232,11 @@ export const invite = mutation({
       throw new ConvexError("Only the meeting creator can invite participants");
     }
 
-    const existingParticipation = await getMeetingParticipation(ctx, args.meetingId, args.userId);
+    const existingParticipation = await getMeetingParticipation(
+      ctx,
+      args.meetingId,
+      args.userId,
+    );
     if (existingParticipation) {
       throw new ConvexError("User is already invited to this meeting");
     }
@@ -253,10 +265,16 @@ export const remove = mutation({
     }
 
     if (args.userId === currentUser._id) {
-      throw new ConvexError("Cannot remove yourself. Delete the meeting instead.");
+      throw new ConvexError(
+        "Cannot remove yourself. Delete the meeting instead.",
+      );
     }
 
-    const participation = await getMeetingParticipation(ctx, args.meetingId, args.userId);
+    const participation = await getMeetingParticipation(
+      ctx,
+      args.meetingId,
+      args.userId,
+    );
     if (!participation) {
       throw new ConvexError("User is not a participant of this meeting");
     }
@@ -272,7 +290,10 @@ export const remove = mutation({
  */
 export const getParticipantUserIds = query({
   args: { meetingIds: v.array(v.id("meetings")) },
-  handler: async (ctx, args): Promise<Record<Id<"meetings">, Id<"users">[]>> => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<Record<Id<"meetings">, Id<"users">[]>> => {
     const currentUser = await getCurrentUserOrNull(ctx);
     const result: Record<Id<"meetings">, Id<"users">[]> = {};
 
@@ -302,12 +323,15 @@ export const getParticipantUserIds = query({
 export const getParticipantSummaries = query({
   args: { meetingIds: v.array(v.id("meetings")) },
   handler: async (ctx, args) => {
-    const summaries: Record<string, {
-      acceptedCount: number;
-      pendingCount: number;
-      declinedCount: number;
-      totalInvited: number;
-    }> = {};
+    const summaries: Record<
+      string,
+      {
+        acceptedCount: number;
+        pendingCount: number;
+        declinedCount: number;
+        totalInvited: number;
+      }
+    > = {};
 
     for (const meetingId of args.meetingIds) {
       // Verify user has permission to view this meeting
