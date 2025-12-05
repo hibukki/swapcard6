@@ -53,7 +53,7 @@ jobs:
             - Performance (it is better to keep simple maintainable code. avoid premature optimization.)
 
             If you feel like it:
-            - If you notice something out-of-scope-for-the-PR that bugs you or you feel like improving for any reason, you can suggest it as a follow up task, each such task as a bullet point phrased as a task that a developer could pick up. As a naive example, "Possible follow up tasks:\n - Remove redundant comments from convex/users.ts, such as '// set x to 5' before 'x = 5'.\n - Add getMeetingByIdOrCrash and search convex/ for files that could use it."
+            - If you notice something out-of-scope-for-the-PR that bugs you or you feel like improving for any reason, you can suggest it as a follow up task, each such task as numbered li phrased as a task that a developer could pick up. As a naive example, "Possible follow up tasks:\n 6. Remove redundant comments from convex/users.ts, such as '// set x to 5' before 'x = 5'.\n 7. Add getMeetingByIdOrCrash and search convex/ for files that could use it."
 
             Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
 
