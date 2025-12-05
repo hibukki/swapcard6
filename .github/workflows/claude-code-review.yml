@@ -49,6 +49,8 @@ jobs:
             - API changes / function signature changes (clean readable APIs are more important than the implementation)
             - UX / user flow problems ("don't make me think")
 
+            If there is nothing to say about one of the sections, be short, like just a green V, not "There are no security issues in the code". (no managers to write fluff for, only engineers)
+
             Things that don't matter:
             - Performance (it is better to keep simple maintainable code. avoid premature optimization.)
 
