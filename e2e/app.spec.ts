@@ -128,7 +128,10 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.getByRole("textbox", { name: "Email address" }).fill(TEST_EMAIL);
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("textbox", { name: "Enter verification code" }).pressSequentially(CLERK_TEST_CODE);
+  // Wait for verification code input to appear before interacting
+  const codeInput = page.getByRole("textbox", { name: "Enter verification code" });
+  await expect(codeInput).toBeVisible({ timeout: 10000 });
+  await codeInput.pressSequentially(CLERK_TEST_CODE);
   await expect(page.getByRole("button", { name: "Open user menu" })).toBeVisible({ timeout: AUTH_TIMEOUT });
 }
 
@@ -215,9 +218,8 @@ test.describe("E2E User Flow", () => {
 
     // Test meeting detail page - use specific meeting for determinism
     await page.goto("/public-meetings", { waitUntil: "networkidle" });
-    // Click on "Opening Keynote" specifically (not .first() which may vary)
-    await page.getByRole("heading", { name: "Opening Keynote: Future of Tech" })
-      .locator("..").getByRole("link", { name: "Open meeting page" }).click();
+    // Click on "Opening Keynote" specifically - the title is now a clickable link
+    await page.getByRole("link", { name: "Opening Keynote: Future of Tech" }).click();
     await expect(page.getByRole("link", { name: "Back to Calendar" })).toBeVisible();
     await expect(page.getByText(/Participants/)).toBeVisible();
     await screenshot(page, "meeting-detail");
@@ -280,8 +282,10 @@ test.describe("E2E User Flow", () => {
 
     // Click into the chat to see split view (on desktop) or full chat (on mobile)
     await aliceChatLink.click();
-    // Verify first message is visible
-    await expect(page.getByText("Hi Alice! Great to meet you at the conference.").first()).toBeVisible();
+    // Wait for chat to load (check for header with user name)
+    await expect(page.getByText("Alice Johnson").nth(1)).toBeVisible({ timeout: 5000 });
+    // Verify message exists (appears in both mobile/desktop views, so count=2)
+    await expect(page.getByText("Hi Alice! Great to meet you at the conference.")).toHaveCount(2);
     await screenshot(page, "chat-conversation");
 
     await signOut(page);

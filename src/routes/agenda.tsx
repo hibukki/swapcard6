@@ -1,6 +1,6 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { Calendar, Check, Clock, MapPin, X } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -263,7 +263,17 @@ function IncomingRequestCard({
       <div className="card-body">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <h3 className="font-semibold">{requester?.name ?? "Unknown"}</h3>
+            {requester ? (
+              <Link
+                to="/user/$userId"
+                params={{ userId: requester._id }}
+                className="font-semibold link link-hover"
+              >
+                {requester.name}
+              </Link>
+            ) : (
+              <h3 className="font-semibold">Unknown</h3>
+            )}
             {requester?.role && (
               <p className="text-sm opacity-70">{requester.role}</p>
             )}
@@ -289,17 +299,17 @@ function IncomingRequestCard({
               className="btn btn-success btn-sm"
               onClick={() => void handleRespond(true)}
               disabled={isResponding}
+              title="Accept"
             >
-              <Check className="w-4 h-4" />
-              Accept
+              <Check className="w-5 h-5" />
             </button>
             <button
               className="btn btn-error btn-sm"
               onClick={() => void handleRespond(false)}
               disabled={isResponding}
+              title="Decline"
             >
-              <X className="w-4 h-4" />
-              Decline
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>

@@ -101,18 +101,19 @@ export function MeetingCard({
         {/* Header */}
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <h3 className={`font-semibold ${isCompact ? "text-lg" : "text-2xl"}`}>
-              {meeting.title}
-            </h3>
-            {showMeetingLink && (
+            {showMeetingLink ? (
               <Link
                 to="/meeting/$meetingId"
                 params={{ meetingId: meeting._id }}
-                className="btn btn-ghost btn-xs btn-square"
-                title="Open meeting page"
+                className={`font-semibold link link-hover ${isCompact ? "text-lg" : "text-2xl"}`}
               >
-                <ExternalLink className="w-3 h-3" />
+                {meeting.title}
+                <ExternalLink className="w-3 h-3 inline ml-1 opacity-50" />
               </Link>
+            ) : (
+              <h3 className={`font-semibold ${isCompact ? "text-lg" : "text-2xl"}`}>
+                {meeting.title}
+              </h3>
             )}
           </div>
           <div className="flex gap-2 flex-wrap">
