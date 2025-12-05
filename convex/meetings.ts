@@ -152,3 +152,31 @@ export const remove = mutation({
     await ctx.db.delete(args.meetingId);
   },
 });
+
+export const getBusySlots = query({
+  args: {
+    userId: v.id("users"),
+    startDate: v.number(),
+    endDate: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const participations = await ctx.db
+      .query("meetingParticipants")
+      .withIndex("by_user_only", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    const busySlots: { start: number; end: number }[] = [];
+
+    for (const p of participations) {
+      if (p.status === "declined") continue;
+      const meeting = await ctx.db.get(p.meetingId);
+      if (!meeting) continue;
+
+      const meetingEnd = meeting.scheduledTime + meeting.duration * 60000;
+      if (meeting.scheduledTime < args.endDate && meetingEnd > args.startDate) {
+        busySlots.push({ start: meeting.scheduledTime, end: meetingEnd });
+      }
+    }
+    return busySlots;
+  },
+});

@@ -1,8 +1,8 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation } from "convex/react";
-import { MessageCircle, MessageSquare, Search, UserPlus, X } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { MessageCircle, MessageSquare, Search, UserPlus, X, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
 import { z } from "zod";
@@ -186,6 +186,7 @@ function AttendeesPage() {
       {selectedUser && (
         <MeetingRequestModal
           recipientId={selectedUser}
+          recipientName={users.find((u) => u._id === selectedUser)?.name ?? ""}
           onClose={() => setSelectedUser(null)}
         />
       )}
@@ -193,26 +194,159 @@ function AttendeesPage() {
   );
 }
 
+type BusySlot = { start: number; end: number };
+
+function generateTimeSlots(
+  date: Date,
+  duration: number,
+  myBusySlots: BusySlot[],
+  theirBusySlots: BusySlot[]
+): number[] {
+  const allBusySlots = [...myBusySlots, ...theirBusySlots];
+  const slots: number[] = [];
+
+  // Generate slots from 8:00 AM to 6:00 PM (last slot at 5:30 PM for 30 min meeting)
+  const dayStart = new Date(date);
+  dayStart.setHours(8, 0, 0, 0);
+
+  const dayEnd = new Date(date);
+  dayEnd.setHours(18, 0, 0, 0);
+
+  for (let time = dayStart.getTime(); time < dayEnd.getTime(); time += 30 * 60 * 1000) {
+    const slotEnd = time + duration * 60 * 1000;
+    if (slotEnd > dayEnd.getTime()) break;
+
+    const isAvailable = !allBusySlots.some(
+      (busy) => time < busy.end && slotEnd > busy.start
+    );
+    if (isAvailable) {
+      slots.push(time);
+    }
+  }
+
+  return slots;
+}
+
+function formatTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatDateHeader(date: Date): string {
+  return date.toLocaleDateString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 function MeetingRequestModal({
   recipientId,
+  recipientName,
   onClose,
 }: {
   recipientId: Id<"users">;
+  recipientName: string;
   onClose: () => void;
 }) {
   const sendRequest = useMutation(api.meetingParticipants.sendRequest);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const currentUser = useQuery(api.users.getCurrentUser);
+  const conferences = useQuery(api.conferences.list);
+
   const [location, setLocation] = useState("");
-  const [proposedTime, setProposedTime] = useState("");
-  const [proposedDuration, setProposedDuration] = useState(30);
+  const [duration, setDuration] = useState<20 | 30>(30);
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Get conference date bounds
+  const conference = conferences?.[0];
+  const minDate = conference ? new Date(conference.startDate) : new Date();
+  const maxDate = conference ? new Date(conference.endDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  // Initialize selected date to conference start (or today if within range)
+  useEffect(() => {
+    if (conference && !selectedDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const confStart = new Date(conference.startDate);
+      confStart.setHours(0, 0, 0, 0);
+      const confEnd = new Date(conference.endDate);
+      confEnd.setHours(23, 59, 59, 999);
+
+      if (today >= confStart && today <= confEnd) {
+        setSelectedDate(today);
+      } else if (today < confStart) {
+        setSelectedDate(confStart);
+      } else {
+        setSelectedDate(confStart);
+      }
+    }
+  }, [conference, selectedDate]);
+
+  // Fetch busy slots for both users
+  const dayStart = selectedDate ? new Date(selectedDate).setHours(0, 0, 0, 0) : 0;
+  const dayEnd = selectedDate ? new Date(selectedDate).setHours(23, 59, 59, 999) : 0;
+
+  const myBusySlots = useQuery(
+    api.meetings.getBusySlots,
+    currentUser && selectedDate
+      ? { userId: currentUser._id, startDate: dayStart, endDate: dayEnd }
+      : "skip"
+  );
+
+  const theirBusySlots = useQuery(
+    api.meetings.getBusySlots,
+    selectedDate ? { userId: recipientId, startDate: dayStart, endDate: dayEnd } : "skip"
+  );
+
+  // ESC key handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  // Generate available time slots
+  const availableSlots = useMemo(() => {
+    if (!selectedDate || !myBusySlots || !theirBusySlots) return [];
+    return generateTimeSlots(selectedDate, duration, myBusySlots, theirBusySlots);
+  }, [selectedDate, duration, myBusySlots, theirBusySlots]);
+
+  // Clear selected slot when duration or date changes
+  useEffect(() => {
+    setSelectedSlot(null);
+  }, [duration, selectedDate]);
+
+  const canGoBack = selectedDate && selectedDate > minDate;
+  const canGoForward = selectedDate && selectedDate < maxDate;
+
+  const goToPreviousDay = () => {
+    if (selectedDate && canGoBack) {
+      const newDate = new Date(selectedDate);
+      newDate.setDate(newDate.getDate() - 1);
+      setSelectedDate(newDate);
+    }
+  };
+
+  const goToNextDay = () => {
+    if (selectedDate && canGoForward) {
+      const newDate = new Date(selectedDate);
+      newDate.setDate(newDate.getDate() + 1);
+      setSelectedDate(newDate);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!proposedTime) {
-      alert("Please select a proposed time for the meeting");
+    if (!selectedSlot) {
       return;
     }
 
@@ -220,11 +354,11 @@ function MeetingRequestModal({
     try {
       await sendRequest({
         recipientId,
-        title: title || "Meeting Request",
-        description: description || undefined,
+        title: `Meeting with ${recipientName}`,
+        description: undefined,
         location: location || undefined,
-        scheduledTime: new Date(proposedTime).getTime(),
-        duration: proposedDuration,
+        scheduledTime: selectedSlot,
+        duration,
       });
       onClose();
     } catch (error) {
@@ -234,73 +368,112 @@ function MeetingRequestModal({
     }
   };
 
+  const isLoading = !currentUser || !conferences || myBusySlots === undefined || theirBusySlots === undefined;
+
   return (
     <dialog open className="modal modal-open">
-      <div className="modal-box">
-        <h3 className="font-bold text-lg mt-0">Send Meeting Request</h3>
+      <div className="modal-box max-w-md">
+        <button
+          className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+          onClick={onClose}
+        >
+          <X className="w-4 h-4" />
+        </button>
+        <h3 className="font-bold text-lg mt-0 pr-8">
+          Request Meeting with {recipientName}
+        </h3>
+
         <form
           onSubmit={(e) => {
             void handleSubmit(e);
           }}
           className="mt-4 space-y-4"
         >
+          {/* Duration toggle */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Meeting Title
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Quick chat about AI"
-            />
+            <label className="block text-sm font-medium mb-2">Duration</label>
+            <div className="join">
+              <button
+                type="button"
+                className={`join-item btn ${duration === 20 ? "btn-primary" : "btn-ghost"}`}
+                onClick={() => setDuration(20)}
+              >
+                20 min
+              </button>
+              <button
+                type="button"
+                className={`join-item btn ${duration === 30 ? "btn-primary" : "btn-ghost"}`}
+                onClick={() => setDuration(30)}
+              >
+                30 min
+              </button>
+            </div>
           </div>
 
+          {/* Available times section */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Proposed Time
-            </label>
-            <input
-              type="datetime-local"
-              className="input input-bordered w-full"
-              value={proposedTime}
-              onChange={(e) => setProposedTime(e.target.value)}
-              required
-            />
+            <div className="flex items-center gap-2 mb-2">
+              <label className="text-sm font-medium">Available Times</label>
+              <div className="tooltip" data-tip={`Shows times when both you and ${recipientName} are free, based on calendars (including private meetings and public events)`}>
+                <Info className="w-4 h-4 opacity-50 cursor-help" />
+              </div>
+            </div>
+
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <span className="loading loading-spinner loading-md"></span>
+              </div>
+            ) : (
+              <>
+                {/* Day navigation */}
+                <div className="flex items-center justify-between bg-base-200 rounded-t-lg px-3 py-2">
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm btn-square"
+                    onClick={goToPreviousDay}
+                    disabled={!canGoBack}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="font-medium">
+                    {selectedDate && formatDateHeader(selectedDate)}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm btn-square"
+                    onClick={goToNextDay}
+                    disabled={!canGoForward}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Time slots grid */}
+                <div className="bg-base-200 rounded-b-lg p-3 max-h-48 overflow-y-auto">
+                  {availableSlots.length === 0 ? (
+                    <p className="text-center opacity-70 py-4 text-sm">
+                      No available times on this day
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      {availableSlots.map((slot) => (
+                        <button
+                          key={slot}
+                          type="button"
+                          className={`btn btn-sm ${selectedSlot === slot ? "btn-primary" : "btn-ghost"}`}
+                          onClick={() => setSelectedSlot(slot)}
+                        >
+                          {formatTime(slot)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Duration (minutes)
-            </label>
-            <select
-              className="select select-bordered w-full"
-              value={proposedDuration}
-              onChange={(e) => setProposedDuration(parseInt(e.target.value))}
-            >
-              <option value={15}>15 minutes</option>
-              <option value={30}>30 minutes</option>
-              <option value={45}>45 minutes</option>
-              <option value={60}>1 hour</option>
-              <option value={90}>1.5 hours</option>
-              <option value={120}>2 hours</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Message (optional)
-            </label>
-            <textarea
-              className="textarea textarea-bordered w-full"
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Tell them why you'd like to meet..."
-            />
-          </div>
-
+          {/* Location */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Location (optional)
@@ -326,7 +499,7 @@ function MeetingRequestModal({
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !selectedSlot}
             >
               <MessageSquare className="w-4 h-4" />
               {isSubmitting ? "Sending..." : "Send Request"}
