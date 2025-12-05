@@ -135,7 +135,7 @@ export const seedData = internalMutation({
         seedUserIds.push(id);
       } else {
         // Ensure isDemoBot is set on existing seed users
-        if (!existing.isDemoBot) {
+        if (existing.isDemoBot !== true) {
           await ctx.db.patch(existing._id, { isDemoBot: true });
         }
         seedUserIds.push(existing._id);

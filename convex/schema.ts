@@ -92,6 +92,7 @@ export default defineSchema({
     needsHelpWith: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     calendarToken: v.optional(v.string()),
+    // isDemoBot: undefined means false
     isDemoBot: v.optional(v.boolean()),
   })
     .index("by_clerkId", ["clerkId"])
