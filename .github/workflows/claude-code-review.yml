@@ -57,6 +57,8 @@ jobs:
 
             Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
 
+            Use the same numbered list throughout the review. If you have 1,2,3 and then you move to another section, use 4,5,6, which makes it easier to respond to specific points. Sub bullets like 4.1 are also ok.
+
             Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
