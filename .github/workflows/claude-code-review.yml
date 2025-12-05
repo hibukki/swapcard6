@@ -44,9 +44,10 @@ jobs:
             - Code quality and best practices
             - Potential bugs or issues
             - Security concerns (are security assumptions grouped in one place which is simple to review?)
-            - DRY
+            - DRY (also in md. md shouldn't repeat code and shouldn't write the same thing twice, like "reminder: how to run the backend: ...")
             - Scope creep (is the PR trying to solve too many problems at once?)
             - API changes / function signature changes (clean readable APIs are more important than the implementation)
+            - UX / user flow problems ("don't make me think")
 
             Things that don't matter:
             - Performance (it is better to keep simple maintainable code. avoid premature optimization.)
