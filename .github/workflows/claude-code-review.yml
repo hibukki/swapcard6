@@ -41,7 +41,7 @@ jobs:
             PR NUMBER: ${{ github.event.pull_request.number }}
 
             Please review this pull request and provide feedback on:
-            - Code quality and best practices
+            - Code quality and best practices (see relevant claude.md files, like convex/claude.md of convex/ files were changed)
             - Potential bugs or issues
             - Security concerns (are security assumptions grouped in one place which is simple to review?)
             - DRY (also in md. md shouldn't repeat code and shouldn't write the same thing twice, like "reminder: how to run the backend: ...")
