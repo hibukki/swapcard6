@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { ConvexError, v } from "convex/values";
 import { getCurrentUserOrCrash } from "./users";
+import { requireChatRoomMembership } from "./chatRoomUsers";
 
 export const listByRoom = query({
   args: { chatRoomId: v.id("chatRooms") },
@@ -8,16 +9,7 @@ export const listByRoom = query({
     const currentUser = await getCurrentUserOrCrash(ctx);
 
     // Verify current user is a participant
-    const membership = await ctx.db
-      .query("chatRoomUsers")
-      .withIndex("by_chatRoom_and_user", (q) =>
-        q.eq("chatRoomId", args.chatRoomId).eq("userId", currentUser._id),
-      )
-      .unique();
-
-    if (!membership) {
-      throw new ConvexError("Not a participant of this chat room");
-    }
+    await requireChatRoomMembership(ctx, args.chatRoomId, currentUser._id);
 
     // Get messages ordered by creation time (oldest first)
     const messages = await ctx.db
@@ -39,16 +31,7 @@ export const send = mutation({
     const currentUser = await getCurrentUserOrCrash(ctx);
 
     // Verify current user is a participant
-    const membership = await ctx.db
-      .query("chatRoomUsers")
-      .withIndex("by_chatRoom_and_user", (q) =>
-        q.eq("chatRoomId", args.chatRoomId).eq("userId", currentUser._id),
-      )
-      .unique();
-
-    if (!membership) {
-      throw new ConvexError("Not a participant of this chat room");
-    }
+    await requireChatRoomMembership(ctx, args.chatRoomId, currentUser._id);
 
     // Verify parent message exists and is in the same room (if provided)
     if (args.parentMessageId) {

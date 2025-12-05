@@ -44,8 +44,17 @@ function ChatRoomPage() {
     convexQuery(api.chatRooms.get, { chatRoomId: chatRoomId as Id<"chatRooms"> }),
   );
 
-  const { data: participants } = useSuspenseQuery(
+  const { data: memberships } = useSuspenseQuery(
     convexQuery(api.chatRoomUsers.listByRoom, { chatRoomId: chatRoomId as Id<"chatRooms"> }),
+  );
+
+  // Get participant IDs from memberships and fetch user details
+  const participantIds = useMemo(
+    () => memberships.map((m) => m.userId),
+    [memberships],
+  );
+  const { data: participants } = useSuspenseQuery(
+    convexQuery(api.users.getMany, { userIds: participantIds }),
   );
 
   // Redirect to /chats if chat room is invalid or user doesn't have access

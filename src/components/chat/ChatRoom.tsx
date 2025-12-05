@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
@@ -23,8 +23,17 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96" }: Chat
   const { data: messages } = useSuspenseQuery(
     convexQuery(api.chatRoomMessages.listByRoom, { chatRoomId }),
   );
-  const { data: participants } = useSuspenseQuery(
+  const { data: memberships } = useSuspenseQuery(
     convexQuery(api.chatRoomUsers.listByRoom, { chatRoomId }),
+  );
+
+  // Get participant user IDs and fetch user details
+  const participantIds = useMemo(
+    () => memberships.map((m) => m.userId),
+    [memberships],
+  );
+  const { data: participants } = useSuspenseQuery(
+    convexQuery(api.users.getMany, { userIds: participantIds }),
   );
 
   const sendMessage = useMutation(api.chatRoomMessages.send);
