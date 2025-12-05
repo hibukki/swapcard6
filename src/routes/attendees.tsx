@@ -6,6 +6,8 @@ import { MessageCircle, MessageSquare, Search, UserPlus, X, ChevronLeft, Chevron
 import { Link } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
 import { z } from "zod";
+import Tippy from "@tippyjs/react";
+import "tippy.js/dist/tippy.css";
 import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
 
@@ -319,7 +321,7 @@ function MeetingRequestModal({
     return generateTimeSlots(selectedDate, duration, myBusySlots, theirBusySlots);
   }, [selectedDate, duration, myBusySlots, theirBusySlots]);
 
-  // Clear selected slot when duration or date changes
+  // Auto-select first available slot when slots change
   useEffect(() => {
     if (availableSlots.length > 0) {
       setSelectedSlot(availableSlots[0]);
@@ -418,9 +420,14 @@ function MeetingRequestModal({
           <div>
             <div className="flex items-center gap-2 mb-2">
               <label className="text-sm font-medium">Available Times</label>
-              <div className="tooltip" data-tip={`Shows times when both you and ${recipientName} are free, based on calendars (including private meetings and public events)`}>
-                <Info className="w-4 h-4 opacity-50 cursor-help" />
-              </div>
+              <Tippy
+                content={`Shows times when both you and ${recipientName} are free, based on calendars (including private meetings and public events)`}
+                appendTo={() => document.body}
+              >
+                <span>
+                  <Info className="w-4 h-4 opacity-50 cursor-help" />
+                </span>
+              </Tippy>
             </div>
 
             {isLoading ? (
