@@ -173,6 +173,14 @@ export const get = query({
   },
 });
 
+export const getMany = query({
+  args: { userIds: v.array(v.id("users")) },
+  handler: async (ctx, args) => {
+    const users = await Promise.all(args.userIds.map((id) => ctx.db.get(id)));
+    return users.filter((u) => u !== null);
+  },
+});
+
 // Note: This fetches all users and filters in the client. Acceptable for small user counts.
 // For large scale, consider pagination with .paginate() or a different approach.
 export const listUsers = query({

@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { ArrowLeft } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { ChatEmbed } from "../components/chat/ChatEmbed";
 import { SharedMeetingsList } from "../components/SharedMeetingsList";
 import { UserProfileCard } from "../components/UserProfileCard";
 
@@ -65,6 +66,9 @@ function UserPage() {
             onMeetingClick={(meetingId) => void navigate({ to: "/meeting/$meetingId", params: { meetingId } })}
           />
         )}
+        <div className="not-prose">
+          <ChatEmbed otherUserId={userId as Id<"users">} />
+        </div>
       </div>
     </div>
   );

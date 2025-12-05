@@ -136,4 +136,28 @@ export default defineSchema({
     windowStart: v.number(), // UTC timestamp of window start
     count: v.number(),
   }).index("by_window_and_start", ["window", "windowStart"]),
+
+  // Chat rooms - identified by participants, no names for MVP
+  chatRooms: defineTable({
+    lastMessageAt: v.optional(v.number()), // For sorting room list by recent activity
+  }).index("by_lastMessage", ["lastMessageAt"]),
+
+  // Chat room participants
+  chatRoomUsers: defineTable({
+    chatRoomId: v.id("chatRooms"),
+    userId: v.id("users"),
+  })
+    .index("by_chatRoom", ["chatRoomId"])
+    .index("by_user", ["userId"])
+    .index("by_chatRoom_and_user", ["chatRoomId", "userId"]),
+
+  // Chat messages with optional reply support
+  chatRoomMessages: defineTable({
+    chatRoomId: v.id("chatRooms"),
+    senderId: v.id("users"),
+    content: v.string(),
+    parentMessageId: v.optional(v.id("chatRoomMessages")),
+  })
+    .index("by_chatRoom", ["chatRoomId"])
+    .index("by_parent", ["parentMessageId"]),
 });

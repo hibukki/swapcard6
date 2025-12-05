@@ -2,7 +2,8 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
-import { MessageSquare, Search, UserPlus, X } from "lucide-react";
+import { MessageCircle, MessageSquare, Search, UserPlus, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
 import { z } from "zod";
 import { api } from "../../convex/_generated/api";
@@ -159,9 +160,17 @@ function AttendeesPage() {
                   </div>
                 )}
 
-                <div className="card-actions mt-4">
+                <div className="card-actions mt-4 flex gap-2">
+                  <Link
+                    to="/user/$userId"
+                    params={{ userId: user._id }}
+                    className="btn btn-ghost btn-sm btn-square"
+                    title="Message"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                  </Link>
                   <button
-                    className="btn btn-primary btn-sm w-full"
+                    className="btn btn-primary btn-sm flex-1"
                     onClick={() => setSelectedUser(user._id)}
                   >
                     <UserPlus className="w-4 h-4" />
