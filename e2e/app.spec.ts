@@ -13,6 +13,7 @@ dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
 
 // Enable proxy support for Node.js fetch (required in sandbox environments)
 // See ANTHROPIC_SANDBOX.md for details
+// Docs: https://undici.nodejs.org/#/docs/api/ProxyAgent
 const isProxyEnvironment = Boolean(process.env.https_proxy);
 if (isProxyEnvironment) {
   setGlobalDispatcher(new ProxyAgent(process.env.https_proxy!));
@@ -20,6 +21,9 @@ if (isProxyEnvironment) {
 
 // HTTP-based testing helper for proxy environments
 // See ANTHROPIC_SANDBOX.md - WebSocket doesn't work through the sandbox proxy
+// Based on: https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/server/testing.ts
+// Using ConvexHttpClient instead of ConvexClient (which uses WebSocket)
+// Docs: https://docs.convex.dev/api/classes/browser.ConvexHttpClient
 class ConvexHttpTestingHelper {
   private client: ConvexHttpClient;
 

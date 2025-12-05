@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 // Configure proxy for browser in sandbox environments
 // See ANTHROPIC_SANDBOX.md for details
+// Docs: https://playwright.dev/docs/api/class-testoptions#test-options-proxy
 function parseProxyConfig() {
   const proxyUrl = process.env.https_proxy;
   if (!proxyUrl) return {};
