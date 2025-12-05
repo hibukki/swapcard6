@@ -115,13 +115,7 @@ function AttendeesPage() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <Link
-                      to="/user/$userId"
-                      params={{ userId: user._id }}
-                      className="card-title text-base mt-0 link link-hover"
-                    >
-                      {user.name}
-                    </Link>
+                    <h3 className="card-title text-base mt-0">{user.name}</h3>
                     {user.role && (
                       <p className="text-sm opacity-80">{user.role}</p>
                     )}
