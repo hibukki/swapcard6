@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 import { ConvexHttpClient } from "convex/browser";
+import type { FunctionArgs, FunctionReference, FunctionReturnType } from "convex/server";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
@@ -31,12 +32,18 @@ class ConvexHttpTestingHelper {
     this.client = new ConvexHttpClient(backendUrl);
   }
 
-  async query<T>(functionReference: unknown, args: Record<string, unknown>): Promise<T> {
-    return this.client.query(functionReference as never, args as never);
+  async query<Query extends FunctionReference<"query", "public">>(
+    query: Query,
+    args: FunctionArgs<Query>
+  ): Promise<Awaited<FunctionReturnType<Query>>> {
+    return this.client.query(query, args);
   }
 
-  async mutation<T>(functionReference: unknown, args: Record<string, unknown>): Promise<T> {
-    return this.client.mutation(functionReference as never, args as never);
+  async mutation<Mutation extends FunctionReference<"mutation">>(
+    mutation: Mutation,
+    args: FunctionArgs<Mutation>
+  ): Promise<Awaited<FunctionReturnType<Mutation>>> {
+    return this.client.mutation(mutation, args);
   }
 
   async close(): Promise<void> {
