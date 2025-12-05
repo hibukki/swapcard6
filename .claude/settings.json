@@ -30,7 +30,7 @@
       "Bash(pnpm test:e2e)",
       "Bash(pnpm install --frozen-lockfile)",
       "Bash(pnpm install --no-frozen-lockfile)",
-      "Bash(pnpm install)",
+      "Bash(pnpm install:*)",
       "Bash(pnpx convex run:*)",
       "Bash(git add:*)",
       "mcp__ide__getDiagnostics",
