@@ -237,4 +237,53 @@ test.describe("E2E User Flow", () => {
 
     await signOut(page);
   });
+
+  test("chat feature", async ({ page }) => {
+    await page.goto("/");
+    await signIn(page);
+
+    // Go to attendees and find someone to chat with
+    await page.goto("/attendees", { waitUntil: "networkidle" });
+    await expect(page.getByText("Alice Johnson")).toBeVisible();
+
+    // Click the message icon on Alice's card
+    await page.getByText("Alice Johnson").locator("../../../..").getByRole("link", { name: "Message" }).click();
+
+    // Should navigate to user profile with chat embed
+    await expect(page.getByRole("heading", { name: "Alice Johnson" })).toBeVisible();
+    await expect(page.getByPlaceholder("Type a message...")).toBeVisible({ timeout: 5000 });
+
+    // Send a few messages
+    const chatInput = page.getByPlaceholder("Type a message...");
+    const sendButton = page.getByRole("button", { name: "Send message" });
+
+    await chatInput.fill("Hi Alice! Great to meet you at the conference.");
+    await sendButton.click();
+    await expect(page.getByText("Hi Alice! Great to meet you at the conference.")).toBeVisible();
+
+    await chatInput.fill("I saw you're interested in AI Safety - would love to chat about that!");
+    await sendButton.click();
+    await expect(page.getByText("I saw you're interested in AI Safety")).toBeVisible();
+
+    await chatInput.fill("Let me know if you have time for a coffee break tomorrow.");
+    await sendButton.click();
+    await expect(page.getByText("Let me know if you have time for a coffee break tomorrow.")).toBeVisible();
+
+    await screenshot(page, "chat-embed-user-profile");
+
+    // Navigate to chats page
+    await page.goto("/chats", { waitUntil: "networkidle" });
+    // Use link role and filter for visible (there are two ChatRoomLists - mobile hidden, desktop visible)
+    const aliceChatLink = page.getByRole("link", { name: /Alice Johnson/ }).locator("visible=true").first();
+    await expect(aliceChatLink).toBeVisible();
+    await screenshot(page, "chats-list");
+
+    // Click into the chat to see split view (on desktop) or full chat (on mobile)
+    await aliceChatLink.click();
+    // Filter for visible element (hidden mobile and visible desktop versions exist)
+    await expect(page.getByText("Hi Alice! Great to meet you at the conference.").locator("visible=true").first()).toBeVisible();
+    await screenshot(page, "chat-conversation");
+
+    await signOut(page);
+  });
 });

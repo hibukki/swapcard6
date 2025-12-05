@@ -170,6 +170,7 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96" }: Chat
           onClick={() => void handleSend()}
           disabled={!newMessage.trim()}
           className="btn btn-primary btn-sm btn-square"
+          aria-label="Send message"
         >
           <Send className="w-4 h-4" />
         </button>
