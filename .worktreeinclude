@@ -1,0 +1,3 @@
+# What is this file: https://code.claude.com/docs/en/desktop#copying-files-ignored-with-gitignore
+
+.env.claude.gitworktree
