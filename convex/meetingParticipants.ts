@@ -22,7 +22,7 @@ export const get = query({
 export const listByMeeting = query({
   args: { meetingId: v.id("meetings") },
   handler: async (ctx, args) => {
-    const _ = await getViewableMeetingOrCrash(ctx, args.meetingId);
+    await getViewableMeetingOrCrash(ctx, args.meetingId);
 
     return await ctx.db
       .query("meetingParticipants")
@@ -334,7 +334,6 @@ export const getParticipantSummaries = query({
     > = {};
 
     for (const meetingId of args.meetingIds) {
-      // Verify user has permission to view this meeting
       await getViewableMeetingOrCrash(ctx, meetingId);
 
       const participants = await ctx.db
