@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Configure proxy for browser (required in sandbox environments)
+// Configure proxy for browser in sandbox environments
+// See ANTHROPIC_SANDBOX.md for details
 function parseProxyConfig() {
   const proxyUrl = process.env.https_proxy;
   if (!proxyUrl) return {};
@@ -38,7 +39,7 @@ export default defineConfig({
     screenshot: "only-on-failure",
     video: "on",
     trace: "on",
-    // Ignore HTTPS errors when using proxy (sandbox TLS inspection)
+    // Ignore HTTPS errors when using proxy (see ANTHROPIC_SANDBOX.md)
     ignoreHTTPSErrors: Boolean(process.env.https_proxy),
     ...proxyConfig,
   },
@@ -48,7 +49,7 @@ export default defineConfig({
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
-        // Launch args to handle proxy authentication in sandbox
+        // Proxy launch args for sandbox (see ANTHROPIC_SANDBOX.md)
         ...(process.env.https_proxy && {
           launchOptions: {
             args: [

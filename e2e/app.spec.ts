@@ -12,12 +12,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
 
 // Enable proxy support for Node.js fetch (required in sandbox environments)
+// See ANTHROPIC_SANDBOX.md for details
 const isProxyEnvironment = Boolean(process.env.https_proxy);
 if (isProxyEnvironment) {
   setGlobalDispatcher(new ProxyAgent(process.env.https_proxy!));
 }
 
-// HTTP-based testing helper for cloud/proxy environments (ConvexTestingHelper uses WebSocket which doesn't work through proxies)
+// HTTP-based testing helper for proxy environments
+// See ANTHROPIC_SANDBOX.md - WebSocket doesn't work through the sandbox proxy
 class ConvexHttpTestingHelper {
   private client: ConvexHttpClient;
 
