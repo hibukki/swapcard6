@@ -269,6 +269,9 @@ test.describe("E2E User Flow", () => {
     await sendButton.click();
     await expect(page.getByText("Let me know if you have time for a coffee break tomorrow.")).toBeVisible();
 
+    // Alice is a demo bot - verify she replies (500ms scheduled delay + network)
+    await expect(page.getByText("I feel like messaging you too")).toBeVisible({ timeout: 2000 });
+
     await screenshot(page, "chat-embed-user-profile");
 
     // Navigate to chats page
@@ -280,8 +283,9 @@ test.describe("E2E User Flow", () => {
 
     // Click into the chat to see split view (on desktop) or full chat (on mobile)
     await aliceChatLink.click();
-    // Verify first message is visible
-    await expect(page.getByText("Hi Alice! Great to meet you at the conference.").first()).toBeVisible();
+    // Desktop layout renders both mobile (hidden via lg:hidden) and desktop (visible) chat views
+    // Mobile view comes first in DOM, so we need to filter by visible to get the desktop one
+    await expect(page.getByText("Hi Alice! Great to meet you at the conference.").and(page.locator(":visible"))).toBeVisible();
     await screenshot(page, "chat-conversation");
 
     await signOut(page);
