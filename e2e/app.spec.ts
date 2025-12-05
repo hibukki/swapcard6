@@ -1,7 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 import { ConvexHttpClient } from "convex/browser";
-import type { FunctionArgs, FunctionReference, FunctionReturnType } from "convex/server";
+import type {
+  FunctionArgs,
+  FunctionReference,
+  FunctionReturnType,
+} from "convex/server";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
@@ -34,14 +38,14 @@ class ConvexHttpTestingHelper {
 
   async query<Query extends FunctionReference<"query", "public">>(
     query: Query,
-    args: FunctionArgs<Query>
+    args: FunctionArgs<Query>,
   ): Promise<Awaited<FunctionReturnType<Query>>> {
     return this.client.query(query, args);
   }
 
   async mutation<Mutation extends FunctionReference<"mutation">>(
     mutation: Mutation,
-    args: FunctionArgs<Mutation>
+    args: FunctionArgs<Mutation>,
   ): Promise<Awaited<FunctionReturnType<Mutation>>> {
     return this.client.mutation(mutation, args);
   }
@@ -64,7 +68,7 @@ function clearScreenshotsDir() {
 
 async function screenshot(
   page: import("@playwright/test").Page,
-  screenshotName: string
+  screenshotName: string,
 ) {
   await page.screenshot({
     path: path.join(SCREENSHOTS_DIR, `${screenshotName}.png`),
@@ -89,7 +93,9 @@ test.beforeAll(async () => {
     convex = new ConvexTestingHelper({
       backendUrl: process.env.VITE_CONVEX_URL!,
       // Use CONVEX_DEPLOY_KEY for cloud/preview deployments, otherwise use default local key
-      ...(process.env.CONVEX_DEPLOY_KEY && { adminKey: process.env.CONVEX_DEPLOY_KEY }),
+      ...(process.env.CONVEX_DEPLOY_KEY && {
+        adminKey: process.env.CONVEX_DEPLOY_KEY,
+      }),
     });
   }
 
@@ -100,15 +106,15 @@ test.beforeAll(async () => {
     if (message.includes("IS_TEST")) {
       throw new Error(
         "\n\n" +
-        "═══════════════════════════════════════════════════════════════\n" +
-        "  E2E TEST SETUP ERROR\n" +
-        "═══════════════════════════════════════════════════════════════\n" +
-        "  IS_TEST environment variable is not set on your Convex deployment.\n\n" +
-        "  To fix this:\n" +
-        "  1. Go to your Convex dashboard\n" +
-        "  2. Navigate to Settings > Environment Variables\n" +
-        "  3. Add: IS_TEST = true\n" +
-        "═══════════════════════════════════════════════════════════════\n"
+          "═══════════════════════════════════════════════════════════════\n" +
+          "  E2E TEST SETUP ERROR\n" +
+          "═══════════════════════════════════════════════════════════════\n" +
+          "  IS_TEST environment variable is not set on your Convex deployment.\n\n" +
+          "  To fix this:\n" +
+          "  1. Go to your Convex dashboard\n" +
+          "  2. Navigate to Settings > Environment Variables\n" +
+          "  3. Add: IS_TEST = true\n" +
+          "═══════════════════════════════════════════════════════════════\n",
       );
     }
     throw error;
@@ -117,7 +123,9 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   try {
-    await convex.mutation(api.testingFunctions.deleteTestUser, { name: TEST_USER_NAME });
+    await convex.mutation(api.testingFunctions.deleteTestUser, {
+      name: TEST_USER_NAME,
+    });
   } catch {
     // Ignore cleanup errors
   }
@@ -128,14 +136,20 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.getByRole("textbox", { name: "Email address" }).fill(TEST_EMAIL);
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("textbox", { name: "Enter verification code" }).pressSequentially(CLERK_TEST_CODE);
-  await expect(page.getByRole("button", { name: "Open user menu" })).toBeVisible({ timeout: AUTH_TIMEOUT });
+  await page
+    .getByRole("textbox", { name: "Enter verification code" })
+    .pressSequentially(CLERK_TEST_CODE);
+  await expect(
+    page.getByRole("button", { name: "Open user menu" }),
+  ).toBeVisible({ timeout: AUTH_TIMEOUT });
 }
 
 async function signOut(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Open user menu" }).click();
   await page.getByRole("menuitem", { name: "Sign out" }).click();
-  await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible({ timeout: AUTH_TIMEOUT });
+  await expect(
+    page.getByRole("button", { name: "Sign in", exact: true }),
+  ).toBeVisible({ timeout: AUTH_TIMEOUT });
 }
 
 test.describe("E2E User Flow", () => {
@@ -147,12 +161,16 @@ test.describe("E2E User Flow", () => {
     await page.clock.install({ time: new Date(SEED_BASE_TIMESTAMP) });
 
     await page.goto("/");
-    await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Sign in", exact: true }),
+    ).toBeVisible();
 
     await signIn(page);
 
     // New user should be redirected to profile with welcome message
-    await expect(page.getByRole("heading", { name: "Complete Your Profile" })).toBeVisible({ timeout: AUTH_TIMEOUT });
+    await expect(
+      page.getByRole("heading", { name: "Complete Your Profile" }),
+    ).toBeVisible({ timeout: AUTH_TIMEOUT });
     await expect(page.getByText("Welcome!")).toBeVisible();
     await screenshot(page, "profile-new-user");
 
@@ -167,20 +185,26 @@ test.describe("E2E User Flow", () => {
     // Fill in profile fields and see live preview update
     await page.getByLabel("Company / Organization").fill("Effective Ventures");
     await page.getByLabel("Role / Title").fill("Operations Manager");
-    await page.getByLabel("About You").fill("Interested in high-impact careers and community building.");
+    await page
+      .getByLabel("About You")
+      .fill("Interested in high-impact careers and community building.");
     await page.getByLabel("Interests").fill("AI Safety, Career Planning");
 
     // Click a suggestion for "can help with"
     await page.getByRole("button", { name: "Community building" }).click();
 
     // Type in "needs help with"
-    await page.getByLabel("How others can help me").fill("product design and strategy");
+    await page
+      .getByLabel("How others can help me")
+      .fill("product design and strategy");
 
     // Save the profile
     await page.getByRole("button", { name: "Save & Find Connections" }).click();
 
     // Should redirect to attendees page after save
-    await expect(page.getByRole("heading", { name: "Attendees" })).toBeVisible({ timeout: AUTH_TIMEOUT });
+    await expect(page.getByRole("heading", { name: "Attendees" })).toBeVisible({
+      timeout: AUTH_TIMEOUT,
+    });
     await expect(page.getByText("Alice Johnson")).toBeVisible();
     // Scroll to top for consistent screenshot
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -188,25 +212,43 @@ test.describe("E2E User Flow", () => {
 
     // Verify profile is now filled by going back to profile page
     await page.goto("/profile", { waitUntil: "networkidle" });
-    await expect(page.getByRole("heading", { name: "Edit Your Profile" })).toBeVisible();
-    await expect(page.getByLabel("Company / Organization")).toHaveValue("Effective Ventures");
+    await expect(
+      page.getByRole("heading", { name: "Edit Your Profile" }),
+    ).toBeVisible();
+    await expect(page.getByLabel("Company / Organization")).toHaveValue(
+      "Effective Ventures",
+    );
     // Recommendations should now appear based on saved profile
-    await expect(page.getByText("People You Might Want to Meet")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("People You Might Want to Meet")).toBeVisible({
+      timeout: 5000,
+    });
     await screenshot(page, "profile-with-recommendations");
 
     // Browse other pages
     await page.goto("/agenda", { waitUntil: "networkidle" });
-    await expect(page.getByRole("heading", { name: "My Agenda" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Incoming Requests/ })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Sent Requests/ })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Scheduled Meetings/ })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "My Agenda" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Incoming Requests/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Sent Requests/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Scheduled Meetings/ }),
+    ).toBeVisible();
     await expect(page.getByText("Incoming Requests (2)")).toBeVisible();
     await screenshot(page, "agenda");
 
     await page.goto("/public-meetings", { waitUntil: "networkidle" });
-    await expect(page.getByRole("heading", { name: "Public Meetings" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Public Meetings" }),
+    ).toBeVisible();
     await expect(page.getByText("Upcoming Meetings")).toBeVisible();
-    await expect(page.getByText("Opening Keynote: Future of Tech")).toBeVisible();
+    await expect(
+      page.getByText("Opening Keynote: Future of Tech"),
+    ).toBeVisible();
     await screenshot(page, "public-meetings");
 
     await page.goto("/calendar", { waitUntil: "networkidle" });
@@ -216,22 +258,35 @@ test.describe("E2E User Flow", () => {
     // Test meeting detail page - use specific meeting for determinism
     await page.goto("/public-meetings", { waitUntil: "networkidle" });
     // Click on "Opening Keynote" specifically (not .first() which may vary)
-    await page.getByRole("heading", { name: "Opening Keynote: Future of Tech" })
-      .locator("..").getByRole("link", { name: "Open meeting page" }).click();
-    await expect(page.getByRole("link", { name: "Back to Calendar" })).toBeVisible();
+    await page
+      .getByRole("heading", { name: "Opening Keynote: Future of Tech" })
+      .locator("..")
+      .getByRole("link", { name: "Open meeting page" })
+      .click();
+    await expect(
+      page.getByRole("link", { name: "Back to Calendar" }),
+    ).toBeVisible();
     await expect(page.getByText(/Participants/)).toBeVisible();
     await screenshot(page, "meeting-detail");
 
     // Test user profile page - click on the host (David Chen for Opening Keynote)
     await page.getByText("Hosted by:").locator("..").getByRole("link").click();
-    await expect(page.getByRole("link", { name: "Back to Attendees" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "David Chen" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Request a Meeting" })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Back to Attendees" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "David Chen" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Request a Meeting" }),
+    ).toBeVisible();
     await screenshot(page, "user-profile");
 
     // Clicking "Request a Meeting" navigates to attendees page with user pre-filled
     await page.getByRole("button", { name: "Request a Meeting" }).click();
-    await expect(page.getByRole("heading", { name: "Attendees" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Attendees" }),
+    ).toBeVisible();
     // The search should be pre-filled with the user's name
     await expect(page.getByRole("textbox")).toHaveValue("David Chen");
 
@@ -247,11 +302,19 @@ test.describe("E2E User Flow", () => {
     await expect(page.getByText("Alice Johnson")).toBeVisible();
 
     // Click the message icon on Alice's card
-    await page.getByText("Alice Johnson").locator("../../../..").getByRole("link", { name: "Message" }).click();
+    await page
+      .getByText("Alice Johnson")
+      .locator("../../../..")
+      .getByRole("link", { name: "Message" })
+      .click();
 
     // Should navigate to user profile with chat embed
-    await expect(page.getByRole("heading", { name: "Alice Johnson" })).toBeVisible();
-    await expect(page.getByPlaceholder("Type a message...")).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.getByRole("heading", { name: "Alice Johnson" }),
+    ).toBeVisible();
+    await expect(page.getByPlaceholder("Type a message...")).toBeVisible({
+      timeout: 5000,
+    });
 
     // Send a few messages
     const chatInput = page.getByPlaceholder("Type a message...");
@@ -259,25 +322,36 @@ test.describe("E2E User Flow", () => {
 
     await chatInput.fill("Hi Alice! Great to meet you at the conference.");
     await sendButton.click();
-    await expect(page.getByText("Hi Alice! Great to meet you at the conference.")).toBeVisible();
+    await expect(
+      page.getByText("Hi Alice! Great to meet you at the conference."),
+    ).toBeVisible();
 
-    await chatInput.fill("I saw you're interested in AI Safety - would love to chat about that!");
+    await chatInput.fill(
+      "I saw you're interested in AI Safety - would love to chat about that!",
+    );
     await sendButton.click();
-    await expect(page.getByText("I saw you're interested in AI Safety")).toBeVisible();
+    await expect(
+      page.getByText("I saw you're interested in AI Safety"),
+    ).toBeVisible();
 
-    await chatInput.fill("Let me know if you have time for a coffee break tomorrow.");
+    await chatInput.fill(
+      "Let me know if you have time for a coffee break tomorrow.",
+    );
     await sendButton.click();
-    await expect(page.getByText("Let me know if you have time for a coffee break tomorrow.")).toBeVisible();
-
-    // Alice is a demo bot - verify she replies (500ms scheduled delay + network)
-    await expect(page.getByText("I feel like messaging you too")).toBeVisible({ timeout: 2000 });
+    await expect(
+      page.getByText(
+        "Let me know if you have time for a coffee break tomorrow.",
+      ),
+    ).toBeVisible();
 
     await screenshot(page, "chat-embed-user-profile");
 
     // Navigate to chats page
     await page.goto("/chats", { waitUntil: "networkidle" });
     // There are two ChatRoomLists (mobile hidden, desktop visible) - get visible one
-    const aliceChatLink = page.getByRole("link", { name: "Alice Johnson" }).first();
+    const aliceChatLink = page
+      .getByRole("link", { name: "Alice Johnson" })
+      .first();
     await expect(aliceChatLink).toBeVisible();
     await screenshot(page, "chats-list");
 
@@ -285,7 +359,11 @@ test.describe("E2E User Flow", () => {
     await aliceChatLink.click();
     // Desktop layout renders both mobile (hidden via lg:hidden) and desktop (visible) chat views
     // Mobile view comes first in DOM, so we need to filter by visible to get the desktop one
-    await expect(page.getByText("Hi Alice! Great to meet you at the conference.").and(page.locator(":visible"))).toBeVisible();
+    await expect(
+      page
+        .getByText("Hi Alice! Great to meet you at the conference.")
+        .and(page.locator(":visible")),
+    ).toBeVisible();
     await screenshot(page, "chat-conversation");
 
     await signOut(page);

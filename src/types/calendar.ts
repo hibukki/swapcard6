@@ -1,6 +1,16 @@
 import type { Doc } from "../../convex/_generated/dataModel";
 
 /**
+ * Participant summary for a meeting - used to determine display style
+ */
+export interface ParticipantSummary {
+  acceptedCount: number;
+  pendingCount: number;
+  declinedCount: number;
+  totalInvited: number; // excludes creator
+}
+
+/**
  * A meeting enriched with UI-specific display information for the calendar view.
  * Uses composition: contains the actual meeting document plus derived UI state.
  */
@@ -17,12 +27,32 @@ export interface CalendarMeetingView {
     isOutgoing: boolean;
   };
 
+  /** Summary of other participants' responses */
+  participantSummary?: ParticipantSummary;
+
   /** Display hints for calendar styling */
   display: {
     /** Category for color-coding in calendar views */
-    category: "my-private" | "my-public" | "public-available" | "pending-incoming" | "pending-outgoing";
+    category: CalendarDisplayCategory;
   };
 }
+
+/**
+ * Display categories for calendar events:
+ * - going: User is attending (green filled)
+ * - not-responded: User hasn't responded yet (green border only)
+ * - declined: User declined (green strikethrough)
+ * - all-rejected: Creator's meeting where all invitees declined (warning with strikethrough)
+ * - public-available: Public event user hasn't joined (purple, toggleable)
+ * - other: Fallback for edge cases (yellow)
+ */
+export type CalendarDisplayCategory =
+  | "going"
+  | "not-responded"
+  | "declined"
+  | "all-rejected"
+  | "public-available"
+  | "other";
 
 /**
  * Determines the display category for a meeting based on user's relationship to it.
@@ -30,61 +60,116 @@ export interface CalendarMeetingView {
 export function getMeetingDisplayCategory(
   meeting: Doc<"meetings">,
   participationStatus: "creator" | "accepted" | "pending" | "declined" | undefined,
-  isOutgoing: boolean
-): CalendarMeetingView["display"]["category"] {
-  // Pending requests get special treatment
-  if (participationStatus === "pending") {
-    return "pending-incoming";
+  participantSummary?: ParticipantSummary
+): CalendarDisplayCategory {
+  // User explicitly declined
+  if (participationStatus === "declined") {
+    return "declined";
   }
-  if (participationStatus === "creator" && !meeting.isPublic) {
-    // Check if it's a private meeting I created that's awaiting response
-    // This is determined by the isOutgoing flag passed in
-    if (isOutgoing) {
-      return "pending-outgoing";
+
+  // User is going (creator or accepted)
+  if (participationStatus === "creator" || participationStatus === "accepted") {
+    // Check if creator and all invitees declined
+    if (
+      participationStatus === "creator" &&
+      participantSummary &&
+      participantSummary.totalInvited > 0 &&
+      participantSummary.declinedCount === participantSummary.totalInvited
+    ) {
+      return "all-rejected";
     }
+    return "going";
   }
 
-  // Regular meetings
-  const isParticipant = participationStatus === "creator" || participationStatus === "accepted";
-
-  if (isParticipant) {
-    return meeting.isPublic ? "my-public" : "my-private";
+  // User hasn't responded (pending invitation)
+  if (participationStatus === "pending") {
+    return "not-responded";
   }
 
-  return "public-available";
+  // Public meeting user hasn't joined
+  if (meeting.isPublic && !participationStatus) {
+    return "public-available";
+  }
+
+  // Fallback
+  return "other";
 }
 
 /**
  * Maps display category to Tailwind classes for calendar grid styling.
  */
-export const categoryStyles: Record<CalendarMeetingView["display"]["category"], {
-  bg: string;
-  border: string;
-  text: string;
-}> = {
-  "my-private": {
-    bg: "bg-primary/20",
-    border: "border-primary",
-    text: "text-primary-content",
-  },
-  "my-public": {
+export const categoryStyles: Record<
+  CalendarDisplayCategory,
+  {
+    bg: string;
+    border: string;
+    text: string;
+    strikethrough?: boolean;
+    borderOnly?: boolean;
+    warningIcon?: boolean;
+  }
+> = {
+  going: {
     bg: "bg-success/20",
     border: "border-success",
     text: "text-success-content",
+  },
+  "not-responded": {
+    bg: "bg-base-100",
+    border: "border-success",
+    text: "text-base-content",
+    borderOnly: true,
+  },
+  declined: {
+    bg: "bg-base-100",
+    border: "border-success",
+    text: "text-base-content/60",
+    strikethrough: true,
+    borderOnly: true,
+  },
+  "all-rejected": {
+    bg: "bg-base-100",
+    border: "border-warning",
+    text: "text-base-content/60",
+    strikethrough: true,
+    borderOnly: true,
+    warningIcon: true,
   },
   "public-available": {
     bg: "bg-secondary/20",
     border: "border-secondary",
     text: "text-secondary-content",
   },
-  "pending-incoming": {
-    bg: "bg-warning/20",
-    border: "border-warning",
-    text: "text-warning-content",
-  },
-  "pending-outgoing": {
+  other: {
     bg: "bg-warning/20",
     border: "border-warning",
     text: "text-warning-content",
   },
 };
+
+/**
+ * Generate tooltip text for a calendar event
+ */
+export function getEventTooltip(
+  calendarMeeting: CalendarMeetingView,
+  creatorName?: string
+): string {
+  const { display, userStatus, meeting } = calendarMeeting;
+
+  switch (display.category) {
+    case "going":
+      return `Going: ${meeting.title}`;
+    case "not-responded":
+      return `Invitation from ${creatorName ?? "Unknown"}: ${meeting.title}`;
+    case "declined":
+      return `Declined: ${meeting.title}`;
+    case "all-rejected":
+      return `All invitees declined: ${meeting.title}`;
+    case "public-available":
+      return `Public event: ${meeting.title}`;
+    case "other":
+      return userStatus.isOutgoing
+        ? `Sent request: ${meeting.title}`
+        : meeting.title;
+  }
+}
