@@ -1,7 +1,8 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 import { getCurrentUserOrCrash, getCurrentUserOrNull, getUserByIdOrCrash } from "./users";
-import { getMeetingOrCrash } from "./meetingUtils";
+import { getMeetingOrCrash, getViewableMeetingOrCrash } from "./meetingUtils";
 import { getMeetingParticipation } from "./meetingParticipantsUtils";
 import { meetingFields } from "./schema";
 
@@ -261,5 +262,81 @@ export const remove = mutation({
     }
 
     await ctx.db.delete(participation._id);
+  },
+});
+
+/**
+ * Get participant userIds for multiple meetings at once (for calendar view).
+ * Returns a map of meetingId -> userId[] (excluding the current user).
+ * Only returns data for meetings the user has permission to view.
+ */
+export const getParticipantUserIds = query({
+  args: { meetingIds: v.array(v.id("meetings")) },
+  handler: async (ctx, args): Promise<Record<Id<"meetings">, Id<"users">[]>> => {
+    const currentUser = await getCurrentUserOrNull(ctx);
+    const result: Record<Id<"meetings">, Id<"users">[]> = {};
+
+    for (const meetingId of args.meetingIds) {
+      await getViewableMeetingOrCrash(ctx, meetingId);
+
+      const participants = await ctx.db
+        .query("meetingParticipants")
+        .withIndex("by_meeting", (q) => q.eq("meetingId", meetingId))
+        .collect();
+
+      // Get all participant userIds except the current user
+      result[meetingId] = participants
+        .filter((p) => !currentUser || p.userId !== currentUser._id)
+        .map((p) => p.userId);
+    }
+
+    return result;
+  },
+});
+
+/**
+ * Get participant summary for multiple meetings at once (for calendar view).
+ * Returns a map of meetingId -> { acceptedCount, pendingCount, declinedCount, totalInvited }
+ * Only returns summaries for meetings the user has permission to view.
+ */
+export const getParticipantSummaries = query({
+  args: { meetingIds: v.array(v.id("meetings")) },
+  handler: async (ctx, args) => {
+    const summaries: Record<string, {
+      acceptedCount: number;
+      pendingCount: number;
+      declinedCount: number;
+      totalInvited: number;
+    }> = {};
+
+    for (const meetingId of args.meetingIds) {
+      // Verify user has permission to view this meeting
+      await getViewableMeetingOrCrash(ctx, meetingId);
+
+      const participants = await ctx.db
+        .query("meetingParticipants")
+        .withIndex("by_meeting", (q) => q.eq("meetingId", meetingId))
+        .collect();
+
+      let acceptedCount = 0;
+      let pendingCount = 0;
+      let declinedCount = 0;
+
+      for (const p of participants) {
+        if (p.status === "creator") continue; // Don't count creator in summary
+        if (p.status === "accepted") acceptedCount++;
+        else if (p.status === "pending") pendingCount++;
+        else if (p.status === "declined") declinedCount++;
+      }
+
+      summaries[meetingId] = {
+        acceptedCount,
+        pendingCount,
+        declinedCount,
+        totalInvited: acceptedCount + pendingCount + declinedCount,
+      };
+    }
+
+    return summaries;
   },
 });

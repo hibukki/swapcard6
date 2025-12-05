@@ -9,15 +9,24 @@ import type { Id, Doc } from "../../convex/_generated/dataModel";
 import { z } from "zod";
 import { CalendarSubscription } from "../components/CalendarSubscription";
 import { MeetingCard as MeetingCardComponent } from "../components/MeetingCard";
-import { type CalendarMeetingView, getMeetingDisplayCategory, categoryStyles } from "../types/calendar";
+import {
+  type CalendarMeetingView,
+  type ParticipantSummary,
+  getMeetingDisplayCategory,
+  categoryStyles,
+  getEventTooltip,
+} from "../types/calendar";
+
+/** Map of meeting ID to list of other participant user IDs */
+type MeetingParticipantsMap = Record<Id<"meetings">, Id<"users">[]>;
 
 const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
 const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
 
 const calendarSearchSchema = z.object({
   view: z.enum(["week", "month"]).optional().default("week"),
-  mode: z.enum(["my", "public", "combined"]).optional().default("my"),
   date: z.string().optional(),
+  showPublic: z.boolean().optional().default(false),
 });
 
 export const Route = createFileRoute("/calendar")({
@@ -42,32 +51,53 @@ function CalendarPage() {
   const navigate = useNavigate({ from: "/calendar" });
   const search = Route.useSearch();
 
-  // Use URL params with defaults, fallback to localStorage
+  // URL params with defaults
   const view = search.view;
-  const calendarMode = search.mode;
   const currentDate = search.date ? new Date(search.date) : new Date();
+  const showPublicEvents = search.showPublic;
 
-  // On mount, restore from localStorage if URL params match defaults (meaning user just clicked nav link)
+  // Get all meeting IDs for fetching participant data
+  const myMeetingIds_all = useMemo(() => {
+    return myParticipations.map((p) => p.meetingId);
+  }, [myParticipations]);
+
+  // Get meeting IDs where user is creator (for summaries)
+  const creatorMeetingIds = useMemo(() => {
+    return myParticipations.filter((p) => p.status === "creator").map((p) => p.meetingId);
+  }, [myParticipations]);
+
+  // Fetch participant summaries for meetings where user is creator
+  const participantSummaries = useQuery(
+    api.meetingParticipants.getParticipantSummaries,
+    creatorMeetingIds.length > 0 ? { meetingIds: creatorMeetingIds } : "skip"
+  );
+
+  // Fetch participant userIds for all my meetings (to show other participant names)
+  const participantUserIds = useQuery(
+    api.meetingParticipants.getParticipantUserIds,
+    myMeetingIds_all.length > 0 ? { meetingIds: myMeetingIds_all } : "skip"
+  );
+
+  // On mount, restore from localStorage if URL params match defaults
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       const urlView = new URLSearchParams(window.location.search).get("view");
-      const urlMode = new URLSearchParams(window.location.search).get("mode");
       const urlDate = new URLSearchParams(window.location.search).get("date");
+      const urlShowPublic = new URLSearchParams(window.location.search).get("showPublic");
 
-      // Only restore if URL params are missing or match defaults
-      const shouldRestore = !urlView && !urlMode && !urlDate;
+      const shouldRestore = !urlView && !urlDate && !urlShowPublic;
 
       if (shouldRestore) {
         const savedView = localStorage.getItem("calendarView");
-        const savedMode = localStorage.getItem("calendarMode");
         const savedDate = localStorage.getItem("calendarDate");
+        const savedShowPublic = localStorage.getItem("calendarShowPublic");
 
-        if (savedView || savedMode || savedDate) {
+        if (savedView || savedDate || savedShowPublic) {
           void navigate({
             search: {
               view: (savedView as "week" | "month") || "week",
-              mode: (savedMode as "my" | "public" | "combined") || "my",
               date: savedDate || undefined,
+              showPublic: savedShowPublic === "true",
             },
             replace: true,
           });
@@ -75,18 +105,18 @@ function CalendarPage() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only on mount
+  }, []);
 
   // Save calendar state to localStorage whenever it changes
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("calendarView", view);
-      localStorage.setItem("calendarMode", calendarMode);
+      localStorage.setItem("calendarShowPublic", String(showPublicEvents));
       if (search.date) {
         localStorage.setItem("calendarDate", search.date);
       }
     }
-  }, [view, calendarMode, search.date]);
+  }, [view, showPublicEvents, search.date]);
 
   // Helper to update URL params
   const updateSearch = (updates: Partial<typeof search>) => {
@@ -98,8 +128,8 @@ function CalendarPage() {
   const [selectedMeeting, setSelectedMeeting] = useState<CalendarMeetingView | null>(null);
 
   const setView = (newView: "week" | "month") => updateSearch({ view: newView });
-  const setCalendarMode = (newMode: "my" | "public" | "combined") => updateSearch({ mode: newMode });
   const setCurrentDate = (date: Date) => updateSearch({ date: date.toISOString().split('T')[0] });
+  const toggleShowPublic = () => updateSearch({ showPublic: !showPublicEvents });
 
   // Build lookup maps
   const meetingsMap = useMemo(() => {
@@ -112,115 +142,60 @@ function CalendarPage() {
     return new Map(allUsers.map((u) => [u._id, u]));
   }, [allUsers]);
 
-  // Build my meetings with enrichment
+  // Get IDs of meetings the user is in (any status)
+  const myMeetingIds = useMemo(() => {
+    return new Set(myParticipations.map((p) => p.meetingId));
+  }, [myParticipations]);
+
+  // Build my meetings with enrichment (includes all statuses: creator, accepted, pending, declined)
   const myMeetings = useMemo((): CalendarMeetingView[] => {
     const results: CalendarMeetingView[] = [];
     for (const p of myParticipations) {
-      if (p.status !== "accepted" && p.status !== "creator") continue;
       const meeting = meetingsMap.get(p.meetingId);
       if (!meeting) continue;
+
+      // Get participant summary for this meeting (if available)
+      const summary = participantSummaries?.[p.meetingId] as ParticipantSummary | undefined;
+
       results.push({
         meeting,
         userStatus: {
           participationStatus: p.status,
-          isPendingRequest: false,
-          isOutgoing: false,
+          isPendingRequest: p.status === "pending",
+          isOutgoing: p.status === "creator" && !meeting.isPublic,
         },
+        participantSummary: summary,
         display: {
-          category: getMeetingDisplayCategory(meeting, p.status, false),
+          category: getMeetingDisplayCategory(meeting, p.status, summary),
         },
       });
     }
     return results;
-  }, [myParticipations, meetingsMap]);
+  }, [myParticipations, meetingsMap, participantSummaries]);
 
-  // Get pending invitations (incoming)
-  const pendingInvitations = useMemo((): CalendarMeetingView[] => {
-    const results: CalendarMeetingView[] = [];
-    for (const p of myParticipations) {
-      if (p.status !== "pending") continue;
-      const meeting = meetingsMap.get(p.meetingId);
-      if (!meeting) continue;
-      const requester = usersMap.get(meeting.creatorId);
-      const displayTitle = `Meeting Request from ${requester?.name || "Unknown"}`;
-      results.push({
-        meeting: { ...meeting, title: displayTitle },
-        userStatus: {
-          participationStatus: "pending",
-          isPendingRequest: true,
-          isOutgoing: false,
-        },
-        display: {
-          category: "pending-incoming",
-        },
-      });
-    }
-    return results;
-  }, [myParticipations, meetingsMap, usersMap]);
-
-  // Get sent requests (outgoing - meetings I created that are not public)
-  const sentRequests = useMemo((): CalendarMeetingView[] => {
-    const results: CalendarMeetingView[] = [];
-    for (const p of myParticipations) {
-      if (p.status !== "creator") continue;
-      const meeting = meetingsMap.get(p.meetingId);
-      if (!meeting || meeting.isPublic) continue;
-      const displayTitle = `Meeting Request: ${meeting.title}`;
-      results.push({
-        meeting: { ...meeting, title: displayTitle },
-        userStatus: {
-          participationStatus: "creator",
-          isPendingRequest: true,
-          isOutgoing: true,
-        },
-        display: {
-          category: "pending-outgoing",
-        },
-      });
-    }
-    return results;
-  }, [myParticipations, meetingsMap]);
-
-  // Get IDs of meetings the user is already in
-  const myMeetingIds = useMemo(() => {
-    return new Set(myMeetings.map((m) => m.meeting._id));
-  }, [myMeetings]);
-
-  // Transform public meetings, marking those the user is in
+  // Transform public meetings (only those user isn't already in)
   const publicMeetings = useMemo((): CalendarMeetingView[] => {
-    return publicMeetingsData.map((meeting): CalendarMeetingView => {
-      const userIsParticipant = myMeetingIds.has(meeting._id);
-      const participationStatus = userIsParticipant ? ("accepted" as const) : undefined;
-      return {
+    return publicMeetingsData
+      .filter((meeting) => !myMeetingIds.has(meeting._id))
+      .map((meeting): CalendarMeetingView => ({
         meeting,
         userStatus: {
-          participationStatus,
+          participationStatus: undefined,
           isPendingRequest: false,
           isOutgoing: false,
         },
         display: {
-          category: getMeetingDisplayCategory(meeting, participationStatus, false),
+          category: "public-available",
         },
-      };
-    });
+      }));
   }, [publicMeetingsData, myMeetingIds]);
-
-  // Pending requests for calendar display
-  const pendingRequests: CalendarMeetingView[] = useMemo(() => {
-    return [...sentRequests, ...pendingInvitations];
-  }, [sentRequests, pendingInvitations]);
 
   // Determine which meetings to show
   let meetings: CalendarMeetingView[];
-  if (calendarMode === "my") {
-    meetings = [...myMeetings, ...pendingRequests];
-  } else if (calendarMode === "public") {
-    // Show all public meetings (including ones user is in)
-    meetings = publicMeetings;
+  if (showPublicEvents) {
+    meetings = [...myMeetings, ...publicMeetings];
   } else {
-    // Combined view - show my meetings + public meetings I'm NOT in + pending requests
-    const publicMeetingsNotIn = publicMeetings.filter((m) => !m.userStatus.participationStatus);
-    meetings = [...myMeetings, ...publicMeetingsNotIn, ...pendingRequests];
+    meetings = myMeetings;
   }
 
   // Navigate dates
@@ -287,26 +262,6 @@ function CalendarPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <div className="join">
             <button
-              className={`btn btn-sm join-item ${calendarMode === "my" ? "btn-active" : ""}`}
-              onClick={() => setCalendarMode("my")}
-            >
-              My Meetings
-            </button>
-            <button
-              className={`btn btn-sm join-item ${calendarMode === "public" ? "btn-active" : ""}`}
-              onClick={() => setCalendarMode("public")}
-            >
-              Public Events
-            </button>
-            <button
-              className={`btn btn-sm join-item ${calendarMode === "combined" ? "btn-active" : ""}`}
-              onClick={() => setCalendarMode("combined")}
-            >
-              Combined
-            </button>
-          </div>
-          <div className="join">
-            <button
               className={`btn btn-sm join-item ${view === "week" ? "btn-active" : ""}`}
               onClick={() => setView("week")}
             >
@@ -322,33 +277,6 @@ function CalendarPage() {
         </div>
       </div>
 
-      {/* Legend */}
-      {(calendarMode === "combined" || calendarMode === "my") && (
-        <div className="flex items-center gap-4 text-sm mb-4 p-3 bg-base-200 rounded-lg flex-wrap">
-          <span className="font-semibold">Legend:</span>
-          {calendarMode === "combined" && (
-            <>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-primary/20 border-l-4 border-primary"></div>
-                <span>My Private Meetings</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-success/20 border-l-4 border-success"></div>
-                <span>Public Meetings I'm In</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-secondary/20 border-l-4 border-secondary"></div>
-                <span>Available Public Events</span>
-              </div>
-            </>
-          )}
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-warning/20 border-l-4 border-warning"></div>
-            <span>Pending Requests</span>
-          </div>
-        </div>
-      )}
-
       {/* Calendar Subscription */}
       <details className="mb-4">
         <summary className="cursor-pointer text-sm opacity-70 hover:opacity-100 flex items-center gap-1">
@@ -362,10 +290,23 @@ function CalendarPage() {
 
       {/* Calendar Grid */}
       {view === "week" ? (
-        <WeekView meetings={meetings} currentDate={currentDate} onMeetingClick={setSelectedMeeting} />
+        <WeekView meetings={meetings} currentDate={currentDate} usersMap={usersMap} participantUserIds={(participantUserIds ?? {}) as MeetingParticipantsMap} onMeetingClick={setSelectedMeeting} />
       ) : (
-        <MonthView meetings={meetings} currentDate={currentDate} onMeetingClick={setSelectedMeeting} />
+        <MonthView meetings={meetings} currentDate={currentDate} usersMap={usersMap} participantUserIds={(participantUserIds ?? {}) as MeetingParticipantsMap} onMeetingClick={setSelectedMeeting} />
       )}
+
+      {/* Show public events toggle - below calendar */}
+      <div className="mt-4 flex items-center gap-2">
+        <label className="label cursor-pointer gap-2">
+          <input
+            type="checkbox"
+            className="checkbox checkbox-sm checkbox-secondary"
+            checked={showPublicEvents}
+            onChange={toggleShowPublic}
+          />
+          <span className="label-text">Show all public events</span>
+        </label>
+      </div>
 
       {/* Meeting Detail Modal */}
       {selectedMeeting && (
@@ -381,10 +322,14 @@ function CalendarPage() {
 function WeekView({
   meetings,
   currentDate,
+  usersMap,
+  participantUserIds,
   onMeetingClick,
 }: {
   meetings: CalendarMeetingView[];
   currentDate: Date;
+  usersMap: Map<Id<"users">, Doc<"users">>;
+  participantUserIds: MeetingParticipantsMap;
   onMeetingClick: (meeting: CalendarMeetingView) => void;
 }) {
   // Get the start of the week (Sunday)
@@ -478,6 +423,8 @@ function WeekView({
                       <CalendarGridCard
                         key={calendarMeeting.meeting._id}
                         calendarMeeting={calendarMeeting}
+                        usersMap={usersMap}
+                        participantUserIds={participantUserIds}
                         onClick={() => onMeetingClick(calendarMeeting)}
                       />
                     );
@@ -495,10 +442,14 @@ function WeekView({
 function MonthView({
   meetings,
   currentDate,
+  usersMap,
+  participantUserIds,
   onMeetingClick,
 }: {
   meetings: CalendarMeetingView[];
   currentDate: Date;
+  usersMap: Map<Id<"users">, Doc<"users">>;
+  participantUserIds: MeetingParticipantsMap;
   onMeetingClick: (meeting: CalendarMeetingView) => void;
 }) {
   // Get first day of month
@@ -580,13 +531,20 @@ function MonthView({
               <div className="space-y-1">
                 {dayMeetings.slice(0, 3).map((calendarMeeting) => {
                   const styles = categoryStyles[calendarMeeting.display.category];
+                  const displayTitle = getDisplayTitle(calendarMeeting, usersMap, participantUserIds);
+                  const tooltip = getEventTooltip(
+                    calendarMeeting,
+                    usersMap.get(calendarMeeting.meeting.creatorId)?.name
+                  );
 
                   return (
                     <div
                       key={calendarMeeting.meeting._id}
-                      className={`text-xs ${styles.bg} ${styles.text} p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity`}
+                      className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity border-l-4 ${styles.border} ${styles.borderOnly ? "bg-base-100" : styles.bg} ${styles.text} ${styles.strikethrough ? "line-through" : ""}`}
                       onClick={() => onMeetingClick(calendarMeeting)}
+                      title={tooltip}
                     >
+                      {styles.warningIcon && "⚠️ "}
                       {new Date(calendarMeeting.meeting.scheduledTime).toLocaleTimeString(
                         "en-US",
                         {
@@ -594,7 +552,7 @@ function MonthView({
                           minute: "2-digit",
                         }
                       )}{" "}
-                      {calendarMeeting.meeting.title}
+                      {displayTitle}
                     </div>
                   );
                 })}
@@ -612,25 +570,77 @@ function MonthView({
   );
 }
 
-function CalendarGridCard({ calendarMeeting, onClick }: { calendarMeeting: CalendarMeetingView; onClick: () => void }) {
+/**
+ * Get the display title for a calendar event.
+ * Uses event title if available, otherwise shows participant names.
+ */
+function getDisplayTitle(
+  calendarMeeting: CalendarMeetingView,
+  usersMap: Map<Id<"users">, Doc<"users">>,
+  participantUserIds: MeetingParticipantsMap
+): string {
+  const { meeting } = calendarMeeting;
+
+  // If meeting has a meaningful title (not auto-generated), use it
+  if (meeting.title && !meeting.title.startsWith("Meeting Request")) {
+    return meeting.title;
+  }
+
+  // For meetings without a meaningful title, show the other person's name
+  const otherParticipantIds = participantUserIds[meeting._id] ?? [];
+  if (otherParticipantIds.length > 0) {
+    const names = otherParticipantIds
+      .map((id) => usersMap.get(id)?.name)
+      .filter(Boolean);
+    if (names.length > 0) {
+      return names.length <= 2 ? names.join(" & ") : `${names[0]} +${names.length - 1}`;
+    }
+  }
+
+  // Fallback: show creator's name if user is invitee
+  if (calendarMeeting.userStatus.participationStatus !== "creator") {
+    const creatorName = usersMap.get(meeting.creatorId)?.name;
+    if (creatorName) return creatorName;
+  }
+
+  return meeting.title || "Meeting";
+}
+
+function CalendarGridCard({
+  calendarMeeting,
+  usersMap,
+  participantUserIds,
+  onClick,
+}: {
+  calendarMeeting: CalendarMeetingView;
+  usersMap: Map<Id<"users">, Doc<"users">>;
+  participantUserIds: MeetingParticipantsMap;
+  onClick: () => void;
+}) {
   const { meeting, display } = calendarMeeting;
   const startTime = new Date(meeting.scheduledTime);
   const endTime = new Date(meeting.scheduledTime + meeting.duration * 60000);
   const styles = categoryStyles[display.category];
-  const isPublicNotParticipant = display.category === "public-available";
+  const displayTitle = getDisplayTitle(calendarMeeting, usersMap, participantUserIds);
+  const tooltip = getEventTooltip(
+    calendarMeeting,
+    usersMap.get(meeting.creatorId)?.name
+  );
 
   return (
     <div
-      className={`${styles.bg} border-l-4 ${styles.border} p-1 rounded text-xs mb-1 cursor-pointer hover:opacity-80 transition-opacity`}
+      className={`border-l-4 ${styles.border} p-1 rounded text-xs mb-1 cursor-pointer hover:opacity-80 transition-opacity ${styles.borderOnly ? "bg-base-100" : styles.bg}`}
       onClick={onClick}
+      title={tooltip}
     >
       <Link
         to="/meeting/$meetingId"
         params={{ meetingId: meeting._id }}
-        className={`font-semibold ${styles.text} truncate block hover:underline`}
+        className={`font-semibold ${styles.text} truncate block hover:underline ${styles.strikethrough ? "line-through" : ""}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {meeting.title}
+        {styles.warningIcon && "⚠️ "}
+        {displayTitle}
       </Link>
       <div className="text-base-content/80">
         {startTime.toLocaleTimeString("en-US", {
@@ -643,9 +653,6 @@ function CalendarGridCard({ calendarMeeting, onClick }: { calendarMeeting: Calen
           minute: "2-digit",
         })}
       </div>
-      {isPublicNotParticipant && (
-        <div className="text-xs opacity-70 mt-0.5">📢 Public</div>
-      )}
     </div>
   );
 }
@@ -658,11 +665,18 @@ function MeetingDetailModal({
   onClose: () => void;
 }) {
   const { meeting, userStatus } = calendarMeeting;
-  const status = userStatus.participationStatus ?? (
-    userStatus.isPendingRequest && !userStatus.isOutgoing ? "pending" :
-    userStatus.participationStatus === "accepted" || userStatus.participationStatus === "creator" ? "accepted" :
-    null
-  );
+  const status = userStatus.participationStatus ?? null;
+
+  // Close on ESC key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   return (
     <dialog className="modal modal-open">

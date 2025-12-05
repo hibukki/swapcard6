@@ -280,8 +280,9 @@ test.describe("E2E User Flow", () => {
 
     // Click into the chat to see split view (on desktop) or full chat (on mobile)
     await aliceChatLink.click();
-    // Verify first message is visible
-    await expect(page.getByText("Hi Alice! Great to meet you at the conference.").first()).toBeVisible();
+    // Wait for chat conversation to load and verify message is visible
+    const messageLocator = page.locator("main").getByRole("paragraph").filter({ hasText: "Hi Alice! Great to meet you at the conference." });
+    await expect(messageLocator).toBeVisible({ timeout: 5000 });
     await screenshot(page, "chat-conversation");
 
     await signOut(page);
