@@ -321,8 +321,12 @@ function MeetingRequestModal({
 
   // Clear selected slot when duration or date changes
   useEffect(() => {
-    setSelectedSlot(null);
-  }, [duration, selectedDate]);
+    if (availableSlots.length > 0) {
+      setSelectedSlot(availableSlots[0]);
+    } else {
+      setSelectedSlot(null);
+    }
+  }, [availableSlots]);
 
   const canGoBack = selectedDate && selectedDate > minDate;
   const canGoForward = selectedDate && selectedDate < maxDate;
