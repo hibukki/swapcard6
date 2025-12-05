@@ -4,7 +4,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { ChatRoom } from "./ChatRoom";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useCallback } from "react";
 import { MessageCircle } from "lucide-react";
 
 interface ChatEmbedProps {
@@ -19,22 +19,22 @@ export function ChatEmbed({ otherUserId }: ChatEmbedProps) {
   const [chatRoomId, setChatRoomId] = useState<Id<"chatRooms"> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  const initRoom = useCallback(async () => {
     if (!currentUser) return;
 
-    const initRoom = async () => {
-      try {
-        const roomId = await getOrCreateRoom({
-          participantIds: [otherUserId],
-        });
-        setChatRoomId(roomId);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void initRoom();
+    try {
+      const roomId = await getOrCreateRoom({
+        participantIds: [otherUserId],
+      });
+      setChatRoomId(roomId);
+    } finally {
+      setIsLoading(false);
+    }
   }, [currentUser, otherUserId, getOrCreateRoom]);
+
+  useEffect(() => {
+    void initRoom();
+  }, [initRoom]);
 
   if (!currentUser) {
     return null;

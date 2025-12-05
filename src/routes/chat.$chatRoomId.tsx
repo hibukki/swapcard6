@@ -1,12 +1,12 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { ChatRoom } from "../components/chat/ChatRoom";
 import { ChatRoomList } from "../components/chat/ChatRoomList";
 import { ArrowLeft } from "lucide-react";
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useEffect } from "react";
 
 const currentUserQuery = convexQuery(api.users.getCurrentUser, {});
 const chatRoomsQuery = convexQuery(api.chatRooms.list, {});
@@ -35,16 +35,26 @@ export const Route = createFileRoute("/chat/$chatRoomId")({
 
 function ChatRoomPage() {
   const { chatRoomId } = Route.useParams();
+  const navigate = useNavigate();
   const { data: currentUser } = useSuspenseQuery(currentUserQuery);
   const { data: rooms } = useSuspenseQuery(chatRoomsQuery);
 
-  // Fetching room data validates that user is a participant (throws if not)
-  useSuspenseQuery(
+  // Use non-suspense query to catch errors
+  const roomQuery = useQuery(
     convexQuery(api.chatRooms.get, { chatRoomId: chatRoomId as Id<"chatRooms"> }),
   );
+
   const { data: participants } = useSuspenseQuery(
     convexQuery(api.chatRoomUsers.listByRoom, { chatRoomId: chatRoomId as Id<"chatRooms"> }),
   );
+
+  // Redirect to /chats if chat room is invalid or user doesn't have access
+  useEffect(() => {
+    if (roomQuery.error) {
+      console.error("Failed to load chat room:", roomQuery.error);
+      void navigate({ to: "/chats", replace: true });
+    }
+  }, [roomQuery.error, navigate]);
 
   // Get all unique participant IDs for the chat list
   const allParticipantIds = useMemo(() => {
@@ -71,6 +81,14 @@ function ChatRoomPage() {
 
   if (!currentUser) {
     return <div>Loading...</div>;
+  }
+
+  if (roomQuery.isPending) {
+    return <div>Loading chat...</div>;
+  }
+
+  if (roomQuery.error) {
+    return <div>Redirecting...</div>;
   }
 
   // Get other participants for the header

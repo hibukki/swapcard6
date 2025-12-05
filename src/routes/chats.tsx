@@ -83,8 +83,8 @@ function ChatsPage() {
 
         {/* Right panel: empty state */}
         <div className="lg:col-span-2 card bg-base-200 flex flex-col">
-          <div className="card-body flex items-center justify-center text-base-content/50">
-            Select a conversation
+          <div className="card-body flex flex-col items-center justify-center text-base-content/50 gap-2">
+            <div>Select a conversation</div>
           </div>
         </div>
       </div>

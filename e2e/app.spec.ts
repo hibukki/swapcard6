@@ -273,15 +273,15 @@ test.describe("E2E User Flow", () => {
 
     // Navigate to chats page
     await page.goto("/chats", { waitUntil: "networkidle" });
-    // There are two ChatRoomLists (mobile hidden, desktop visible) - use locator with :visible
-    const aliceChatLink = page.locator("a:visible", { hasText: "Alice Johnson" }).first();
+    // There are two ChatRoomLists (mobile hidden, desktop visible) - get visible one
+    const aliceChatLink = page.getByRole("link", { name: "Alice Johnson" }).first();
     await expect(aliceChatLink).toBeVisible();
     await screenshot(page, "chats-list");
 
     // Click into the chat to see split view (on desktop) or full chat (on mobile)
     await aliceChatLink.click();
-    // There are hidden mobile and visible desktop versions - use :visible pseudo-selector
-    await expect(page.locator("p:visible", { hasText: "Hi Alice! Great to meet you at the conference." }).first()).toBeVisible();
+    // Verify first message is visible
+    await expect(page.getByText("Hi Alice! Great to meet you at the conference.").first()).toBeVisible();
     await screenshot(page, "chat-conversation");
 
     await signOut(page);

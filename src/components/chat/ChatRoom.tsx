@@ -31,6 +31,8 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96" }: Chat
 
   const [newMessage, setNewMessage] = useState("");
   const [replyingTo, setReplyingTo] = useState<Doc<"chatRoomMessages"> | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -44,14 +46,29 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96" }: Chat
     const content = newMessage.trim();
     if (!content) return;
 
+    const messageToSend = content;
+    const replyTo = replyingTo;
+
     setNewMessage("");
     setReplyingTo(null);
+    setSendError(null);
+    setIsSending(true);
 
-    await sendMessage({
-      chatRoomId,
-      content,
-      parentMessageId: replyingTo?._id,
-    });
+    try {
+      await sendMessage({
+        chatRoomId,
+        content: messageToSend,
+        parentMessageId: replyTo?._id,
+      });
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setSendError("Failed to send message. Please try again.");
+      // Restore the message content so user can retry
+      setNewMessage(messageToSend);
+      setReplyingTo(replyTo);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -155,6 +172,13 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96" }: Chat
         </div>
       )}
 
+      {/* Error message */}
+      {sendError && (
+        <div className="px-2 py-1 bg-error/10 text-error text-sm">
+          {sendError}
+        </div>
+      )}
+
       {/* Input */}
       <div className="flex gap-2 p-2 border-t border-base-300">
         <textarea
@@ -165,14 +189,19 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96" }: Chat
           placeholder="Type a message..."
           className="textarea textarea-bordered textarea-sm flex-1 min-h-[2.5rem] max-h-24 resize-none"
           rows={1}
+          disabled={isSending}
         />
         <button
           onClick={() => void handleSend()}
-          disabled={!newMessage.trim()}
+          disabled={!newMessage.trim() || isSending}
           className="btn btn-primary btn-sm btn-square"
           aria-label="Send message"
         >
-          <Send className="w-4 h-4" />
+          {isSending ? (
+            <span className="loading loading-spinner loading-xs"></span>
+          ) : (
+            <Send className="w-4 h-4" />
+          )}
         </button>
       </div>
     </div>
