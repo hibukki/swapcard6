@@ -112,25 +112,25 @@ export const categoryStyles: Record<
   going: {
     bg: "bg-success/20",
     border: "border-success",
-    text: "text-success-content",
+    text: "text-success-foreground",
   },
   "not-responded": {
-    bg: "bg-base-100",
+    bg: "bg-background",
     border: "border-success",
-    text: "text-base-content",
+    text: "text-foreground",
     borderOnly: true,
   },
   declined: {
-    bg: "bg-base-100",
+    bg: "bg-background",
     border: "border-success",
-    text: "text-base-content/60",
+    text: "text-muted-foreground",
     strikethrough: true,
     borderOnly: true,
   },
   "all-rejected": {
-    bg: "bg-base-100",
+    bg: "bg-background",
     border: "border-warning",
-    text: "text-base-content/60",
+    text: "text-muted-foreground",
     strikethrough: true,
     borderOnly: true,
     warningIcon: true,
@@ -138,12 +138,12 @@ export const categoryStyles: Record<
   "public-available": {
     bg: "bg-secondary/20",
     border: "border-secondary",
-    text: "text-secondary-content",
+    text: "text-secondary-foreground",
   },
   other: {
     bg: "bg-warning/20",
     border: "border-warning",
-    text: "text-warning-content",
+    text: "text-warning-foreground",
   },
 };
 

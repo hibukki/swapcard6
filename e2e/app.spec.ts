@@ -144,9 +144,11 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.getByRole("textbox", { name: "Email address" }).fill(TEST_EMAIL);
   await page.getByRole("button", { name: "Continue" }).click();
-  await page
-    .getByRole("textbox", { name: "Enter verification code" })
-    .pressSequentially(CLERK_TEST_CODE);
+  // Wait for Clerk to be ready to accept the verification code
+  const codeInput = page.getByRole("textbox", { name: "Enter verification code" });
+  await codeInput.waitFor({ state: "visible" });
+  await page.waitForTimeout(500); // Give Clerk a moment to initialize
+  await codeInput.pressSequentially(CLERK_TEST_CODE);
   await expect(
     page.getByRole("button", { name: "Open user menu" }),
   ).toBeVisible({ timeout: AUTH_TIMEOUT });

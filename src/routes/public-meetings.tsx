@@ -7,6 +7,18 @@ import { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { MeetingCard } from "../components/MeetingCard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { EmptyState } from "@/components/patterns/EmptyState";
 
 const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
 const myParticipationsQuery = convexQuery(
@@ -51,13 +63,10 @@ function PublicMeetingsPage() {
   return (
     <div>
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <button
-          className="not-prose btn btn-primary gap-2 mt-4"
-          onClick={() => setShowCreateModal(true)}
-        >
+        <Button className="not-prose mt-4" onClick={() => setShowCreateModal(true)}>
           <Plus className="w-4 h-4" />
           Create Public Meeting
-        </button>
+        </Button>
       </div>
 
       <div className="not-prose mt-8 space-y-8">
@@ -68,9 +77,7 @@ function PublicMeetingsPage() {
             Upcoming Meetings ({upcomingMeetings.length})
           </h2>
           {upcomingMeetings.length === 0 ? (
-            <div className="p-6 bg-base-200 rounded-lg text-center opacity-70">
-              No upcoming public meetings
-            </div>
+            <EmptyState description="No upcoming public meetings" />
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {upcomingMeetings.map((meeting) => (
@@ -110,14 +117,21 @@ function PublicMeetingsPage() {
       </div>
 
       {/* Create Public Meeting Modal */}
-      {showCreateModal && (
-        <CreatePublicMeetingModal onClose={() => setShowCreateModal(false)} />
-      )}
+      <CreatePublicMeetingModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+      />
     </div>
   );
 }
 
-function CreatePublicMeetingModal({ onClose }: { onClose: () => void }) {
+function CreatePublicMeetingModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   const create = useMutation(api.meetings.create);
   const [formData, setFormData] = useState({
     title: "",
@@ -147,17 +161,16 @@ function CreatePublicMeetingModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <dialog className="modal modal-open">
-      <div className="modal-box max-w-2xl">
-        <h3 className="font-bold text-lg mb-4">Create Public Meeting</h3>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Create Public Meeting</DialogTitle>
+        </DialogHeader>
         <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
-          <div>
-            <label className="label">
-              <span className="label-text">Meeting Title</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full"
+          <div className="space-y-2">
+            <Label htmlFor="title">Meeting Title</Label>
+            <Input
+              id="title"
               value={formData.title}
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
@@ -167,12 +180,10 @@ function CreatePublicMeetingModal({ onClose }: { onClose: () => void }) {
             />
           </div>
 
-          <div>
-            <label className="label">
-              <span className="label-text">Description</span>
-            </label>
-            <textarea
-              className="textarea textarea-bordered w-full"
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
               rows={3}
               value={formData.description}
               onChange={(e) =>
@@ -183,13 +194,11 @@ function CreatePublicMeetingModal({ onClose }: { onClose: () => void }) {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label">
-                <span className="label-text">Date & Time</span>
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="scheduledTime">Date & Time</Label>
+              <Input
+                id="scheduledTime"
                 type="datetime-local"
-                className="input input-bordered w-full"
                 value={formData.scheduledTime}
                 onChange={(e) =>
                   setFormData({ ...formData, scheduledTime: e.target.value })
@@ -198,13 +207,11 @@ function CreatePublicMeetingModal({ onClose }: { onClose: () => void }) {
               />
             </div>
 
-            <div>
-              <label className="label">
-                <span className="label-text">Duration (minutes)</span>
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="duration">Duration (minutes)</Label>
+              <Input
+                id="duration"
                 type="number"
-                className="input input-bordered w-full"
                 value={formData.duration}
                 onChange={(e) =>
                   setFormData({
@@ -218,13 +225,10 @@ function CreatePublicMeetingModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          <div>
-            <label className="label">
-              <span className="label-text">Location</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full"
+          <div className="space-y-2">
+            <Label htmlFor="location">Location</Label>
+            <Input
+              id="location"
               value={formData.location}
               onChange={(e) =>
                 setFormData({ ...formData, location: e.target.value })
@@ -233,13 +237,11 @@ function CreatePublicMeetingModal({ onClose }: { onClose: () => void }) {
             />
           </div>
 
-          <div>
-            <label className="label">
-              <span className="label-text">Max Participants (optional)</span>
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="maxParticipants">Max Participants (optional)</Label>
+            <Input
+              id="maxParticipants"
               type="number"
-              className="input input-bordered w-full"
               value={formData.maxParticipants ?? ""}
               onChange={(e) =>
                 setFormData({
@@ -254,19 +256,14 @@ function CreatePublicMeetingModal({ onClose }: { onClose: () => void }) {
             />
           </div>
 
-          <div className="modal-action">
-            <button type="button" className="btn" onClick={onClose}>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
-            </button>
-            <button type="submit" className="btn btn-primary">
-              Create Public Meeting
-            </button>
-          </div>
+            </Button>
+            <Button type="submit">Create Public Meeting</Button>
+          </DialogFooter>
         </form>
-      </div>
-      <form method="dialog" className="modal-backdrop" onClick={onClose}>
-        <button>close</button>
-      </form>
-    </dialog>
+      </DialogContent>
+    </Dialog>
   );
 }

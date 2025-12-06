@@ -25,6 +25,13 @@ import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -33,13 +40,18 @@ export const Route = createRootRouteWithContext<{
   component: RootComponent,
 });
 
+const navLinks = [
+  { to: "/attendees", label: "Attendees" },
+  { to: "/public-meetings", label: "Public Meetings" },
+  { to: "/calendar", label: "Calendar" },
+  { to: "/agenda", label: "Agenda" },
+  { to: "/chats", label: "Chat" },
+  { to: "/profile", label: "Profile" },
+] as const;
+
 function RootComponent() {
   const { queryClient, convexClient: convex } = Route.useRouteContext();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <ClerkProvider
@@ -51,192 +63,64 @@ function RootComponent() {
           <div className="min-h-screen flex flex-col">
             <Authenticated>
               <EnsureUser />
-              {/* Mobile sidebar drawer */}
-              <div className="drawer min-h-screen">
-                <input
-                  id="drawer-toggle"
-                  type="checkbox"
-                  className="drawer-toggle"
-                  checked={isSidebarOpen}
-                  onChange={toggleSidebar}
-                />
-                <div className="drawer-content container mx-auto flex flex-col h-full">
-                  {/* Navbar */}
-                  <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
-                    <div className="navbar-start">
-                      <label
-                        htmlFor="drawer-toggle"
-                        className="btn btn-square btn-ghost drawer-button lg:hidden mr-2"
-                      >
-                        <Menu className="w-5 h-5" />
-                      </label>
-                      <Link
-                        to="/"
-                        className="btn btn-ghost normal-case text-xl"
-                      >
+              <div className="container mx-auto flex flex-col min-h-screen">
+                {/* Navbar */}
+                <header className="flex items-center justify-between py-4 px-4 border-b border-border">
+                  <div className="flex items-center gap-2">
+                    {/* Mobile menu */}
+                    <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+                      <DropdownMenuTrigger asChild className="lg:hidden">
+                        <Button variant="ghost" size="icon">
+                          <Menu className="w-5 h-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-56">
+                        {navLinks.map((link) => (
+                          <DropdownMenuItem key={link.to} asChild>
+                            <Link
+                              to={link.to}
+                              onClick={() => setIsMenuOpen(false)}
+                              className="w-full"
+                            >
+                              {link.label}
+                            </Link>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Link to="/">
+                      <Button variant="ghost" className="text-xl font-semibold">
                         OpenCon
-                      </Link>
-                    </div>
-                    <div className="navbar-center hidden lg:flex">
-                      <nav className="flex">
-                        <Link
-                          to="/attendees"
-                          className="btn btn-ghost"
-                          activeProps={{
-                            className: "btn btn-ghost btn-active",
-                          }}
-                        >
-                          Attendees
-                        </Link>
-                        <Link
-                          to="/public-meetings"
-                          className="btn btn-ghost"
-                          activeProps={{
-                            className: "btn btn-ghost btn-active",
-                          }}
-                        >
-                          Public Meetings
-                        </Link>
-                        <Link
-                          to="/calendar"
-                          className="btn btn-ghost"
-                          activeProps={{
-                            className: "btn btn-ghost btn-active",
-                          }}
-                        >
-                          Calendar
-                        </Link>
-                        <Link
-                          to="/agenda"
-                          className="btn btn-ghost"
-                          activeProps={{
-                            className: "btn btn-ghost btn-active",
-                          }}
-                        >
-                          Agenda
-                        </Link>
-                        <Link
-                          to="/chats"
-                          className="btn btn-ghost"
-                          activeProps={{
-                            className: "btn btn-ghost btn-active",
-                          }}
-                        >
-                          Chat
-                        </Link>
-                        <Link
-                          to="/profile"
-                          className="btn btn-ghost"
-                          activeProps={{
-                            className: "btn btn-ghost btn-active",
-                          }}
-                        >
-                          Profile
-                        </Link>
-                      </nav>
-                    </div>
-                    <div className="navbar-end">
-                      <UserButton />
-                    </div>
-                  </header>
-                  {/* Main content */}
-                  <main className="flex-1 p-4 prose prose-invert max-w-none">
-                    <Outlet />
-                  </main>
-                  <footer className="footer footer-center p-4 text-base-content">
-                    <p>© {new Date().getFullYear()} OpenCon</p>
-                  </footer>
-                </div>
-                {/* Sidebar content for mobile */}
-                <div className="drawer-side z-10">
-                  <label
-                    htmlFor="drawer-toggle"
-                    aria-label="close sidebar"
-                    className="drawer-overlay"
-                  ></label>
-                  <div className="menu p-4 w-64 min-h-full bg-base-200 text-base-content flex flex-col">
-                    <div className="flex-1">
-                      <div className="menu-title mb-4">Menu</div>
-                      <ul className="space-y-2">
-                        <li>
-                          <Link
-                            to="/attendees"
-                            onClick={() => setIsSidebarOpen(false)}
-                            activeProps={{
-                              className: "active",
-                            }}
-                            className="flex items-center p-2"
-                          >
-                            Attendees
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/public-meetings"
-                            onClick={() => setIsSidebarOpen(false)}
-                            activeProps={{
-                              className: "active",
-                            }}
-                            className="flex items-center p-2"
-                          >
-                            Public Meetings
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/calendar"
-                            onClick={() => setIsSidebarOpen(false)}
-                            activeProps={{
-                              className: "active",
-                            }}
-                            className="flex items-center p-2"
-                          >
-                            Calendar
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/agenda"
-                            onClick={() => setIsSidebarOpen(false)}
-                            activeProps={{
-                              className: "active",
-                            }}
-                            className="flex items-center p-2"
-                          >
-                            Agenda
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/chats"
-                            onClick={() => setIsSidebarOpen(false)}
-                            activeProps={{
-                              className: "active",
-                            }}
-                            className="flex items-center p-2"
-                          >
-                            Chat
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/profile"
-                            onClick={() => setIsSidebarOpen(false)}
-                            activeProps={{
-                              className: "active",
-                            }}
-                            className="flex items-center p-2"
-                          >
-                            Profile
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-                    <div className="mt-auto py-4 border-t border-base-300 flex justify-center items-center">
-                      <UserButton />
-                    </div>
+                      </Button>
+                    </Link>
                   </div>
-                </div>
+
+                  {/* Desktop nav */}
+                  <nav className="hidden lg:flex items-center">
+                    {navLinks.map((link) => (
+                      <Link key={link.to} to={link.to}>
+                        {({ isActive }) => (
+                          <Button variant="ghost" active={isActive}>
+                            {link.label}
+                          </Button>
+                        )}
+                      </Link>
+                    ))}
+                  </nav>
+
+                  <div>
+                    <UserButton />
+                  </div>
+                </header>
+
+                {/* Main content */}
+                <main className="flex-1 p-4 prose dark:prose-invert max-w-none">
+                  <Outlet />
+                </main>
+
+                <footer className="text-center p-4 text-muted-foreground">
+                  <p>© {new Date().getFullYear()} OpenCon</p>
+                </footer>
               </div>
             </Authenticated>
             <Unauthenticated>
@@ -256,30 +140,32 @@ function UnauthenticatedView() {
 
   return (
     <>
-      <header className="navbar bg-base-100 shadow-sm border-b border-base-300">
+      <header className="flex items-center justify-between py-4 px-4 border-b border-border">
         <div className="container mx-auto flex justify-between w-full">
-          <div className="navbar-start">
+          <div>
             <h1 className="font-semibold">OpenCon</h1>
           </div>
-          <div className="navbar-center">
-            <span className="text-xs opacity-70">
+          <div>
+            <span className="text-xs text-muted-foreground">
               Debug: Backend connected? {isConnected ? "true" : "false"}
             </span>
           </div>
-          <div className="navbar-end">
+          <div className="flex items-center gap-2">
             <SignInButton mode="modal">
-              <button className="btn btn-primary btn-sm">Sign in</button>
+              <Button size="sm">Sign in</Button>
             </SignInButton>
             <SignUpButton mode="modal">
-              <button className="btn btn-ghost btn-sm ml-2">Sign up</button>
+              <Button variant="ghost" size="sm">
+                Sign up
+              </Button>
             </SignUpButton>
           </div>
         </div>
       </header>
-      <main className="flex-1 container mx-auto p-4 prose prose-invert max-w-none">
+      <main className="flex-1 container mx-auto p-4 prose dark:prose-invert max-w-none">
         <Outlet />
       </main>
-      <footer className="footer footer-center p-4 text-base-content">
+      <footer className="text-center p-4 text-muted-foreground">
         <p>© {new Date().getFullYear()} OpenCon</p>
       </footer>
     </>

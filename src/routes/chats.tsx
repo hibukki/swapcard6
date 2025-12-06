@@ -5,6 +5,7 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { ChatRoomList } from "../components/chat/ChatRoomList";
 import { useMemo } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 
 const chatRoomsQuery = convexQuery(api.chatRooms.list, {});
 const currentUserQuery = convexQuery(api.users.getCurrentUser, {});
@@ -25,7 +26,6 @@ function ChatsPage() {
   const { data: rooms } = useSuspenseQuery(chatRoomsQuery);
   const { data: currentUser } = useSuspenseQuery(currentUserQuery);
 
-  // Get all unique participant IDs
   const allParticipantIds = useMemo(() => {
     const ids = new Set<Id<"users">>();
     for (const { participantIds } of rooms) {
@@ -36,9 +36,8 @@ function ChatsPage() {
     return Array.from(ids);
   }, [rooms]);
 
-  // Fetch all participants
   const { data: participants } = useSuspenseQuery(
-    convexQuery(api.users.getMany, { userIds: allParticipantIds }),
+    convexQuery(api.users.getMany, { userIds: allParticipantIds })
   );
 
   const usersMap = useMemo(() => {
@@ -57,36 +56,36 @@ function ChatsPage() {
     <div className="not-prose">
       {/* Mobile: full-width list */}
       <div className="lg:hidden">
-        <div className="card bg-base-200">
-          <div className="card-body p-0">
+        <Card>
+          <CardContent className="p-0">
             <ChatRoomList
               rooms={rooms}
               users={usersMap}
               currentUserId={currentUser._id}
             />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Desktop: split view with empty state on right */}
       <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4 lg:h-[calc(100vh-12rem)]">
         {/* Left panel: chat list */}
-        <div className="card bg-base-200 overflow-hidden">
-          <div className="card-body p-0 overflow-y-auto">
+        <Card className="overflow-hidden">
+          <CardContent className="p-0 overflow-y-auto h-full">
             <ChatRoomList
               rooms={rooms}
               users={usersMap}
               currentUserId={currentUser._id}
             />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Right panel: empty state */}
-        <div className="lg:col-span-2 card bg-base-200 flex flex-col">
-          <div className="card-body flex flex-col items-center justify-center text-base-content/50 gap-2">
+        <Card className="lg:col-span-2 flex flex-col">
+          <CardContent className="flex flex-col items-center justify-center text-muted-foreground gap-2 flex-1">
             <div>Select a conversation</div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

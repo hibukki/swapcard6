@@ -5,6 +5,9 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "../../../convex/_generated/api";
 import type { Id, Doc } from "../../../convex/_generated/dataModel";
 import { Send, Reply, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ChatRoomProps {
   chatRoomId: Id<"chatRooms">;
@@ -20,18 +23,25 @@ function formatMessageTime(timestamp: number): string {
   });
 }
 
-export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96", autoFocus = false }: ChatRoomProps) {
+export function ChatRoom({
+  chatRoomId,
+  currentUserId,
+  maxHeight = "h-96",
+  autoFocus = false,
+}: ChatRoomProps) {
   const { data: messages } = useSuspenseQuery(
-    convexQuery(api.chatRoomMessages.listByRoom, { chatRoomId }),
+    convexQuery(api.chatRoomMessages.listByRoom, { chatRoomId })
   );
   const { data: participants } = useSuspenseQuery(
-    convexQuery(api.chatRoomUsers.listByRoom, { chatRoomId }),
+    convexQuery(api.chatRoomUsers.listByRoom, { chatRoomId })
   );
 
   const sendMessage = useMutation(api.chatRoomMessages.send);
 
   const [newMessage, setNewMessage] = useState("");
-  const [replyingTo, setReplyingTo] = useState<Doc<"chatRoomMessages"> | null>(null);
+  const [replyingTo, setReplyingTo] = useState<Doc<"chatRoomMessages"> | null>(
+    null
+  );
   const [sendError, setSendError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -42,7 +52,6 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96", autoFo
   useEffect(() => {
     if (autoFocus) {
       inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      // Focus after scroll animation completes
       const timeout = setTimeout(() => {
         inputRef.current?.focus({ preventScroll: true });
       }, 400);
@@ -71,12 +80,10 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96", autoFo
     } catch (error) {
       console.error("Failed to send message:", error);
       setSendError("Failed to send message. Please try again.");
-      // Restore the message content so user can retry
       setNewMessage(messageToSend);
       setReplyingTo(replyTo);
     } finally {
       setIsSending(false);
-      // Refocus input after send
       setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
@@ -98,7 +105,7 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96", autoFo
       {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-1 p-2">
         {messages.length === 0 ? (
-          <div className="text-center text-base-content/50 py-8">
+          <div className="text-center text-muted-foreground py-8">
             No messages yet. Start the conversation!
           </div>
         ) : (
@@ -106,7 +113,8 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96", autoFo
             const sender = participantsMap.get(message.senderId);
             const isCurrentUser = message.senderId === currentUserId;
             const prevMessage = index > 0 ? messages[index - 1] : null;
-            const showSender = !prevMessage || prevMessage.senderId !== message.senderId;
+            const showSender =
+              !prevMessage || prevMessage.senderId !== message.senderId;
             const parentMessage = getParentMessage(message.parentMessageId);
 
             return (
@@ -130,9 +138,9 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96", autoFo
                   {showSender && (
                     <div className="flex items-baseline gap-2">
                       <span className="font-medium text-sm">
-                        {isCurrentUser ? "You" : sender?.name ?? "Unknown"}
+                        {isCurrentUser ? "You" : (sender?.name ?? "Unknown")}
                       </span>
-                      <span className="text-xs text-base-content/50">
+                      <span className="text-xs text-muted-foreground">
                         {formatMessageTime(message._creationTime)}
                       </span>
                     </div>
@@ -140,9 +148,11 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96", autoFo
 
                   {/* Reply indicator */}
                   {parentMessage && (
-                    <div className="text-xs text-base-content/50 border-l-2 border-base-content/20 pl-2 mb-1 truncate">
-                      Replying to {participantsMap.get(parentMessage.senderId)?.name ?? "Unknown"}:{" "}
-                      {parentMessage.content.slice(0, 50)}
+                    <div className="text-xs text-muted-foreground border-l-2 border-muted pl-2 mb-1 truncate">
+                      Replying to{" "}
+                      {participantsMap.get(parentMessage.senderId)?.name ??
+                        "Unknown"}
+                      : {parentMessage.content.slice(0, 50)}
                       {parentMessage.content.length > 50 ? "..." : ""}
                     </div>
                   )}
@@ -151,16 +161,18 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96", autoFo
                 </div>
 
                 {/* Reply button on hover */}
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
                   onClick={() => {
                     setReplyingTo(message);
                     inputRef.current?.focus();
                   }}
-                  className="opacity-0 group-hover:opacity-100 btn btn-ghost btn-xs"
+                  className="opacity-0 group-hover:opacity-100"
                   title="Reply"
                 >
                   <Reply className="w-3 h-3" />
-                </button>
+                </Button>
               </div>
             );
           })
@@ -170,49 +182,50 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96", autoFo
 
       {/* Reply indicator */}
       {replyingTo && (
-        <div className="flex items-center gap-2 px-2 py-1 bg-base-200 text-sm">
+        <div className="flex items-center gap-2 px-2 py-1 bg-muted text-sm">
           <Reply className="w-3 h-3" />
           <span className="truncate flex-1">
-            Replying to {participantsMap.get(replyingTo.senderId)?.name ?? "Unknown"}:{" "}
+            Replying to{" "}
+            {participantsMap.get(replyingTo.senderId)?.name ?? "Unknown"}:{" "}
             {replyingTo.content.slice(0, 50)}
           </span>
-          <button onClick={() => setReplyingTo(null)} className="btn btn-ghost btn-xs">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => setReplyingTo(null)}
+          >
             <X className="w-3 h-3" />
-          </button>
+          </Button>
         </div>
       )}
 
       {/* Error message */}
       {sendError && (
-        <div className="px-2 py-1 bg-error/10 text-error text-sm">
+        <div className="px-2 py-1 bg-destructive/10 text-destructive text-sm">
           {sendError}
         </div>
       )}
 
       {/* Input */}
-      <div className="flex gap-2 p-2 border-t border-base-300">
-        <textarea
+      <div className="flex gap-2 p-2 border-t">
+        <Textarea
           ref={inputRef}
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
-          className="textarea textarea-bordered textarea-sm flex-1 min-h-[2.5rem] max-h-24 resize-none"
+          className="flex-1 min-h-[2.5rem] max-h-24 resize-none"
           rows={1}
           disabled={isSending}
         />
-        <button
+        <Button
           onClick={() => void handleSend()}
           disabled={!newMessage.trim() || isSending}
-          className="btn btn-primary btn-sm btn-square"
+          size="icon"
           aria-label="Send message"
         >
-          {isSending ? (
-            <span className="loading loading-spinner loading-xs"></span>
-          ) : (
-            <Send className="w-4 h-4" />
-          )}
-        </button>
+          {isSending ? <Spinner size="xs" /> : <Send className="w-4 h-4" />}
+        </Button>
       </div>
     </div>
   );

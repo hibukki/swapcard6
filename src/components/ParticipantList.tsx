@@ -1,5 +1,7 @@
 import { Users } from "lucide-react";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
+import { StatusBadge } from "@/components/patterns/StatusBadge";
+import { Button } from "@/components/ui/button";
 
 type Participant = {
   _id: Id<"meetingParticipants">;
@@ -14,13 +16,6 @@ interface ParticipantListProps {
   maxHeight?: string;
   onUserClick?: (userId: Id<"users">) => void;
 }
-
-const statusBadgeConfig = {
-  creator: { class: "badge-primary", label: "Host" },
-  accepted: { class: "badge-success", label: "Accepted" },
-  pending: { class: "badge-warning", label: "Pending" },
-  declined: { class: "badge-error", label: "Declined" },
-} as const;
 
 export function ParticipantList({
   participants,
@@ -41,29 +36,30 @@ export function ParticipantList({
           Participants ({participants.length})
         </h4>
       )}
-      <div className={`${maxHeight} overflow-y-auto border border-base-300 rounded-lg`}>
-        <ul className="divide-y divide-base-300">
+      <div className={`${maxHeight} overflow-y-auto border rounded-lg`}>
+        <ul className="divide-y">
           {participants.map((p) => {
             const user = usersMap.get(p.userId);
-            const badge = statusBadgeConfig[p.status] || { class: "badge-ghost", label: p.status };
             const userName = user?.name || "Unknown";
 
             return (
-              <li key={p._id} className="flex items-center justify-between px-3 py-2">
+              <li
+                key={p._id}
+                className="flex items-center justify-between px-3 py-2"
+              >
                 {onUserClick && user ? (
-                  <button
-                    type="button"
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="p-0 h-auto"
                     onClick={() => onUserClick(p.userId)}
-                    className="text-sm link link-hover link-primary"
                   >
                     {userName}
-                  </button>
+                  </Button>
                 ) : (
                   <span className="text-sm">{userName}</span>
                 )}
-                <span className={`badge badge-sm ${badge.class}`}>
-                  {badge.label}
-                </span>
+                <StatusBadge status={p.status} size="sm" />
               </li>
             );
           })}

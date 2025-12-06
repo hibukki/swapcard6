@@ -15,6 +15,14 @@ import { CalendarSubscription } from "../components/CalendarSubscription";
 import { UserProfileCard } from "../components/UserProfileCard";
 import type { Doc } from "../../convex/_generated/dataModel";
 import type { RecommendationsResponse } from "../../convex/llm";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
+import { InfoBox } from "@/components/patterns/InfoBox";
 
 const currentUserQuery = convexQuery(api.users.getCurrentUser, {});
 
@@ -147,12 +155,10 @@ function ProfilePage() {
   return (
     <div>
       {isNewUser && (
-        <div className="alert alert-info mb-6">
-          <span>
-            👋 Welcome! Let&apos;s set up your profile so other attendees can
-            find you.
-          </span>
-        </div>
+        <InfoBox variant="info" className="mb-6">
+          👋 Welcome! Let&apos;s set up your profile so other attendees can find
+          you.
+        </InfoBox>
       )}
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -169,17 +175,10 @@ function ProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <form.Field name="company">
                   {(field) => (
-                    <div>
-                      <label
-                        htmlFor="company"
-                        className="block text-sm font-medium mb-1"
-                      >
-                        Company / Organization
-                      </label>
-                      <input
+                    <div className="space-y-2">
+                      <Label htmlFor="company">Company / Organization</Label>
+                      <Input
                         id="company"
-                        type="text"
-                        className="input input-border w-full"
                         value={field.state.value}
                         onChange={(e) => field.handleChange(e.target.value)}
                         placeholder="e.g., Open Philanthropy, DeepMind"
@@ -190,17 +189,10 @@ function ProfilePage() {
 
                 <form.Field name="role">
                   {(field) => (
-                    <div>
-                      <label
-                        htmlFor="role"
-                        className="block text-sm font-medium mb-1"
-                      >
-                        Role / Title
-                      </label>
-                      <input
+                    <div className="space-y-2">
+                      <Label htmlFor="role">Role / Title</Label>
+                      <Input
                         id="role"
-                        type="text"
-                        className="input input-border w-full"
                         value={field.state.value}
                         onChange={(e) => field.handleChange(e.target.value)}
                         placeholder="e.g., Research Analyst, Software Engineer"
@@ -212,16 +204,10 @@ function ProfilePage() {
 
               <form.Field name="bio">
                 {(field) => (
-                  <div>
-                    <label
-                      htmlFor="bio"
-                      className="block text-sm font-medium mb-1"
-                    >
-                      About You
-                    </label>
-                    <textarea
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">About You</Label>
+                    <Textarea
                       id="bio"
-                      className="textarea textarea-border w-full"
                       rows={3}
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
@@ -233,22 +219,15 @@ function ProfilePage() {
 
               <form.Field name="interests">
                 {(field) => (
-                  <div>
-                    <label
-                      htmlFor="interests"
-                      className="block text-sm font-medium mb-1"
-                    >
-                      Interests
-                    </label>
-                    <input
+                  <div className="space-y-2">
+                    <Label htmlFor="interests">Interests</Label>
+                    <Input
                       id="interests"
-                      type="text"
-                      className="input input-border w-full"
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
                       placeholder="AI Safety, Global Health, Career Planning (comma separated)"
                     />
-                    <p className="text-sm opacity-70 mt-1">
+                    <p className="text-sm text-muted-foreground">
                       Separate with commas
                     </p>
                   </div>
@@ -257,16 +236,10 @@ function ProfilePage() {
 
               <form.Field name="canHelpWith">
                 {(field) => (
-                  <div>
-                    <label
-                      htmlFor="canHelpWith"
-                      className="block text-sm font-medium mb-1"
-                    >
-                      How I can help others
-                    </label>
-                    <textarea
+                  <div className="space-y-2">
+                    <Label htmlFor="canHelpWith">How I can help others</Label>
+                    <Textarea
                       id="canHelpWith"
-                      className="textarea textarea-border w-full"
                       rows={2}
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
@@ -275,14 +248,15 @@ function ProfilePage() {
                     {!field.state.value && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {CAN_HELP_SUGGESTIONS.map((suggestion) => (
-                          <button
+                          <Badge
                             key={suggestion}
-                            type="button"
-                            className="badge badge-outline badge-sm cursor-pointer hover:badge-primary"
+                            variant="outline"
+                            size="sm"
+                            className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
                             onClick={() => field.handleChange(suggestion)}
                           >
                             {suggestion}
-                          </button>
+                          </Badge>
                         ))}
                       </div>
                     )}
@@ -292,16 +266,12 @@ function ProfilePage() {
 
               <form.Field name="needsHelpWith">
                 {(field) => (
-                  <div>
-                    <label
-                      htmlFor="needsHelpWith"
-                      className="block text-sm font-medium mb-1"
-                    >
+                  <div className="space-y-2">
+                    <Label htmlFor="needsHelpWith">
                       How others can help me
-                    </label>
-                    <textarea
+                    </Label>
+                    <Textarea
                       id="needsHelpWith"
-                      className="textarea textarea-border w-full"
                       rows={2}
                       value={field.state.value}
                       onChange={(e) => field.handleChange(e.target.value)}
@@ -310,14 +280,15 @@ function ProfilePage() {
                     {!field.state.value && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {NEEDS_HELP_SUGGESTIONS.map((suggestion) => (
-                          <button
+                          <Badge
                             key={suggestion}
-                            type="button"
-                            className="badge badge-outline badge-sm cursor-pointer hover:badge-info"
+                            variant="outline"
+                            size="sm"
+                            className="cursor-pointer hover:bg-info hover:text-info-foreground"
                             onClick={() => field.handleChange(suggestion)}
                           >
                             {suggestion}
-                          </button>
+                          </Badge>
                         ))}
                       </div>
                     )}
@@ -326,9 +297,8 @@ function ProfilePage() {
               </form.Field>
 
               <div className="flex gap-2 pt-4">
-                <button
+                <Button
                   type="submit"
-                  className="btn btn-primary"
                   disabled={!form.state.canSubmit || isSubmitting}
                 >
                   {isSubmitting
@@ -336,17 +306,17 @@ function ProfilePage() {
                     : isNewUser
                       ? "Save & Find Connections"
                       : "Save"}
-                </button>
+                </Button>
                 {!isNewUser && (
-                  <button
+                  <Button
                     type="button"
-                    className="btn btn-ghost"
+                    variant="ghost"
                     onClick={() => {
                       void navigate({ to: "/attendees" });
                     }}
                   >
                     Cancel
-                  </button>
+                  </Button>
                 )}
               </div>
             </form>
@@ -375,14 +345,14 @@ function ProfilePage() {
 
       {/* Text-based Recommendations for existing users (based on saved profile) */}
       {!isNewUser && hasSearchCriteria && (
-        <div className="not-prose mt-8 pt-8 border-t border-base-300">
+        <div className="not-prose mt-8 pt-8 border-t border-border">
           <div className="flex items-center gap-2 mb-4">
             <Users className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold">
               People You Might Want to Meet
             </h2>
           </div>
-          <p className="text-sm opacity-70 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Based on your interests and what you're looking for
           </p>
 
@@ -393,57 +363,58 @@ function ProfilePage() {
                   key={recUser._id}
                   to="/user/$userId"
                   params={{ userId: recUser._id }}
-                  className="card bg-base-200 hover:bg-base-300 transition-colors"
                 >
-                  <div className="card-body p-4">
-                    <div className="flex items-center gap-3">
-                      {recUser.imageUrl ? (
-                        <img
-                          src={recUser.imageUrl}
-                          alt={recUser.name}
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-lg font-bold text-primary">
-                          {recUser.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate">
-                          {recUser.name}
-                        </h3>
-                        {(recUser.role || recUser.company) && (
-                          <p className="text-sm opacity-70 truncate">
-                            {recUser.role}
-                            {recUser.role && recUser.company && " at "}
-                            {recUser.company}
-                          </p>
+                  <Card className="hover:bg-muted transition-colors">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        {recUser.imageUrl ? (
+                          <img
+                            src={recUser.imageUrl}
+                            alt={recUser.name}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-lg font-bold text-primary">
+                            {recUser.name.charAt(0).toUpperCase()}
+                          </div>
                         )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold truncate">
+                            {recUser.name}
+                          </h3>
+                          {(recUser.role || recUser.company) && (
+                            <p className="text-sm text-muted-foreground truncate">
+                              {recUser.role}
+                              {recUser.role && recUser.company && " at "}
+                              {recUser.company}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    {recUser.canHelpWith && (
-                      <p className="text-sm text-success mt-2 line-clamp-2">
-                        Can help with: {recUser.canHelpWith}
-                      </p>
-                    )}
-                    {recUser.needsHelpWith && (
-                      <p className="text-sm text-info mt-1 line-clamp-2">
-                        Looking for: {recUser.needsHelpWith}
-                      </p>
-                    )}
-                  </div>
+                      {recUser.canHelpWith && (
+                        <p className="text-sm text-success mt-2 line-clamp-2">
+                          Can help with: {recUser.canHelpWith}
+                        </p>
+                      )}
+                      {recUser.needsHelpWith && (
+                        <p className="text-sm text-info mt-1 line-clamp-2">
+                          Looking for: {recUser.needsHelpWith}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
                 </Link>
               ))}
             </div>
           ) : (
-            <p className="text-sm opacity-50">
+            <p className="text-sm text-muted-foreground">
               No matches yet. Keep filling out your profile!
             </p>
           )}
         </div>
       )}
 
-      <div className="not-prose mt-12 pt-8 border-t border-base-300">
+      <div className="not-prose mt-12 pt-8 border-t border-border">
         <CalendarSubscription />
       </div>
 
@@ -471,22 +442,23 @@ function SeedDataSection() {
   };
 
   return (
-    <div className="mt-12 pt-8 border-t border-base-300">
+    <div className="mt-12 pt-8 border-t border-border">
       <h2 className="text-lg font-semibold mb-2">Developer Tools</h2>
-      <p className="text-sm opacity-70 mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         Generate test data including sample users, conferences, meetings, and
         notifications. Your account will be included in the relationships.
       </p>
-      <button
-        className="btn btn-outline btn-sm"
+      <Button
+        variant="outline"
+        size="sm"
         onClick={() => void handleSeed()}
         disabled={isSeeding}
       >
         {isSeeding ? "Seeding..." : "Seed Test Data"}
-      </button>
+      </Button>
       {result && (
         <p
-          className={`text-sm mt-2 ${result.includes("success") ? "text-success" : "text-error"}`}
+          className={`text-sm mt-2 ${result.includes("success") ? "text-success" : "text-destructive"}`}
         >
           {result}
         </p>
@@ -624,61 +596,58 @@ function AIRecommendations({
     .filter((r): r is NonNullable<typeof r> => r !== null);
 
   return (
-    <div className="not-prose mt-8 pt-8 border-t border-base-300">
+    <div className="not-prose mt-8 pt-8 border-t border-border">
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="w-5 h-5 text-secondary" />
         <h2 className="text-lg font-semibold">AI-Suggested Connections</h2>
-        {isLoading && (
-          <span className="loading loading-spinner loading-sm"></span>
-        )}
+        {isLoading && <Spinner size="sm" />}
       </div>
-      <p className="text-sm opacity-70 mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         Based on what you can offer and what you're looking for
       </p>
 
-      {error && <p className="text-sm text-error mb-4">{error}</p>}
+      {error && <p className="text-sm text-destructive mb-4">{error}</p>}
 
       {recommendedUsersWithData.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {recommendedUsersWithData.map(({ userId, reason, score, user }) => (
-            <Link
-              key={userId}
-              to="/user/$userId"
-              params={{ userId }}
-              className="card bg-base-200 hover:bg-base-300 transition-colors"
-            >
-              <div className="card-body p-4">
-                <div className="flex items-center gap-3">
-                  {user.imageUrl ? (
-                    <img
-                      src={user.imageUrl}
-                      alt={user.name}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center text-lg font-bold text-secondary">
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold truncate">{user.name}</h3>
-                    {(user.role || user.company) && (
-                      <p className="text-sm opacity-70 truncate">
-                        {user.role}
-                        {user.role && user.company && " at "}
-                        {user.company}
-                      </p>
+            <Link key={userId} to="/user/$userId" params={{ userId }}>
+              <Card className="hover:bg-muted transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    {user.imageUrl ? (
+                      <img
+                        src={user.imageUrl}
+                        alt={user.name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center text-lg font-bold text-secondary">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
                     )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold truncate">{user.name}</h3>
+                      {(user.role || user.company) && (
+                        <p className="text-sm text-muted-foreground truncate">
+                          {user.role}
+                          {user.role && user.company && " at "}
+                          {user.company}
+                        </p>
+                      )}
+                    </div>
+                    <Badge variant="secondary" size="sm">
+                      {score}%
+                    </Badge>
                   </div>
-                  <div className="badge badge-secondary badge-sm">{score}%</div>
-                </div>
-                <p className="text-sm mt-2 opacity-80">{reason}</p>
-              </div>
+                  <p className="text-sm mt-2 text-muted-foreground">{reason}</p>
+                </CardContent>
+              </Card>
             </Link>
           ))}
         </div>
       ) : !isLoading ? (
-        <p className="text-sm opacity-50">
+        <p className="text-sm text-muted-foreground">
           Fill in what you can help with or what you need to see AI
           recommendations.
         </p>

@@ -6,10 +6,16 @@ import { Calendar, Check, Clock, MapPin, X } from "lucide-react";
 import { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/patterns/EmptyState";
+import { handleMutationError } from "@/lib/error-handling";
 
 const myParticipationsQuery = convexQuery(
   api.meetingParticipants.listMeetingsForCurrentUser,
-  {},
+  {}
 );
 
 export const Route = createFileRoute("/agenda")({
@@ -26,7 +32,6 @@ function AgendaPage() {
   const allMeetings = useQuery(api.meetings.list, {});
   const allUsers = useQuery(api.users.listUsers, {});
 
-  // Build lookup maps
   const meetingsMap = useMemo(() => {
     if (!allMeetings) return new Map<Id<"meetings">, Doc<"meetings">>();
     return new Map(allMeetings.map((m) => [m._id, m]));
@@ -48,7 +53,6 @@ function AgendaPage() {
     meeting: Doc<"meetings">;
   };
 
-  // Filter and enrich participations
   const pendingInvitations = useMemo((): EnrichedInvitation[] => {
     const results: EnrichedInvitation[] = [];
     for (const p of participations) {
@@ -62,7 +66,6 @@ function AgendaPage() {
   }, [participations, meetingsMap, usersMap]);
 
   const sentRequests = useMemo((): EnrichedMeeting[] => {
-    // Get meetings where I'm the creator and there are pending participants
     const results: EnrichedMeeting[] = [];
     for (const p of participations) {
       if (p.status !== "creator") continue;
@@ -87,7 +90,7 @@ function AgendaPage() {
   if (!allMeetings || !allUsers) {
     return (
       <div className="flex justify-center p-8">
-        <span className="loading loading-spinner loading-lg" />
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -102,9 +105,7 @@ function AgendaPage() {
             Incoming Requests ({pendingInvitations.length})
           </h2>
           {pendingInvitations.length === 0 ? (
-            <div className="p-6 bg-base-200 rounded-lg text-center opacity-70">
-              No pending requests
-            </div>
+            <EmptyState description="No pending requests" />
           ) : (
             <div className="space-y-3">
               {pendingInvitations.map(
@@ -118,7 +119,7 @@ function AgendaPage() {
                     scheduledTime={meeting.scheduledTime}
                     duration={meeting.duration}
                   />
-                ),
+                )
               )}
             </div>
           )}
@@ -130,41 +131,36 @@ function AgendaPage() {
             Sent Requests ({sentRequests.length})
           </h2>
           {sentRequests.length === 0 ? (
-            <div className="p-6 bg-base-200 rounded-lg text-center opacity-70">
-              No pending sent requests
-            </div>
+            <EmptyState description="No pending sent requests" />
           ) : (
             <div className="space-y-3">
               {sentRequests.map(({ participation, meeting }) => (
-                <div
-                  key={participation._id}
-                  className="card card-border bg-base-200"
-                >
-                  <div className="card-body">
+                <Card key={participation._id}>
+                  <CardContent className="pt-6">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="font-semibold">{meeting.title}</h3>
-                        <p className="text-sm mt-2 opacity-80 flex items-center gap-1">
+                        <p className="text-sm mt-2 text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {new Date(meeting.scheduledTime).toLocaleString()}
                           {` (${meeting.duration} min)`}
                         </p>
                         {meeting.description && (
-                          <p className="text-sm mt-2 opacity-80">
+                          <p className="text-sm mt-2 text-muted-foreground">
                             {meeting.description}
                           </p>
                         )}
                         {meeting.location && (
-                          <p className="text-sm mt-1 opacity-70 flex items-center gap-1">
+                          <p className="text-sm mt-1 text-muted-foreground flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
                             {meeting.location}
                           </p>
                         )}
                       </div>
-                      <span className="badge">Pending</span>
+                      <Badge variant="secondary">Pending</Badge>
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}
@@ -177,22 +173,17 @@ function AgendaPage() {
             Scheduled Meetings ({confirmedMeetings.length})
           </h2>
           {confirmedMeetings.length === 0 ? (
-            <div className="p-6 bg-base-200 rounded-lg text-center opacity-70">
-              No scheduled meetings yet
-            </div>
+            <EmptyState description="No scheduled meetings yet" />
           ) : (
             <div className="space-y-3">
               {confirmedMeetings.map(({ participation, meeting }) => (
-                <div
-                  key={participation._id}
-                  className="card card-border bg-base-200"
-                >
-                  <div className="card-body">
+                <Card key={participation._id}>
+                  <CardContent className="pt-6">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="font-semibold">{meeting.title}</h3>
                         {meeting.description && (
-                          <p className="text-sm opacity-70 mt-1">
+                          <p className="text-sm text-muted-foreground mt-1">
                             {meeting.description}
                           </p>
                         )}
@@ -211,17 +202,15 @@ function AgendaPage() {
                         </div>
                       </div>
                       <div className="flex flex-col gap-2 items-end">
-                        <span className="badge badge-success">Confirmed</span>
-                        {meeting.isPublic && (
-                          <span className="badge badge-info">Public</span>
-                        )}
+                        <Badge variant="success">Confirmed</Badge>
+                        {meeting.isPublic && <Badge variant="info">Public</Badge>}
                         {participation.status === "creator" && (
-                          <span className="badge">Creator</span>
+                          <Badge variant="secondary">Creator</Badge>
                         )}
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}
@@ -257,32 +246,32 @@ function IncomingRequestCard({
         accept,
       });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to respond");
+      handleMutationError(error, "Failed to respond");
     } finally {
       setIsResponding(false);
     }
   };
 
   return (
-    <div className="card card-border bg-base-200">
-      <div className="card-body">
+    <Card>
+      <CardContent className="pt-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <h3 className="font-semibold">{requester?.name ?? "Unknown"}</h3>
             {requester?.role && (
-              <p className="text-sm opacity-70">{requester.role}</p>
+              <p className="text-sm text-muted-foreground">{requester.role}</p>
             )}
             {description && (
-              <p className="text-sm mt-2 opacity-80">{description}</p>
+              <p className="text-sm mt-2 text-muted-foreground">{description}</p>
             )}
             <div className="mt-2 space-y-1">
-              <p className="text-sm opacity-70 flex items-center gap-1">
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {new Date(scheduledTime).toLocaleString()}
                 {` (${duration} min)`}
               </p>
               {location && (
-                <p className="text-sm opacity-70 flex items-center gap-1">
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
                   {location}
                 </p>
@@ -290,25 +279,27 @@ function IncomingRequestCard({
             </div>
           </div>
           <div className="flex gap-2">
-            <button
-              className="btn btn-success btn-sm"
+            <Button
+              variant="success"
+              size="sm"
               onClick={() => void handleRespond(true)}
               disabled={isResponding}
             >
               <Check className="w-4 h-4" />
               Accept
-            </button>
-            <button
-              className="btn btn-error btn-sm"
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
               onClick={() => void handleRespond(false)}
               disabled={isResponding}
             >
               <X className="w-4 h-4" />
               Decline
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

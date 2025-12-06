@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { MeetingCard } from "../components/MeetingCard";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/meeting/$meetingId")({
   loader: async ({ context: { queryClient }, params }) => {
@@ -34,11 +35,15 @@ function MeetingPage() {
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold mb-4">Meeting Not Found</h1>
-        <p className="opacity-70 mb-6">This meeting may have been deleted or you don't have access to it.</p>
-        <Link to="/calendar" className="btn btn-primary">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Calendar
-        </Link>
+        <p className="text-muted-foreground mb-6">
+          This meeting may have been deleted or you don't have access to it.
+        </p>
+        <Button asChild>
+          <Link to="/calendar">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Calendar
+          </Link>
+        </Button>
       </div>
     );
   }
@@ -46,10 +51,12 @@ function MeetingPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
-        <Link to="/calendar" className="btn btn-ghost btn-sm gap-2">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Calendar
-        </Link>
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/calendar">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Calendar
+          </Link>
+        </Button>
       </div>
 
       <MeetingCard

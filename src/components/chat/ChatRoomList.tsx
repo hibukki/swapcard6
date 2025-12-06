@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { Id, Doc } from "../../../convex/_generated/dataModel";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 interface ChatRoomWithDetails {
   room: Doc<"chatRooms">;
@@ -28,20 +30,21 @@ function formatTimestamp(timestamp: number | undefined): string {
     return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   }
 
-  const daysDiff = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+  const daysDiff = Math.floor(
+    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+  );
 
   if (daysDiff < 7) {
     return date.toLocaleDateString([], { weekday: "long" });
   }
 
-  // ISO format for geeks: yyyy-mm-dd
   return date.toISOString().split("T")[0];
 }
 
 function getOtherParticipants(
   participantIds: Id<"users">[],
   currentUserId: Id<"users">,
-  users: Map<Id<"users">, Doc<"users">>,
+  users: Map<Id<"users">, Doc<"users">>
 ): Doc<"users">[] {
   return participantIds
     .filter((id) => id !== currentUserId)
@@ -57,51 +60,54 @@ export function ChatRoomList({
 }: ChatRoomListProps) {
   if (rooms.length === 0) {
     return (
-      <div className="p-4 text-center text-base-content/50">
+      <div className="p-4 text-center text-muted-foreground">
         No conversations yet
       </div>
     );
   }
 
   return (
-    <div className="divide-y divide-base-300">
+    <div className="divide-y">
       {rooms.map(({ room, participantIds }) => {
-        const otherParticipants = getOtherParticipants(participantIds, currentUserId, users);
+        const otherParticipants = getOtherParticipants(
+          participantIds,
+          currentUserId,
+          users
+        );
         const isSelected = room._id === selectedRoomId;
 
-        // Display name: other participants' names
         const displayName =
           otherParticipants.length > 0
             ? otherParticipants.map((u) => u.name).join(", ")
             : "Unknown";
 
-        // First participant's avatar
         const avatarUrl = otherParticipants[0]?.imageUrl;
-        const avatarInitial = otherParticipants[0]?.name?.charAt(0).toUpperCase() ?? "?";
+        const avatarInitial =
+          otherParticipants[0]?.name?.charAt(0).toUpperCase() ?? "?";
 
         return (
           <Link
             key={room._id}
             to="/chat/$chatRoomId"
             params={{ chatRoomId: room._id }}
-            className={`flex items-center gap-3 p-3 hover:bg-base-300 transition-colors ${
-              isSelected ? "bg-base-300" : ""
-            }`}
+            className={cn(
+              "flex items-center gap-3 p-3 hover:bg-accent transition-colors",
+              isSelected && "bg-accent"
+            )}
           >
             {/* Avatar */}
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-10 h-10 rounded-full flex-shrink-0" />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium flex-shrink-0">
+            <Avatar className="h-10 w-10 flex-shrink-0">
+              <AvatarImage src={avatarUrl} alt="" />
+              <AvatarFallback className="bg-primary/20 text-primary font-medium">
                 {avatarInitial}
-              </div>
-            )}
+              </AvatarFallback>
+            </Avatar>
 
             {/* Name and time */}
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-medium truncate">{displayName}</span>
-                <span className="text-xs text-base-content/50 flex-shrink-0">
+                <span className="text-xs text-muted-foreground flex-shrink-0">
                   {formatTimestamp(room.lastMessageAt)}
                 </span>
               </div>

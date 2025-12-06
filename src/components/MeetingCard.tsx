@@ -5,22 +5,27 @@ import { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { ParticipantList } from "./ParticipantList";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { handleMutationError } from "@/lib/error-handling";
 
-type ParticipantStatus = "creator" | "accepted" | "pending" | "declined" | "participant";
+type ParticipantStatus =
+  | "creator"
+  | "accepted"
+  | "pending"
+  | "declined"
+  | "participant";
 
 interface MeetingCardProps {
   meeting: Doc<"meetings">;
-  /** Current user's participation status, if known */
   userStatus?: ParticipantStatus | null;
-  /** Variant affects layout: 'compact' for lists, 'full' for detail views */
   variant?: "compact" | "full";
-  /** Whether to show the participant list */
   showParticipants?: boolean;
-  /** Whether to show action buttons (join/leave/accept/decline) */
   showActions?: boolean;
-  /** Whether to show a link to the meeting detail page */
   showMeetingLink?: boolean;
-  /** Callback when an action completes (for closing modals, etc.) */
   onActionComplete?: () => void;
 }
 
@@ -59,7 +64,7 @@ export function MeetingCard({
       await join({ meetingId: meeting._id });
       onActionComplete?.();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to join meeting");
+      handleMutationError(error, "Failed to join meeting");
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +76,7 @@ export function MeetingCard({
       await leave({ meetingId: meeting._id });
       onActionComplete?.();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to leave meeting");
+      handleMutationError(error, "Failed to leave meeting");
     } finally {
       setIsLoading(false);
     }
@@ -83,76 +88,94 @@ export function MeetingCard({
       await respond({ meetingId: meeting._id, accept });
       onActionComplete?.();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to respond");
+      handleMutationError(error, "Failed to respond");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const isParticipant = userStatus === "accepted" || userStatus === "creator" || userStatus === "participant";
+  const isParticipant =
+    userStatus === "accepted" ||
+    userStatus === "creator" ||
+    userStatus === "participant";
   const isPending = userStatus === "pending";
   const isCreator = userStatus === "creator";
 
   const isCompact = variant === "compact";
 
   return (
-    <div className={`card ${isCompact ? "card-border" : ""} bg-base-200`}>
-      <div className="card-body">
+    <Card className={cn(isCompact && "border")}>
+      <CardContent className="pt-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <h3 className={`font-semibold ${isCompact ? "text-lg" : "text-2xl"}`}>
+            <h3
+              className={cn("font-semibold", isCompact ? "text-lg" : "text-2xl")}
+            >
               {meeting.title}
             </h3>
             {showMeetingLink && (
               <Link
                 to="/meeting/$meetingId"
                 params={{ meetingId: meeting._id }}
-                className="btn btn-ghost btn-xs btn-square"
                 title="Open meeting page"
               >
-                <ExternalLink className="w-3 h-3" />
+                <Button variant="ghost" size="icon-xs">
+                  <ExternalLink className="w-3 h-3" />
+                </Button>
               </Link>
             )}
           </div>
           <div className="flex gap-2 flex-wrap">
-            {meeting.isPublic && (
-              <span className="badge badge-primary badge-sm">Public</span>
-            )}
+            {meeting.isPublic && <Badge size="sm">Public</Badge>}
             {meeting.maxParticipants && (
-              <span className="badge badge-warning badge-sm">
+              <Badge variant="warning" size="sm">
                 Max {meeting.maxParticipants}
-              </span>
+              </Badge>
             )}
             {isPending && (
-              <span className="badge badge-warning badge-sm">Pending</span>
+              <Badge variant="warning" size="sm">
+                Pending
+              </Badge>
             )}
             {isParticipant && !isCreator && (
-              <span className="badge badge-success badge-sm">Attending</span>
+              <Badge variant="success" size="sm">
+                Attending
+              </Badge>
             )}
-            {isCreator && (
-              <span className="badge badge-primary badge-sm">Hosting</span>
-            )}
+            {isCreator && <Badge size="sm">Hosting</Badge>}
           </div>
         </div>
 
         {/* Description */}
         {meeting.description && (
-          <p className={`opacity-80 ${isCompact ? "text-sm mt-1" : "mt-2"}`}>
+          <p
+            className={cn(
+              "text-muted-foreground",
+              isCompact ? "text-sm mt-1" : "mt-2"
+            )}
+          >
             {meeting.description}
           </p>
         )}
 
-        {!isCompact && <div className="divider my-2"></div>}
+        {!isCompact && <Separator className="my-4" />}
 
         {/* Details */}
-        <div className={`space-y-${isCompact ? "2" : "3"} ${isCompact ? "mt-3" : ""}`}>
-          <div className={`flex items-center gap-${isCompact ? "2" : "3"} text-sm`}>
-            <Clock className={`w-4 h-4 opacity-70`} />
+        <div className={cn("space-y-2", isCompact ? "mt-3" : "space-y-3")}>
+          <div
+            className={cn(
+              "flex items-center text-sm",
+              isCompact ? "gap-2" : "gap-3"
+            )}
+          >
+            <Clock className="w-4 h-4 text-muted-foreground" />
             {isCompact ? (
               <>
                 <span>{new Date(meeting.scheduledTime).toLocaleString()}</span>
-                <span className="opacity-70">({meeting.duration} min)</span>
+                <span className="text-muted-foreground">
+                  ({meeting.duration} min)
+                </span>
               </>
             ) : (
               <div>
@@ -164,13 +187,15 @@ export function MeetingCard({
                     day: "numeric",
                   })}
                 </div>
-                <div className="opacity-70">
+                <div className="text-muted-foreground">
                   {new Date(meeting.scheduledTime).toLocaleTimeString("en-US", {
                     hour: "numeric",
                     minute: "2-digit",
                   })}
                   {" - "}
-                  {new Date(meeting.scheduledTime + meeting.duration * 60000).toLocaleTimeString("en-US", {
+                  {new Date(
+                    meeting.scheduledTime + meeting.duration * 60000
+                  ).toLocaleTimeString("en-US", {
                     hour: "numeric",
                     minute: "2-digit",
                   })}
@@ -181,29 +206,34 @@ export function MeetingCard({
           </div>
 
           {meeting.location && (
-            <div className={`flex items-center gap-${isCompact ? "2" : "3"} text-sm`}>
-              <MapPin className="w-4 h-4 opacity-70" />
+            <div
+              className={cn(
+                "flex items-center text-sm",
+                isCompact ? "gap-2" : "gap-3"
+              )}
+            >
+              <MapPin className="w-4 h-4 text-muted-foreground" />
               <span>{meeting.location}</span>
             </div>
           )}
 
           {!isCompact && meeting.maxParticipants && (
             <div className="flex items-center gap-3 text-sm">
-              <Users className="w-4 h-4 opacity-70" />
+              <Users className="w-4 h-4 text-muted-foreground" />
               <span>Max {meeting.maxParticipants} participants</span>
             </div>
           )}
 
           {creator && (
             <div className="text-sm">
-              <span className="opacity-70">Hosted by: </span>
+              <span className="text-muted-foreground">Hosted by: </span>
               {isCompact ? (
                 <span className="font-semibold">{creator.name}</span>
               ) : (
                 <Link
                   to="/user/$userId"
                   params={{ userId: creator._id }}
-                  className="link link-hover link-primary font-semibold"
+                  className="font-semibold text-primary hover:underline underline-offset-4"
                 >
                   {creator.name}
                 </Link>
@@ -215,13 +245,21 @@ export function MeetingCard({
         {/* Participants */}
         {showParticipants && participants && participants.length > 0 && (
           <>
-            {!isCompact && <div className="divider my-2"></div>}
-            <div className={isCompact ? "mt-3" : ""}>
+            {!isCompact && <Separator className="my-4" />}
+            <div className={cn(isCompact && "mt-3")}>
               <ParticipantList
                 participants={participants}
                 usersMap={usersMap}
                 maxHeight={isCompact ? "max-h-32" : "max-h-60"}
-                onUserClick={!isCompact ? (userId) => void navigate({ to: "/user/$userId", params: { userId } }) : undefined}
+                onUserClick={
+                  !isCompact
+                    ? (userId) =>
+                        void navigate({
+                          to: "/user/$userId",
+                          params: { userId },
+                        })
+                    : undefined
+                }
               />
             </div>
           </>
@@ -229,48 +267,58 @@ export function MeetingCard({
 
         {/* Actions */}
         {showActions && (
-          <div className={`card-actions justify-end ${isCompact ? "mt-4" : "mt-6"}`}>
+          <div
+            className={cn(
+              "flex justify-end gap-2",
+              isCompact ? "mt-4" : "mt-6"
+            )}
+          >
             {isPending && (
               <>
-                <button
-                  className={`btn btn-error ${isCompact ? "btn-sm" : ""}`}
+                <Button
+                  variant="destructive"
+                  size={isCompact ? "sm" : "default"}
                   onClick={() => void handleRespond(false)}
                   disabled={isLoading}
                 >
                   {isLoading ? "..." : "Decline"}
-                </button>
-                <button
-                  className={`btn btn-success ${isCompact ? "btn-sm" : ""}`}
+                </Button>
+                <Button
+                  variant="success"
+                  size={isCompact ? "sm" : "default"}
                   onClick={() => void handleRespond(true)}
                   disabled={isLoading}
                 >
                   {isLoading ? "..." : "Accept"}
-                </button>
+                </Button>
               </>
             )}
 
             {meeting.isPublic && !isParticipant && !isPending && (
-              <button
-                className={`btn btn-primary ${isCompact ? "btn-sm w-full" : ""}`}
+              <Button
+                size={isCompact ? "sm" : "default"}
+                className={cn(isCompact && "w-full")}
                 onClick={() => void handleJoin()}
                 disabled={isLoading}
               >
                 {isLoading ? "Joining..." : "Join Meeting"}
-              </button>
+              </Button>
             )}
 
             {isParticipant && !isCreator && (
-              <button
-                className={`btn btn-error ${isCompact ? "btn-sm w-full" : ""}`}
+              <Button
+                variant="destructive"
+                size={isCompact ? "sm" : "default"}
+                className={cn(isCompact && "w-full")}
                 onClick={() => void handleLeave()}
                 disabled={isLoading}
               >
                 {isLoading ? "Leaving..." : "Leave Meeting"}
-              </button>
+              </Button>
             )}
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
