@@ -146,7 +146,7 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Continue" }).click();
   // Wait for Clerk to be ready to accept the verification code
   const codeInput = page.getByRole("textbox", { name: "Enter verification code" });
-  await codeInput.waitFor({ state: "visible" });
+  await codeInput.waitFor({ state: "visible", timeout: AUTH_TIMEOUT });
   await page.waitForTimeout(500); // Give Clerk a moment to initialize
   await codeInput.pressSequentially(CLERK_TEST_CODE);
   await expect(
