@@ -39,12 +39,12 @@ export interface CalendarMeetingView {
 
 /**
  * Display categories for calendar events:
- * - going: User is attending (green filled)
- * - not-responded: User hasn't responded yet (green border only)
- * - declined: User declined (green strikethrough)
- * - all-rejected: Creator's meeting where all invitees declined (warning with strikethrough)
- * - public-available: Public event user hasn't joined (purple, toggleable)
- * - other: Fallback for edge cases (yellow)
+ * - going: User is attending (creator or accepted invitation)
+ * - not-responded: User has a pending invitation
+ * - declined: User explicitly declined
+ * - all-rejected: Creator's meeting where all invitees declined
+ * - public-available: Public event user hasn't joined
+ * - other: Fallback for edge cases
  */
 export type CalendarDisplayCategory =
   | "going"
