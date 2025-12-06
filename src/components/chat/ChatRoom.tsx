@@ -76,6 +76,8 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96", autoFo
       setReplyingTo(replyTo);
     } finally {
       setIsSending(false);
+      // Refocus input after send
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
 
