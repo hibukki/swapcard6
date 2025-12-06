@@ -7,6 +7,8 @@ import { ChatRoom } from "../components/chat/ChatRoom";
 import { ChatRoomList } from "../components/chat/ChatRoomList";
 import { ArrowLeft } from "lucide-react";
 import { Suspense, useMemo, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 const currentUserQuery = convexQuery(api.users.getCurrentUser, {});
 const chatRoomsQuery = convexQuery(api.chatRooms.list, {});
@@ -19,13 +21,13 @@ export const Route = createFileRoute("/chat/$chatRoomId")({
         queryClient.ensureQueryData(currentUserQuery),
         queryClient.ensureQueryData(chatRoomsQuery),
         queryClient.ensureQueryData(
-          convexQuery(api.chatRooms.get, { chatRoomId }),
+          convexQuery(api.chatRooms.get, { chatRoomId })
         ),
         queryClient.ensureQueryData(
-          convexQuery(api.chatRoomMessages.listByRoom, { chatRoomId }),
+          convexQuery(api.chatRoomMessages.listByRoom, { chatRoomId })
         ),
         queryClient.ensureQueryData(
-          convexQuery(api.chatRoomUsers.listByRoom, { chatRoomId }),
+          convexQuery(api.chatRoomUsers.listByRoom, { chatRoomId })
         ),
       ]);
     }
@@ -39,16 +41,18 @@ function ChatRoomPage() {
   const { data: currentUser } = useSuspenseQuery(currentUserQuery);
   const { data: rooms } = useSuspenseQuery(chatRoomsQuery);
 
-  // Use non-suspense query to catch errors
   const roomQuery = useQuery(
-    convexQuery(api.chatRooms.get, { chatRoomId: chatRoomId as Id<"chatRooms"> }),
+    convexQuery(api.chatRooms.get, {
+      chatRoomId: chatRoomId as Id<"chatRooms">,
+    })
   );
 
   const { data: participants } = useSuspenseQuery(
-    convexQuery(api.chatRoomUsers.listByRoom, { chatRoomId: chatRoomId as Id<"chatRooms"> }),
+    convexQuery(api.chatRoomUsers.listByRoom, {
+      chatRoomId: chatRoomId as Id<"chatRooms">,
+    })
   );
 
-  // Redirect to /chats if chat room is invalid or user doesn't have access
   useEffect(() => {
     if (roomQuery.error) {
       console.error("Failed to load chat room:", roomQuery.error);
@@ -56,7 +60,6 @@ function ChatRoomPage() {
     }
   }, [roomQuery.error, navigate]);
 
-  // Get all unique participant IDs for the chat list
   const allParticipantIds = useMemo(() => {
     const ids = new Set<Id<"users">>();
     for (const { participantIds } of rooms) {
@@ -68,7 +71,7 @@ function ChatRoomPage() {
   }, [rooms]);
 
   const { data: allParticipants } = useSuspenseQuery(
-    convexQuery(api.users.getMany, { userIds: allParticipantIds }),
+    convexQuery(api.users.getMany, { userIds: allParticipantIds })
   );
 
   const usersMap = useMemo(() => {
@@ -91,18 +94,22 @@ function ChatRoomPage() {
     return <div>Redirecting...</div>;
   }
 
-  // Get other participants for the header
-  const otherParticipants = participants.filter((p) => p._id !== currentUser._id);
-  const displayName = otherParticipants.map((p) => p.name).join(", ") || "Chat";
+  const otherParticipants = participants.filter(
+    (p) => p._id !== currentUser._id
+  );
+  const displayName =
+    otherParticipants.map((p) => p.name).join(", ") || "Chat";
 
   const chatContent = (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center gap-2 p-3 border-b border-base-300">
+      <div className="flex items-center gap-2 p-3 border-b">
         {/* Back button - mobile only */}
-        <Link to="/chats" className="btn btn-ghost btn-sm btn-square lg:hidden">
-          <ArrowLeft className="w-4 h-4" />
-        </Link>
+        <Button variant="ghost" size="icon-sm" asChild className="lg:hidden">
+          <Link to="/chats">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+        </Button>
         <span className="font-medium truncate">{displayName}</span>
       </div>
 
@@ -123,29 +130,25 @@ function ChatRoomPage() {
     <div className="not-prose">
       {/* Mobile: just the chat */}
       <div className="lg:hidden h-[calc(100vh-12rem)]">
-        <div className="card bg-base-200 h-full overflow-hidden">
-          {chatContent}
-        </div>
+        <Card className="h-full overflow-hidden">{chatContent}</Card>
       </div>
 
       {/* Desktop: split view with chat list */}
       <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4 lg:h-[calc(100vh-12rem)]">
         {/* Left panel: chat list */}
-        <div className="card bg-base-200 overflow-hidden">
-          <div className="card-body p-0 overflow-y-auto">
+        <Card className="overflow-hidden">
+          <CardContent className="p-0 overflow-y-auto h-full">
             <ChatRoomList
               rooms={rooms}
               users={usersMap}
               currentUserId={currentUser._id}
               selectedRoomId={chatRoomId as Id<"chatRooms">}
             />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Right panel: selected chat */}
-        <div className="lg:col-span-2 card bg-base-200 overflow-hidden">
-          {chatContent}
-        </div>
+        <Card className="lg:col-span-2 overflow-hidden">{chatContent}</Card>
       </div>
     </div>
   );

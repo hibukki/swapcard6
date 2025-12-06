@@ -16,6 +16,14 @@ import {
   categoryStyles,
   getEventTooltip,
 } from "../types/calendar";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 /** Map of meeting ID to list of other participant user IDs */
 type MeetingParticipantsMap = Record<Id<"meetings">, Id<"users">[]>;
@@ -226,7 +234,7 @@ function CalendarPage() {
   if (!allMeetings || !allUsers) {
     return (
       <div className="flex justify-center p-8">
-        <span className="loading loading-spinner loading-lg" />
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -236,21 +244,15 @@ function CalendarPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <button className="btn btn-primary btn-sm" onClick={goToToday}>
+          <Button size="sm" onClick={goToToday}>
             Today
-          </button>
-          <button
-            className="btn btn-ghost btn-sm btn-square"
-            onClick={navigatePrevious}
-          >
+          </Button>
+          <Button variant="ghost" size="icon-sm" onClick={navigatePrevious}>
             <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            className="btn btn-ghost btn-sm btn-square"
-            onClick={navigateNext}
-          >
+          </Button>
+          <Button variant="ghost" size="icon-sm" onClick={navigateNext}>
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </Button>
           <h2 className="text-xl font-semibold ml-2">
             {currentDate.toLocaleDateString("en-US", {
               month: "long",
@@ -260,30 +262,32 @@ function CalendarPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="join">
-            <button
-              className={`btn btn-sm join-item ${view === "week" ? "btn-active" : ""}`}
+          <div className="flex gap-1">
+            <Button
+              size="sm"
+              variant={view === "week" ? "default" : "outline"}
               onClick={() => setView("week")}
             >
               Week
-            </button>
-            <button
-              className={`btn btn-sm join-item ${view === "month" ? "btn-active" : ""}`}
+            </Button>
+            <Button
+              size="sm"
+              variant={view === "month" ? "default" : "outline"}
               onClick={() => setView("month")}
             >
               Month
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Calendar Subscription */}
       <details className="mb-4">
-        <summary className="cursor-pointer text-sm opacity-70 hover:opacity-100 flex items-center gap-1">
+        <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
           <ChevronDown className="w-4 h-4" />
           Sync to external calendar
         </summary>
-        <div className="mt-3 p-4 bg-base-200 rounded-lg">
+        <div className="mt-3 p-4 bg-muted rounded-lg">
           <CalendarSubscription />
         </div>
       </details>
@@ -297,24 +301,24 @@ function CalendarPage() {
 
       {/* Show public events toggle - below calendar */}
       <div className="mt-4 flex items-center gap-2">
-        <label className="label cursor-pointer gap-2">
-          <input
-            type="checkbox"
-            className="checkbox checkbox-sm checkbox-secondary"
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="show-public"
             checked={showPublicEvents}
-            onChange={toggleShowPublic}
+            onCheckedChange={toggleShowPublic}
           />
-          <span className="label-text">Show all public events</span>
-        </label>
+          <Label htmlFor="show-public" className="cursor-pointer">
+            Show all public events
+          </Label>
+        </div>
       </div>
 
       {/* Meeting Detail Modal */}
-      {selectedMeeting && (
-        <MeetingDetailModal
-          calendarMeeting={selectedMeeting}
-          onClose={() => setSelectedMeeting(null)}
-        />
-      )}
+      <MeetingDetailModal
+        calendarMeeting={selectedMeeting}
+        open={!!selectedMeeting}
+        onClose={() => setSelectedMeeting(null)}
+      />
     </div>
   );
 }
@@ -348,10 +352,10 @@ function WeekView({
   const hours = Array.from({ length: 17 }, (_, i) => i + 6);
 
   return (
-    <div className="flex-1 overflow-auto border border-base-300 rounded-lg">
+    <div className="flex-1 overflow-auto border border-border rounded-lg">
       <div className="grid grid-cols-8 min-w-[800px]">
         {/* Time column header */}
-        <div className="sticky top-0 bg-base-200 border-b border-base-300 p-2 text-center text-sm font-semibold z-10"></div>
+        <div className="sticky top-0 bg-muted border-b border-border p-2 text-center text-sm font-semibold z-10"></div>
 
         {/* Day headers */}
         {weekDays.map((date, i) => {
@@ -360,7 +364,7 @@ function WeekView({
           return (
             <div
               key={i}
-              className={`sticky top-0 bg-base-200 border-b border-l border-base-300 p-2 text-center text-sm z-10 ${
+              className={`sticky top-0 bg-muted border-b border-l border-border p-2 text-center text-sm z-10 ${
                 isToday ? "text-primary font-bold" : ""
               }`}
             >
@@ -368,7 +372,7 @@ function WeekView({
                 {date.toLocaleDateString("en-US", { weekday: "short" })}
               </div>
               <div
-                className={`text-2xl ${isToday ? "bg-primary text-primary-content rounded-full w-8 h-8 mx-auto flex items-center justify-center" : ""}`}
+                className={`text-2xl ${isToday ? "bg-primary text-primary-foreground rounded-full w-8 h-8 mx-auto flex items-center justify-center" : ""}`}
               >
                 {date.getDate()}
               </div>
@@ -382,7 +386,7 @@ function WeekView({
             {/* Time label */}
             <div
               key={`time-${hour}`}
-              className="bg-base-100 border-b border-base-300 p-2 text-xs text-right text-base-content/60 sticky left-0"
+              className="bg-background border-b border-border p-2 text-xs text-right text-muted-foreground sticky left-0"
             >
               {hour === 0 || hour === 12
                 ? "12"
@@ -411,7 +415,7 @@ function WeekView({
               return (
                 <div
                   key={`${hour}-${dayIndex}`}
-                  className="border-b border-l border-base-300 p-1 min-h-[60px] relative hover:bg-base-200/50 transition-colors"
+                  className="border-b border-l border-border p-1 min-h-[60px] relative hover:bg-muted/50 transition-colors"
                 >
                   {slotMeetings.map((calendarMeeting) => {
                     const meetingStart = new Date(calendarMeeting.meeting.scheduledTime);
@@ -482,13 +486,13 @@ function MonthView({
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <div className="flex-1 overflow-auto border border-base-300 rounded-lg">
+    <div className="flex-1 overflow-auto border border-border rounded-lg">
       <div className="grid grid-cols-7 h-full">
         {/* Day headers */}
         {weekDays.map((day) => (
           <div
             key={day}
-            className="sticky top-0 bg-base-200 border-b border-r border-base-300 p-2 text-center text-sm font-semibold z-10"
+            className="sticky top-0 bg-muted border-b border-r border-border p-2 text-center text-sm font-semibold z-10"
           >
             {day}
           </div>
@@ -500,7 +504,7 @@ function MonthView({
             return (
               <div
                 key={`empty-${index}`}
-                className="border-r border-b border-base-300 bg-base-200/30 min-h-[100px]"
+                className="border-r border-b border-border bg-muted/30 min-h-[100px]"
               />
             );
           }
@@ -521,10 +525,10 @@ function MonthView({
           return (
             <div
               key={day}
-              className="border-r border-b border-base-300 p-2 min-h-[100px] hover:bg-base-200/50 transition-colors"
+              className="border-r border-b border-border p-2 min-h-[100px] hover:bg-muted/50 transition-colors"
             >
               <div
-                className={`text-sm mb-1 ${isToday ? "bg-primary text-primary-content rounded-full w-6 h-6 flex items-center justify-center font-bold" : ""}`}
+                className={`text-sm mb-1 ${isToday ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center font-bold" : ""}`}
               >
                 {day}
               </div>
@@ -540,7 +544,7 @@ function MonthView({
                   return (
                     <div
                       key={calendarMeeting.meeting._id}
-                      className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity border-l-4 ${styles.border} ${styles.borderOnly ? "bg-base-100" : styles.bg} ${styles.text} ${styles.strikethrough ? "line-through" : ""}`}
+                      className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity border-l-4 ${styles.border} ${styles.borderOnly ? "bg-background" : styles.bg} ${styles.text} ${styles.strikethrough ? "line-through" : ""}`}
                       onClick={() => onMeetingClick(calendarMeeting)}
                       title={tooltip}
                     >
@@ -557,7 +561,7 @@ function MonthView({
                   );
                 })}
                 {dayMeetings.length > 3 && (
-                  <div className="text-xs text-base-content/60">
+                  <div className="text-xs text-muted-foreground">
                     +{dayMeetings.length - 3} more
                   </div>
                 )}
@@ -629,7 +633,7 @@ function CalendarGridCard({
 
   return (
     <div
-      className={`border-l-4 ${styles.border} p-1 rounded text-xs mb-1 cursor-pointer hover:opacity-80 transition-opacity ${styles.borderOnly ? "bg-base-100" : styles.bg}`}
+      className={`border-l-4 ${styles.border} p-1 rounded text-xs mb-1 cursor-pointer hover:opacity-80 transition-opacity ${styles.borderOnly ? "bg-background" : styles.bg}`}
       onClick={onClick}
       title={tooltip}
     >
@@ -642,7 +646,7 @@ function CalendarGridCard({
         {styles.warningIcon && "⚠️ "}
         {displayTitle}
       </Link>
-      <div className="text-base-content/80">
+      <div className="text-muted-foreground">
         {startTime.toLocaleTimeString("en-US", {
           hour: "numeric",
           minute: "2-digit",
@@ -659,28 +663,21 @@ function CalendarGridCard({
 
 function MeetingDetailModal({
   calendarMeeting,
+  open,
   onClose,
 }: {
-  calendarMeeting: CalendarMeetingView;
+  calendarMeeting: CalendarMeetingView | null;
+  open: boolean;
   onClose: () => void;
 }) {
+  if (!calendarMeeting) return null;
+
   const { meeting, userStatus } = calendarMeeting;
   const status = userStatus.participationStatus ?? null;
 
-  // Close on ESC key
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
   return (
-    <dialog className="modal modal-open">
-      <div className="modal-box max-w-2xl p-0">
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="max-w-2xl p-0">
         <MeetingCardComponent
           meeting={meeting}
           userStatus={status}
@@ -691,14 +688,11 @@ function MeetingDetailModal({
           onActionComplete={onClose}
         />
         <div className="px-6 pb-6">
-          <button type="button" className="btn btn-block" onClick={onClose}>
+          <Button className="w-full" variant="outline" onClick={onClose}>
             Close
-          </button>
+          </Button>
         </div>
-      </div>
-      <form method="dialog" className="modal-backdrop" onClick={onClose}>
-        <button>close</button>
-      </form>
-    </dialog>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -3,10 +3,10 @@
 exports[`SharedMeetingsList > renders meeting with location 1`] = `
 <div>
   <div
-    class="card bg-base-200"
+    class="rounded-xl border bg-card text-card-foreground shadow"
   >
     <div
-      class="card-body"
+      class="p-6 pt-6"
     >
       <h3
         class="font-semibold mb-3 flex items-center gap-2"
@@ -49,7 +49,7 @@ exports[`SharedMeetingsList > renders meeting with location 1`] = `
         class="space-y-2"
       >
         <button
-          class="block w-full text-left p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
+          class="block w-full text-left p-3 bg-muted rounded-lg hover:bg-accent transition-colors"
           type="button"
         >
           <div
@@ -58,7 +58,7 @@ exports[`SharedMeetingsList > renders meeting with location 1`] = `
             Office Hours
           </div>
           <div
-            class="text-sm opacity-70"
+            class="text-sm text-muted-foreground"
           >
             Wed, Jan 15, 2:00 PM
              · 
@@ -76,10 +76,10 @@ exports[`SharedMeetingsList > renders meeting with location 1`] = `
 exports[`SharedMeetingsList > renders multiple meetings 1`] = `
 <div>
   <div
-    class="card bg-base-200"
+    class="rounded-xl border bg-card text-card-foreground shadow"
   >
     <div
-      class="card-body"
+      class="p-6 pt-6"
     >
       <h3
         class="font-semibold mb-3 flex items-center gap-2"
@@ -122,7 +122,7 @@ exports[`SharedMeetingsList > renders multiple meetings 1`] = `
         class="space-y-2"
       >
         <button
-          class="block w-full text-left p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
+          class="block w-full text-left p-3 bg-muted rounded-lg hover:bg-accent transition-colors"
           type="button"
         >
           <div
@@ -131,7 +131,7 @@ exports[`SharedMeetingsList > renders multiple meetings 1`] = `
             Morning Standup
           </div>
           <div
-            class="text-sm opacity-70"
+            class="text-sm text-muted-foreground"
           >
             Wed, Jan 15, 9:00 AM
              · 
@@ -140,7 +140,7 @@ exports[`SharedMeetingsList > renders multiple meetings 1`] = `
           </div>
         </button>
         <button
-          class="block w-full text-left p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
+          class="block w-full text-left p-3 bg-muted rounded-lg hover:bg-accent transition-colors"
           type="button"
         >
           <div
@@ -149,7 +149,7 @@ exports[`SharedMeetingsList > renders multiple meetings 1`] = `
             Lunch Discussion
           </div>
           <div
-            class="text-sm opacity-70"
+            class="text-sm text-muted-foreground"
           >
             Wed, Jan 15, 12:00 PM
              · 
@@ -159,7 +159,7 @@ exports[`SharedMeetingsList > renders multiple meetings 1`] = `
           </div>
         </button>
         <button
-          class="block w-full text-left p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
+          class="block w-full text-left p-3 bg-muted rounded-lg hover:bg-accent transition-colors"
           type="button"
         >
           <div
@@ -168,7 +168,7 @@ exports[`SharedMeetingsList > renders multiple meetings 1`] = `
             Afternoon Review
           </div>
           <div
-            class="text-sm opacity-70"
+            class="text-sm text-muted-foreground"
           >
             Wed, Jan 15, 3:30 PM
              · 
@@ -188,10 +188,10 @@ exports[`SharedMeetingsList > renders nothing when meetings array is empty 1`] =
 exports[`SharedMeetingsList > renders single meeting 1`] = `
 <div>
   <div
-    class="card bg-base-200"
+    class="rounded-xl border bg-card text-card-foreground shadow"
   >
     <div
-      class="card-body"
+      class="p-6 pt-6"
     >
       <h3
         class="font-semibold mb-3 flex items-center gap-2"
@@ -234,7 +234,7 @@ exports[`SharedMeetingsList > renders single meeting 1`] = `
         class="space-y-2"
       >
         <button
-          class="block w-full text-left p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
+          class="block w-full text-left p-3 bg-muted rounded-lg hover:bg-accent transition-colors"
           type="button"
         >
           <div
@@ -243,7 +243,7 @@ exports[`SharedMeetingsList > renders single meeting 1`] = `
             Coffee Chat
           </div>
           <div
-            class="text-sm opacity-70"
+            class="text-sm text-muted-foreground"
           >
             Wed, Jan 15, 10:00 AM
              · 
@@ -260,10 +260,10 @@ exports[`SharedMeetingsList > renders single meeting 1`] = `
 exports[`SharedMeetingsList > renders with click handler 1`] = `
 <div>
   <div
-    class="card bg-base-200"
+    class="rounded-xl border bg-card text-card-foreground shadow"
   >
     <div
-      class="card-body"
+      class="p-6 pt-6"
     >
       <h3
         class="font-semibold mb-3 flex items-center gap-2"
@@ -306,7 +306,7 @@ exports[`SharedMeetingsList > renders with click handler 1`] = `
         class="space-y-2"
       >
         <button
-          class="block w-full text-left p-3 bg-base-300 rounded-lg hover:bg-base-100 transition-colors"
+          class="block w-full text-left p-3 bg-muted rounded-lg hover:bg-accent transition-colors"
           type="button"
         >
           <div
@@ -315,7 +315,7 @@ exports[`SharedMeetingsList > renders with click handler 1`] = `
             Clickable Meeting
           </div>
           <div
-            class="text-sm opacity-70"
+            class="text-sm text-muted-foreground"
           >
             Thu, Jan 16, 10:00 AM
              · 

@@ -6,6 +6,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { ChatRoom } from "./ChatRoom";
 import { useEffect, useState, Suspense, useCallback } from "react";
 import { MessageCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface ChatEmbedProps {
   otherUserId: Id<"users">;
@@ -43,14 +44,14 @@ export function ChatEmbed({ otherUserId, autoFocus = false }: ChatEmbedProps) {
 
   if (isLoading) {
     return (
-      <div className="card bg-base-200 mt-6">
-        <div className="card-body">
-          <div className="flex items-center gap-2 text-base-content/50">
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <MessageCircle className="w-5 h-5" />
             <span>Loading chat...</span>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -59,9 +60,9 @@ export function ChatEmbed({ otherUserId, autoFocus = false }: ChatEmbedProps) {
   }
 
   return (
-    <div className="card bg-base-200 mt-6">
-      <div className="card-body p-0">
-        <div className="flex items-center gap-2 p-3 border-b border-base-300">
+    <Card className="mt-6">
+      <CardContent className="p-0">
+        <div className="flex items-center gap-2 p-3 border-b">
           <MessageCircle className="w-5 h-5" />
           <span className="font-medium">Chat</span>
         </div>
@@ -73,7 +74,7 @@ export function ChatEmbed({ otherUserId, autoFocus = false }: ChatEmbedProps) {
             autoFocus={autoFocus}
           />
         </Suspense>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

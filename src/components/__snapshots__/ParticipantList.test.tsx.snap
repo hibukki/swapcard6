@@ -39,10 +39,10 @@ exports[`ParticipantList > renders Unknown for missing user 1`] = `
       )
     </h4>
     <div
-      class="max-h-40 overflow-y-auto border border-base-300 rounded-lg"
+      class="max-h-40 overflow-y-auto border rounded-lg"
     >
       <ul
-        class="divide-y divide-base-300"
+        class="divide-y"
       >
         <li
           class="flex items-center justify-between px-3 py-2"
@@ -52,11 +52,11 @@ exports[`ParticipantList > renders Unknown for missing user 1`] = `
           >
             Unknown
           </span>
-          <span
-            class="badge badge-sm badge-success"
+          <div
+            class="inline-flex items-center rounded-md border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-success text-success-foreground shadow hover:bg-success/80 px-2 py-0.5 text-[10px]"
           >
             Accepted
-          </span>
+          </div>
         </li>
       </ul>
     </div>
@@ -103,10 +103,10 @@ exports[`ParticipantList > renders multiple participants with different statuses
       )
     </h4>
     <div
-      class="max-h-40 overflow-y-auto border border-base-300 rounded-lg"
+      class="max-h-40 overflow-y-auto border rounded-lg"
     >
       <ul
-        class="divide-y divide-base-300"
+        class="divide-y"
       >
         <li
           class="flex items-center justify-between px-3 py-2"
@@ -116,11 +116,11 @@ exports[`ParticipantList > renders multiple participants with different statuses
           >
             Alice (Host)
           </span>
-          <span
-            class="badge badge-sm badge-primary"
+          <div
+            class="inline-flex items-center rounded-md border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80 px-2 py-0.5 text-[10px]"
           >
             Host
-          </span>
+          </div>
         </li>
         <li
           class="flex items-center justify-between px-3 py-2"
@@ -130,11 +130,11 @@ exports[`ParticipantList > renders multiple participants with different statuses
           >
             Bob
           </span>
-          <span
-            class="badge badge-sm badge-success"
+          <div
+            class="inline-flex items-center rounded-md border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-success text-success-foreground shadow hover:bg-success/80 px-2 py-0.5 text-[10px]"
           >
             Accepted
-          </span>
+          </div>
         </li>
         <li
           class="flex items-center justify-between px-3 py-2"
@@ -144,11 +144,11 @@ exports[`ParticipantList > renders multiple participants with different statuses
           >
             Charlie
           </span>
-          <span
-            class="badge badge-sm badge-warning"
+          <div
+            class="inline-flex items-center rounded-md border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-warning text-warning-foreground shadow hover:bg-warning/80 px-2 py-0.5 text-[10px]"
           >
             Pending
-          </span>
+          </div>
         </li>
         <li
           class="flex items-center justify-between px-3 py-2"
@@ -158,11 +158,11 @@ exports[`ParticipantList > renders multiple participants with different statuses
           >
             Diana
           </span>
-          <span
-            class="badge badge-sm badge-error"
+          <div
+            class="inline-flex items-center rounded-md border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80 px-2 py-0.5 text-[10px]"
           >
             Declined
-          </span>
+          </div>
         </li>
       </ul>
     </div>
@@ -211,10 +211,10 @@ exports[`ParticipantList > renders single participant 1`] = `
       )
     </h4>
     <div
-      class="max-h-40 overflow-y-auto border border-base-300 rounded-lg"
+      class="max-h-40 overflow-y-auto border rounded-lg"
     >
       <ul
-        class="divide-y divide-base-300"
+        class="divide-y"
       >
         <li
           class="flex items-center justify-between px-3 py-2"
@@ -224,11 +224,11 @@ exports[`ParticipantList > renders single participant 1`] = `
           >
             Alice
           </span>
-          <span
-            class="badge badge-sm badge-success"
+          <div
+            class="inline-flex items-center rounded-md border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-success text-success-foreground shadow hover:bg-success/80 px-2 py-0.5 text-[10px]"
           >
             Accepted
-          </span>
+          </div>
         </li>
       </ul>
     </div>
@@ -275,25 +275,24 @@ exports[`ParticipantList > renders with clickable user names when onUserClick pr
       )
     </h4>
     <div
-      class="max-h-40 overflow-y-auto border border-base-300 rounded-lg"
+      class="max-h-40 overflow-y-auto border rounded-lg"
     >
       <ul
-        class="divide-y divide-base-300"
+        class="divide-y"
       >
         <li
           class="flex items-center justify-between px-3 py-2"
         >
           <button
-            class="text-sm link link-hover link-primary"
-            type="button"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 text-primary underline-offset-4 hover:underline rounded-md text-xs p-0 h-auto"
           >
             Alice
           </button>
-          <span
-            class="badge badge-sm badge-success"
+          <div
+            class="inline-flex items-center rounded-md border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-success text-success-foreground shadow hover:bg-success/80 px-2 py-0.5 text-[10px]"
           >
             Accepted
-          </span>
+          </div>
         </li>
       </ul>
     </div>
@@ -340,10 +339,10 @@ exports[`ParticipantList > renders with custom maxHeight 1`] = `
       )
     </h4>
     <div
-      class="max-h-96 overflow-y-auto border border-base-300 rounded-lg"
+      class="max-h-96 overflow-y-auto border rounded-lg"
     >
       <ul
-        class="divide-y divide-base-300"
+        class="divide-y"
       >
         <li
           class="flex items-center justify-between px-3 py-2"
@@ -353,11 +352,11 @@ exports[`ParticipantList > renders with custom maxHeight 1`] = `
           >
             Alice
           </span>
-          <span
-            class="badge badge-sm badge-success"
+          <div
+            class="inline-flex items-center rounded-md border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-success text-success-foreground shadow hover:bg-success/80 px-2 py-0.5 text-[10px]"
           >
             Accepted
-          </span>
+          </div>
         </li>
       </ul>
     </div>
@@ -369,10 +368,10 @@ exports[`ParticipantList > renders without header when showHeader is false 1`] =
 <div>
   <div>
     <div
-      class="max-h-40 overflow-y-auto border border-base-300 rounded-lg"
+      class="max-h-40 overflow-y-auto border rounded-lg"
     >
       <ul
-        class="divide-y divide-base-300"
+        class="divide-y"
       >
         <li
           class="flex items-center justify-between px-3 py-2"
@@ -382,11 +381,11 @@ exports[`ParticipantList > renders without header when showHeader is false 1`] =
           >
             Alice
           </span>
-          <span
-            class="badge badge-sm badge-success"
+          <div
+            class="inline-flex items-center rounded-md border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-success text-success-foreground shadow hover:bg-success/80 px-2 py-0.5 text-[10px]"
           >
             Accepted
-          </span>
+          </div>
         </li>
       </ul>
     </div>

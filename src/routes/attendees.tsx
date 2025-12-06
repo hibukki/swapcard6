@@ -19,6 +19,21 @@ import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { EmptyState } from "@/components/patterns/EmptyState";
 
 const usersQuery = convexQuery(api.users.listUsers, {});
 
@@ -69,17 +84,17 @@ function AttendeesPage() {
     <div>
       <div className="not-prose mt-6 mb-6">
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" />
-          <input
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
             type="text"
-            className="input input-bordered w-full pl-10 pr-10"
+            className="pl-10 pr-10"
             placeholder="Search by name, role, company, interests..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
             <button
-              className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               onClick={() => setSearchQuery("")}
             >
               <X className="w-4 h-4" />
@@ -87,7 +102,7 @@ function AttendeesPage() {
           )}
         </div>
         {searchQuery && (
-          <p className="text-sm opacity-70 mt-2">
+          <p className="text-sm text-muted-foreground mt-2">
             {filteredUsers.length}{" "}
             {filteredUsers.length === 1 ? "result" : "results"}
           </p>
@@ -96,52 +111,49 @@ function AttendeesPage() {
 
       {filteredUsers.length === 0 ? (
         <div className="not-prose">
-          <div className="p-8 bg-base-200 rounded-lg text-center">
-            <p className="opacity-70">
-              {searchQuery
+          <EmptyState
+            description={
+              searchQuery
                 ? "No attendees match your search"
-                : "No other attendees yet. Be the first to connect!"}
-            </p>
-          </div>
+                : "No other attendees yet. Be the first to connect!"
+            }
+          />
         </div>
       ) : (
         <div className="not-prose grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredUsers.map((user) => (
-            <div key={user._id} className="card card-border bg-base-200">
-              <div className="card-body">
+            <Card key={user._id}>
+              <CardContent className="pt-6">
                 <div className="flex items-start gap-3">
-                  {user.imageUrl ? (
-                    <img
-                      src={user.imageUrl}
-                      alt={user.name}
-                      className="w-12 h-12 rounded-full"
-                    />
-                  ) : (
-                    <div className="avatar avatar-placeholder">
-                      <div className="w-12 rounded-full bg-neutral text-neutral-content">
-                        <span className="text-xl">{user.name[0]}</span>
-                      </div>
-                    </div>
-                  )}
+                  <Avatar className="w-12 h-12">
+                    {user.imageUrl ? (
+                      <AvatarImage src={user.imageUrl} alt={user.name} />
+                    ) : null}
+                    <AvatarFallback>{user.name[0]}</AvatarFallback>
+                  </Avatar>
                   <div className="flex-1 min-w-0">
                     <Link
                       to="/user/$userId"
                       params={{ userId: user._id }}
-                      className="card-title text-base mt-0 hover:underline"
+                      className="font-semibold text-base hover:underline"
                     >
                       {user.name}
                     </Link>
                     {user.role && (
-                      <p className="text-sm opacity-80">{user.role}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {user.role}
+                      </p>
                     )}
                     {user.company && (
-                      <p className="text-sm opacity-60">{user.company}</p>
+                      <p className="text-sm text-muted-foreground/70">
+                        {user.company}
+                      </p>
                     )}
                   </div>
                 </div>
 
                 {user.bio && (
-                  <p className="text-sm opacity-80 mt-2 line-clamp-3">
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
                     {user.bio}
                   </p>
                 )}
@@ -149,24 +161,24 @@ function AttendeesPage() {
                 {user.interests && user.interests.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {user.interests.slice(0, 3).map((interest, i) => (
-                      <span key={i} className="badge badge-sm">
+                      <Badge key={i} size="sm" variant="secondary">
                         {interest}
-                      </span>
+                      </Badge>
                     ))}
                     {user.interests.length > 3 && (
-                      <span className="badge badge-sm">
+                      <Badge size="sm" variant="secondary">
                         +{user.interests.length - 3}
-                      </span>
+                      </Badge>
                     )}
                   </div>
                 )}
 
                 {user.canHelpWith && (
                   <div className="mt-3">
-                    <p className="text-xs font-medium opacity-60 mb-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
                       Can help with
                     </p>
-                    <p className="text-sm opacity-80 line-clamp-2">
+                    <p className="text-sm text-muted-foreground line-clamp-2">
                       {user.canHelpWith}
                     </p>
                   </div>
@@ -174,46 +186,46 @@ function AttendeesPage() {
 
                 {user.needsHelpWith && (
                   <div className="mt-3">
-                    <p className="text-xs font-medium opacity-60 mb-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
                       Looking for help with
                     </p>
-                    <p className="text-sm opacity-80 line-clamp-2">
+                    <p className="text-sm text-muted-foreground line-clamp-2">
                       {user.needsHelpWith}
                     </p>
                   </div>
                 )}
 
-                <div className="card-actions mt-4 flex gap-2">
-                  <Link
-                    to="/user/$userId"
-                    params={{ userId: user._id }}
-                    search={{ chat: "focus" }}
-                    className="btn btn-ghost btn-sm btn-square"
-                    title="Message"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                  </Link>
-                  <button
-                    className="btn btn-primary btn-sm flex-1"
+                <div className="mt-4 flex gap-2">
+                  <Button variant="ghost" size="icon-sm" asChild title="Message">
+                    <Link
+                      to="/user/$userId"
+                      params={{ userId: user._id }}
+                      search={{ chat: "focus" }}
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="flex-1"
                     onClick={() => setSelectedUser(user._id)}
                   >
                     <UserPlus className="w-4 h-4" />
                     Request Meeting
-                  </button>
+                  </Button>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
 
-      {selectedUser && (
-        <MeetingRequestModal
-          recipientId={selectedUser}
-          recipientName={users.find((u) => u._id === selectedUser)?.name ?? ""}
-          onClose={() => setSelectedUser(null)}
-        />
-      )}
+      <MeetingRequestModal
+        recipientId={selectedUser}
+        recipientName={users.find((u) => u._id === selectedUser)?.name ?? ""}
+        open={!!selectedUser}
+        onClose={() => setSelectedUser(null)}
+      />
     </div>
   );
 }
@@ -273,10 +285,12 @@ function formatDateHeader(date: Date): string {
 function MeetingRequestModal({
   recipientId,
   recipientName,
+  open,
   onClose,
 }: {
-  recipientId: Id<"users">;
+  recipientId: Id<"users"> | null;
   recipientName: string;
+  open: boolean;
   onClose: () => void;
 }) {
   const sendRequest = useMutation(api.meetingParticipants.sendRequest);
@@ -333,21 +347,10 @@ function MeetingRequestModal({
 
   const theirBusySlots = useQuery(
     api.meetings.getBusySlots,
-    selectedDate
+    selectedDate && recipientId
       ? { userId: recipientId, startDate: dayStart, endDate: dayEnd }
       : "skip",
   );
-
-  // ESC key handler
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
 
   // Generate available time slots
   const availableSlots = useMemo(() => {
@@ -395,6 +398,8 @@ function MeetingRequestModal({
       return;
     }
 
+    if (!recipientId) return;
+
     setIsSubmitting(true);
     try {
       await sendRequest({
@@ -420,105 +425,102 @@ function MeetingRequestModal({
     theirBusySlots === undefined;
 
   return (
-    <dialog open className="modal modal-open">
-      <div className="modal-box max-w-md">
-        <button
-          className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-          onClick={onClose}
-        >
-          <X className="w-4 h-4" />
-        </button>
-        <h3 className="font-bold text-lg mt-0 pr-8">
-          Request Meeting with {recipientName}
-        </h3>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Request Meeting with {recipientName}</DialogTitle>
+        </DialogHeader>
 
         <form
           onSubmit={(e) => {
             void handleSubmit(e);
           }}
-          className="mt-4 space-y-4"
+          className="space-y-4"
         >
           {/* Duration toggle */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Duration</label>
-            <div className="join">
-              <button
+          <div className="space-y-2">
+            <Label>Duration</Label>
+            <div className="flex gap-2">
+              <Button
                 type="button"
-                className={`join-item btn ${duration === 20 ? "btn-primary" : "btn-ghost"}`}
+                variant={duration === 20 ? "default" : "outline"}
                 onClick={() => setDuration(20)}
               >
                 20 min
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className={`join-item btn ${duration === 30 ? "btn-primary" : "btn-ghost"}`}
+                variant={duration === 30 ? "default" : "outline"}
                 onClick={() => setDuration(30)}
               >
                 30 min
-              </button>
+              </Button>
             </div>
           </div>
 
           {/* Available times section */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <label className="text-sm font-medium">Available Times</label>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Label>Available Times</Label>
               <Tippy
                 content={`Shows times when both you and ${recipientName} are free, based on calendars (including private meetings and public events)`}
                 appendTo={() => document.body}
               >
                 <span>
-                  <Info className="w-4 h-4 opacity-50 cursor-help" />
+                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                 </span>
               </Tippy>
             </div>
 
             {isLoading ? (
               <div className="flex justify-center py-8">
-                <span className="loading loading-spinner loading-md"></span>
+                <Spinner />
               </div>
             ) : (
               <>
                 {/* Day navigation */}
-                <div className="flex items-center justify-between bg-base-200 rounded-t-lg px-3 py-2">
-                  <button
+                <div className="flex items-center justify-between bg-muted rounded-t-lg px-3 py-2">
+                  <Button
                     type="button"
-                    className="btn btn-ghost btn-sm btn-square"
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={goToPreviousDay}
                     disabled={!canGoBack}
                   >
                     <ChevronLeft className="w-4 h-4" />
-                  </button>
+                  </Button>
                   <span className="font-medium">
                     {selectedDate && formatDateHeader(selectedDate)}
                   </span>
-                  <button
+                  <Button
                     type="button"
-                    className="btn btn-ghost btn-sm btn-square"
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={goToNextDay}
                     disabled={!canGoForward}
                   >
                     <ChevronRight className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Time slots grid */}
-                <div className="bg-base-200 rounded-b-lg p-3 max-h-48 overflow-y-auto">
+                <div className="bg-muted rounded-b-lg p-3 max-h-48 overflow-y-auto">
                   {availableSlots.length === 0 ? (
-                    <p className="text-center opacity-70 py-4 text-sm">
+                    <p className="text-center text-muted-foreground py-4 text-sm">
                       No available times on this day
                     </p>
                   ) : (
                     <div className="grid grid-cols-3 gap-2">
                       {availableSlots.map((slot) => (
-                        <button
+                        <Button
                           key={slot}
                           type="button"
-                          className={`btn btn-sm ${selectedSlot === slot ? "btn-primary" : "btn-ghost"}`}
+                          size="sm"
+                          variant={selectedSlot === slot ? "default" : "ghost"}
                           onClick={() => setSelectedSlot(slot)}
                         >
                           {formatTime(slot)}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   )}
@@ -528,40 +530,32 @@ function MeetingRequestModal({
           </div>
 
           {/* Location */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Location (optional)
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full"
+          <div className="space-y-2">
+            <Label htmlFor="meeting-location">Location (optional)</Label>
+            <Input
+              id="meeting-location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Coffee shop, booth #5, etc."
             />
           </div>
 
-          <div className="modal-action">
-            <button
+          <DialogFooter>
+            <Button
               type="button"
-              className="btn btn-ghost"
+              variant="ghost"
               onClick={onClose}
               disabled={isSubmitting}
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isSubmitting || !selectedSlot}
-            >
+            </Button>
+            <Button type="submit" disabled={isSubmitting || !selectedSlot}>
               <MessageSquare className="w-4 h-4" />
               {isSubmitting ? "Sending..." : "Send Request"}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-      <div className="modal-backdrop" onClick={onClose}></div>
-    </dialog>
+      </DialogContent>
+    </Dialog>
   );
 }

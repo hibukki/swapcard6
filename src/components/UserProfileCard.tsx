@@ -1,32 +1,42 @@
-import { Building2, Briefcase, HandHelping, HelpCircle, Mail } from "lucide-react";
+import {
+  Building2,
+  Briefcase,
+  HandHelping,
+  HelpCircle,
+  Mail,
+} from "lucide-react";
 import type { Doc } from "../../convex/_generated/dataModel";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { InfoBox } from "@/components/patterns/InfoBox";
 
 interface UserProfileCardProps {
   user: Doc<"users">;
   onRequestMeeting?: () => void;
 }
 
-export function UserProfileCard({ user, onRequestMeeting }: UserProfileCardProps) {
+export function UserProfileCard({
+  user,
+  onRequestMeeting,
+}: UserProfileCardProps) {
   return (
-    <div className="card bg-base-200">
-      <div className="card-body">
+    <Card>
+      <CardContent className="pt-6">
         {/* Header with avatar and name */}
         <div className="flex items-start gap-4">
-          {user.imageUrl ? (
-            <img
-              src={user.imageUrl}
-              alt={user.name}
-              className="w-20 h-20 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary">
+          <Avatar className="h-20 w-20">
+            <AvatarImage src={user.imageUrl} alt={user.name} />
+            <AvatarFallback className="text-2xl font-bold bg-primary/20 text-primary">
               {user.name.charAt(0).toUpperCase()}
-            </div>
-          )}
+            </AvatarFallback>
+          </Avatar>
           <div className="flex-1">
             <h1 className="text-2xl font-bold">{user.name}</h1>
             {(user.role || user.company) && (
-              <p className="opacity-70">
+              <p className="text-muted-foreground">
                 {user.role}
                 {user.role && user.company && " at "}
                 {user.company}
@@ -38,18 +48,21 @@ export function UserProfileCard({ user, onRequestMeeting }: UserProfileCardProps
         {/* Bio */}
         {user.bio && (
           <>
-            <div className="divider"></div>
+            <Separator className="my-4" />
             <p className="whitespace-pre-wrap">{user.bio}</p>
           </>
         )}
 
         {/* Details */}
-        <div className="divider"></div>
+        <Separator className="my-4" />
         <div className="space-y-3">
           {user.email && (
             <div className="flex items-center gap-3">
-              <Mail className="w-5 h-5 opacity-70" />
-              <a href={`mailto:${user.email}`} className="link link-hover">
+              <Mail className="w-5 h-5 text-muted-foreground" />
+              <a
+                href={`mailto:${user.email}`}
+                className="text-primary hover:underline underline-offset-4"
+              >
                 {user.email}
               </a>
             </div>
@@ -57,61 +70,59 @@ export function UserProfileCard({ user, onRequestMeeting }: UserProfileCardProps
 
           {user.company && (
             <div className="flex items-center gap-3">
-              <Building2 className="w-5 h-5 opacity-70" />
+              <Building2 className="w-5 h-5 text-muted-foreground" />
               <span>{user.company}</span>
             </div>
           )}
 
           {user.role && (
             <div className="flex items-center gap-3">
-              <Briefcase className="w-5 h-5 opacity-70" />
+              <Briefcase className="w-5 h-5 text-muted-foreground" />
               <span>{user.role}</span>
             </div>
           )}
 
           {user.interests && user.interests.length > 0 && (
             <div className="flex items-start gap-3">
-              <span className="opacity-70 text-sm">Interests:</span>
+              <span className="text-muted-foreground text-sm">Interests:</span>
               <div className="flex flex-wrap gap-1">
                 {user.interests.map((interest, i) => (
-                  <span key={i} className="badge badge-sm badge-outline">
+                  <Badge key={i} variant="outline" size="sm">
                     {interest}
-                  </span>
+                  </Badge>
                 ))}
               </div>
             </div>
           )}
 
           {user.canHelpWith && (
-            <div className="flex items-start gap-3 p-3 bg-success/10 rounded-lg">
-              <HandHelping className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
-              <div>
-                <span className="text-sm font-semibold text-success">Can help with:</span>
-                <p className="text-sm mt-1 whitespace-pre-wrap">{user.canHelpWith}</p>
-              </div>
-            </div>
+            <InfoBox
+              variant="success"
+              icon={<HandHelping />}
+              title="Can help with:"
+            >
+              <p className="whitespace-pre-wrap">{user.canHelpWith}</p>
+            </InfoBox>
           )}
 
           {user.needsHelpWith && (
-            <div className="flex items-start gap-3 p-3 bg-info/10 rounded-lg">
-              <HelpCircle className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
-              <div>
-                <span className="text-sm font-semibold text-info">Looking for help with:</span>
-                <p className="text-sm mt-1 whitespace-pre-wrap">{user.needsHelpWith}</p>
-              </div>
-            </div>
+            <InfoBox
+              variant="info"
+              icon={<HelpCircle />}
+              title="Looking for help with:"
+            >
+              <p className="whitespace-pre-wrap">{user.needsHelpWith}</p>
+            </InfoBox>
           )}
         </div>
 
         {/* Request Meeting Button */}
         {onRequestMeeting && (
-          <div className="card-actions justify-end mt-6">
-            <button onClick={onRequestMeeting} className="btn btn-primary">
-              Request a Meeting
-            </button>
+          <div className="flex justify-end mt-6">
+            <Button onClick={onRequestMeeting}>Request a Meeting</Button>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

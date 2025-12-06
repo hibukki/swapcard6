@@ -6,6 +6,8 @@ import { Authenticated, Unauthenticated } from "convex/react";
 import { Users } from "lucide-react";
 import { useEffect } from "react";
 import { api } from "../../convex/_generated/api";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 const currentUserQuery = convexQuery(api.users.getCurrentUser, {});
 
@@ -25,10 +27,12 @@ function HomePage() {
           <Users className="w-20 h-20 text-primary" />
         </div>
         <h1 className="mt-0">OpenCon</h1>
-        <p className="text-lg">Connect with conference attendees and schedule 1-on-1 meetings</p>
+        <p className="text-lg">
+          Connect with conference attendees and schedule 1-on-1 meetings
+        </p>
         <div className="not-prose mt-8">
           <SignInButton mode="modal">
-            <button className="btn btn-primary btn-lg">Get Started</button>
+            <Button size="lg">Get Started</Button>
           </SignInButton>
         </div>
       </Unauthenticated>
@@ -44,7 +48,6 @@ function AuthenticatedHome() {
   const { data: user } = useSuspenseQuery(currentUserQuery);
   const navigate = useNavigate();
 
-  // Redirect to profile if user hasn't completed their profile
   const needsOnboarding = !user?.bio && !user?.role && !user?.canHelpWith;
 
   useEffect(() => {
@@ -57,8 +60,8 @@ function AuthenticatedHome() {
 
   return (
     <div>
-      <div className="loading loading-spinner loading-lg"></div>
-      <p className="mt-4 opacity-70">Redirecting...</p>
+      <Spinner size="lg" />
+      <p className="mt-4 text-muted-foreground">Redirecting...</p>
     </div>
   );
 }
