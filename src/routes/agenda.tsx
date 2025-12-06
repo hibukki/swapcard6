@@ -7,7 +7,10 @@ import { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
 
-const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
+const myParticipationsQuery = convexQuery(
+  api.meetingParticipants.listMeetingsForCurrentUser,
+  {},
+);
 
 export const Route = createFileRoute("/agenda")({
   loader: async ({ context: { queryClient } }) => {
@@ -35,8 +38,15 @@ function AgendaPage() {
   }, [allUsers]);
 
   type Participation = Doc<"meetingParticipants">;
-  type EnrichedInvitation = { participation: Participation; meeting: Doc<"meetings">; requester: Doc<"users"> | null | undefined };
-  type EnrichedMeeting = { participation: Participation; meeting: Doc<"meetings"> };
+  type EnrichedInvitation = {
+    participation: Participation;
+    meeting: Doc<"meetings">;
+    requester: Doc<"users"> | null | undefined;
+  };
+  type EnrichedMeeting = {
+    participation: Participation;
+    meeting: Doc<"meetings">;
+  };
 
   // Filter and enrich participations
   const pendingInvitations = useMemo((): EnrichedInvitation[] => {
@@ -84,9 +94,6 @@ function AgendaPage() {
 
   return (
     <div>
-      <h1 className="mt-0">My Agenda</h1>
-      <p>Manage your meeting requests and view your schedule</p>
-
       <div className="not-prose mt-8 space-y-8">
         {/* Incoming Requests */}
         <section>
@@ -100,17 +107,19 @@ function AgendaPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {pendingInvitations.map(({ participation, meeting, requester }) => (
-                <IncomingRequestCard
-                  key={participation._id}
-                  meetingId={meeting._id}
-                  requester={requester}
-                  description={meeting.description}
-                  location={meeting.location}
-                  scheduledTime={meeting.scheduledTime}
-                  duration={meeting.duration}
-                />
-              ))}
+              {pendingInvitations.map(
+                ({ participation, meeting, requester }) => (
+                  <IncomingRequestCard
+                    key={participation._id}
+                    meetingId={meeting._id}
+                    requester={requester}
+                    description={meeting.description}
+                    location={meeting.location}
+                    scheduledTime={meeting.scheduledTime}
+                    duration={meeting.duration}
+                  />
+                ),
+              )}
             </div>
           )}
         </section>
@@ -134,9 +143,7 @@ function AgendaPage() {
                   <div className="card-body">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="font-semibold">
-                          {meeting.title}
-                        </h3>
+                        <h3 className="font-semibold">{meeting.title}</h3>
                         <p className="text-sm mt-2 opacity-80 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {new Date(meeting.scheduledTime).toLocaleString()}
@@ -183,9 +190,7 @@ function AgendaPage() {
                   <div className="card-body">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="font-semibold">
-                          {meeting.title}
-                        </h3>
+                        <h3 className="font-semibold">{meeting.title}</h3>
                         {meeting.description && (
                           <p className="text-sm opacity-70 mt-1">
                             {meeting.description}

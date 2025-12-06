@@ -9,7 +9,10 @@ import type { Id } from "../../convex/_generated/dataModel";
 import { MeetingCard } from "../components/MeetingCard";
 
 const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
-const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
+const myParticipationsQuery = convexQuery(
+  api.meetingParticipants.listMeetingsForCurrentUser,
+  {},
+);
 
 export const Route = createFileRoute("/public-meetings")({
   loader: async ({ context: { queryClient } }) => {
@@ -30,7 +33,10 @@ function PublicMeetingsPage() {
 
   // Build map of meetingId -> user's status
   const statusByMeetingId = useMemo(() => {
-    const map = new Map<Id<"meetings">, "creator" | "accepted" | "pending" | "declined">();
+    const map = new Map<
+      Id<"meetings">,
+      "creator" | "accepted" | "pending" | "declined"
+    >();
     for (const p of myParticipations) {
       map.set(p.meetingId, p.status);
     }
@@ -45,10 +51,6 @@ function PublicMeetingsPage() {
   return (
     <div>
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="mt-0">Public Meetings</h1>
-          <p>Browse and join public meetings open to all attendees</p>
-        </div>
         <button
           className="not-prose btn btn-primary gap-2 mt-4"
           onClick={() => setShowCreateModal(true)}

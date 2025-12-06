@@ -2,7 +2,11 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useForm } from "@tanstack/react-form";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useAction, useMutation, useQuery as useConvexQuery } from "convex/react";
+import {
+  useAction,
+  useMutation,
+  useQuery as useConvexQuery,
+} from "convex/react";
 import { Sparkles, Users } from "lucide-react";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { z } from "zod";
@@ -144,16 +148,16 @@ function ProfilePage() {
     <div>
       {isNewUser && (
         <div className="alert alert-info mb-6">
-          <span>👋 Welcome! Let&apos;s set up your profile so other attendees can find you.</span>
+          <span>
+            👋 Welcome! Let&apos;s set up your profile so other attendees can
+            find you.
+          </span>
         </div>
       )}
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Form Section */}
         <div className="flex-1">
-          <h1 className="mt-0">{isNewUser ? "Complete Your Profile" : "Edit Your Profile"}</h1>
-          <p className="mb-6">Help other attendees get to know you</p>
-
           <div className="not-prose">
             <form
               onSubmit={(e) => {
@@ -166,7 +170,10 @@ function ProfilePage() {
                 <form.Field name="company">
                   {(field) => (
                     <div>
-                      <label htmlFor="company" className="block text-sm font-medium mb-1">
+                      <label
+                        htmlFor="company"
+                        className="block text-sm font-medium mb-1"
+                      >
                         Company / Organization
                       </label>
                       <input
@@ -184,7 +191,12 @@ function ProfilePage() {
                 <form.Field name="role">
                   {(field) => (
                     <div>
-                      <label htmlFor="role" className="block text-sm font-medium mb-1">Role / Title</label>
+                      <label
+                        htmlFor="role"
+                        className="block text-sm font-medium mb-1"
+                      >
+                        Role / Title
+                      </label>
                       <input
                         id="role"
                         type="text"
@@ -201,7 +213,12 @@ function ProfilePage() {
               <form.Field name="bio">
                 {(field) => (
                   <div>
-                    <label htmlFor="bio" className="block text-sm font-medium mb-1">About You</label>
+                    <label
+                      htmlFor="bio"
+                      className="block text-sm font-medium mb-1"
+                    >
+                      About You
+                    </label>
                     <textarea
                       id="bio"
                       className="textarea textarea-border w-full"
@@ -217,7 +234,10 @@ function ProfilePage() {
               <form.Field name="interests">
                 {(field) => (
                   <div>
-                    <label htmlFor="interests" className="block text-sm font-medium mb-1">
+                    <label
+                      htmlFor="interests"
+                      className="block text-sm font-medium mb-1"
+                    >
                       Interests
                     </label>
                     <input
@@ -238,7 +258,10 @@ function ProfilePage() {
               <form.Field name="canHelpWith">
                 {(field) => (
                   <div>
-                    <label htmlFor="canHelpWith" className="block text-sm font-medium mb-1">
+                    <label
+                      htmlFor="canHelpWith"
+                      className="block text-sm font-medium mb-1"
+                    >
                       How I can help others
                     </label>
                     <textarea
@@ -270,7 +293,10 @@ function ProfilePage() {
               <form.Field name="needsHelpWith">
                 {(field) => (
                   <div>
-                    <label htmlFor="needsHelpWith" className="block text-sm font-medium mb-1">
+                    <label
+                      htmlFor="needsHelpWith"
+                      className="block text-sm font-medium mb-1"
+                    >
                       How others can help me
                     </label>
                     <textarea
@@ -305,7 +331,11 @@ function ProfilePage() {
                   className="btn btn-primary"
                   disabled={!form.state.canSubmit || isSubmitting}
                 >
-                  {isSubmitting ? "Saving..." : isNewUser ? "Save & Find Connections" : "Save Profile"}
+                  {isSubmitting
+                    ? "Saving..."
+                    : isNewUser
+                      ? "Save & Find Connections"
+                      : "Save"}
                 </button>
                 {!isNewUser && (
                   <button
@@ -326,7 +356,9 @@ function ProfilePage() {
         {/* Preview Section */}
         <div className="lg:w-96">
           <h2 className="text-lg font-semibold mb-4">Preview</h2>
-          <p className="text-sm opacity-70 mb-4">This is how others will see you</p>
+          <p className="text-sm opacity-70 mb-4">
+            This is how others will see you
+          </p>
           <div className="not-prose sticky top-4">
             <UserProfileCard user={previewUser} />
           </div>
@@ -346,7 +378,9 @@ function ProfilePage() {
         <div className="not-prose mt-8 pt-8 border-t border-base-300">
           <div className="flex items-center gap-2 mb-4">
             <Users className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold">People You Might Want to Meet</h2>
+            <h2 className="text-lg font-semibold">
+              People You Might Want to Meet
+            </h2>
           </div>
           <p className="text-sm opacity-70 mb-4">
             Based on your interests and what you're looking for
@@ -375,7 +409,9 @@ function ProfilePage() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate">{recUser.name}</h3>
+                        <h3 className="font-semibold truncate">
+                          {recUser.name}
+                        </h3>
                         {(recUser.role || recUser.company) && (
                           <p className="text-sm opacity-70 truncate">
                             {recUser.role}
@@ -438,8 +474,8 @@ function SeedDataSection() {
     <div className="mt-12 pt-8 border-t border-base-300">
       <h2 className="text-lg font-semibold mb-2">Developer Tools</h2>
       <p className="text-sm opacity-70 mb-4">
-        Generate test data including sample users, conferences, meetings, and notifications.
-        Your account will be included in the relationships.
+        Generate test data including sample users, conferences, meetings, and
+        notifications. Your account will be included in the relationships.
       </p>
       <button
         className="btn btn-outline btn-sm"
@@ -449,7 +485,9 @@ function SeedDataSection() {
         {isSeeding ? "Seeding..." : "Seed Test Data"}
       </button>
       {result && (
-        <p className={`text-sm mt-2 ${result.includes("success") ? "text-success" : "text-error"}`}>
+        <p
+          className={`text-sm mt-2 ${result.includes("success") ? "text-success" : "text-error"}`}
+        >
           {result}
         </p>
       )}
@@ -470,11 +508,16 @@ interface AIRecommendationsProps {
   currentUserId: string;
 }
 
-function AIRecommendations({ currentUserProfile, currentUserId }: AIRecommendationsProps) {
+function AIRecommendations({
+  currentUserProfile,
+  currentUserId,
+}: AIRecommendationsProps) {
   const getAIRecommendations = useAction(api.llm.getAIRecommendations);
   const allUsers = useConvexQuery(api.users.listUsers);
 
-  const [recommendations, setRecommendations] = useState<RecommendationsResponse["recommendations"]>([]);
+  const [recommendations, setRecommendations] = useState<
+    RecommendationsResponse["recommendations"]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lastRequestRef = useRef<string>("");
@@ -540,7 +583,13 @@ function AIRecommendations({ currentUserProfile, currentUserId }: AIRecommendati
     } finally {
       setIsLoading(false);
     }
-  }, [allUsers, currentUserId, currentUserProfile, hasProfileContent, getAIRecommendations]);
+  }, [
+    allUsers,
+    currentUserId,
+    currentUserProfile,
+    hasProfileContent,
+    getAIRecommendations,
+  ]);
 
   // Debounced fetch when profile changes
   useEffect(() => {
@@ -579,15 +628,15 @@ function AIRecommendations({ currentUserProfile, currentUserId }: AIRecommendati
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="w-5 h-5 text-secondary" />
         <h2 className="text-lg font-semibold">AI-Suggested Connections</h2>
-        {isLoading && <span className="loading loading-spinner loading-sm"></span>}
+        {isLoading && (
+          <span className="loading loading-spinner loading-sm"></span>
+        )}
       </div>
       <p className="text-sm opacity-70 mb-4">
         Based on what you can offer and what you're looking for
       </p>
 
-      {error && (
-        <p className="text-sm text-error mb-4">{error}</p>
-      )}
+      {error && <p className="text-sm text-error mb-4">{error}</p>}
 
       {recommendedUsersWithData.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -630,7 +679,8 @@ function AIRecommendations({ currentUserProfile, currentUserId }: AIRecommendati
         </div>
       ) : !isLoading ? (
         <p className="text-sm opacity-50">
-          Fill in what you can help with or what you need to see AI recommendations.
+          Fill in what you can help with or what you need to see AI
+          recommendations.
         </p>
       ) : null}
     </div>
