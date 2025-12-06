@@ -120,59 +120,55 @@ export function ChatRoom({
             return (
               <div
                 key={message._id}
-                className={`group flex gap-2 ${showSender ? "mt-2" : ""}`}
+                className={`group flex ${isCurrentUser ? "justify-start" : "justify-end"} ${showSender ? "mt-3" : "mt-0.5"}`}
               >
-                {/* Avatar column */}
-                <div className="w-6 flex-shrink-0">
-                  {showSender && sender?.imageUrl && (
-                    <img
-                      src={sender.imageUrl}
-                      alt=""
-                      className="w-6 h-6 rounded-full"
-                    />
-                  )}
-                </div>
+                <div className={`flex gap-1.5 max-w-[80%] ${isCurrentUser ? "flex-row" : "flex-row-reverse"}`}>
+                  {/* Avatar */}
+                  <div className="w-6 flex-shrink-0 self-end">
+                    {showSender && sender?.imageUrl && (
+                      <img
+                        src={sender.imageUrl}
+                        alt=""
+                        className="w-6 h-6 rounded-full"
+                      />
+                    )}
+                  </div>
 
-                {/* Message content */}
-                <div className="flex-1 min-w-0">
-                  {showSender && (
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-medium text-sm">
-                        {isCurrentUser ? "You" : (sender?.name ?? "Unknown")}
+                  {/* Message bubble */}
+                  <div className={`flex flex-col ${isCurrentUser ? "items-start" : "items-end"}`}>
+                    {showSender && (
+                      <span className="text-xs text-muted-foreground mb-0.5 px-1">
+                        {isCurrentUser ? "You" : (sender?.name ?? "Unknown")} · {formatMessageTime(message._creationTime)}
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatMessageTime(message._creationTime)}
-                      </span>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Reply indicator */}
-                  {parentMessage && (
-                    <div className="text-xs text-muted-foreground border-l-2 border-muted pl-2 mb-1 truncate">
-                      Replying to{" "}
-                      {participantsMap.get(parentMessage.senderId)?.name ??
-                        "Unknown"}
-                      : {parentMessage.content.slice(0, 50)}
-                      {parentMessage.content.length > 50 ? "..." : ""}
-                    </div>
-                  )}
+                    {/* Reply indicator */}
+                    {parentMessage && (
+                      <div className="text-xs text-muted-foreground border-l-2 border-muted pl-2 mb-1 max-w-full truncate">
+                        ↩ {participantsMap.get(parentMessage.senderId)?.name ?? "Unknown"}: {parentMessage.content.slice(0, 30)}
+                        {parentMessage.content.length > 30 ? "..." : ""}
+                      </div>
+                    )}
 
-                  <p className="text-sm break-words">{message.content}</p>
+                    <div className={`px-3 py-1.5 rounded-2xl text-sm break-words ${isCurrentUser ? "bg-primary text-primary-foreground rounded-bl-sm" : "bg-muted rounded-br-sm"}`}>
+                      {message.content}
+                    </div>
+                  </div>
+
+                  {/* Reply button on hover */}
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => {
+                      setReplyingTo(message);
+                      inputRef.current?.focus();
+                    }}
+                    className="opacity-0 group-hover:opacity-100 self-center"
+                    title="Reply"
+                  >
+                    <Reply className="w-3 h-3" />
+                  </Button>
                 </div>
-
-                {/* Reply button on hover */}
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => {
-                    setReplyingTo(message);
-                    inputRef.current?.focus();
-                  }}
-                  className="opacity-0 group-hover:opacity-100"
-                  title="Reply"
-                >
-                  <Reply className="w-3 h-3" />
-                </Button>
               </div>
             );
           })
