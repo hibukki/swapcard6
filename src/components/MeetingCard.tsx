@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { UserName } from "@/components/patterns/UserName";
+import { ShortDate, ShortTimeRange } from "@/components/patterns/ShortDate";
 import { cn } from "@/lib/utils";
 import { handleMutationError } from "@/lib/error-handling";
 
@@ -170,39 +172,26 @@ export function MeetingCard({
             )}
           >
             <Clock className="w-4 h-4 text-muted-foreground" />
-            {isCompact ? (
-              <>
-                <span>{new Date(meeting.scheduledTime).toLocaleString()}</span>
-                <span className="text-muted-foreground">
-                  ({meeting.duration} min)
-                </span>
-              </>
-            ) : (
-              <div>
-                <div className="font-semibold">
-                  {new Date(meeting.scheduledTime).toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+            {(() => {
+              const endTime = meeting.scheduledTime + meeting.duration * 60000;
+              return isCompact ? (
+                <>
+                  <ShortDate timestamp={meeting.scheduledTime} />
+                  <span className="text-muted-foreground">
+                    ({meeting.duration} min)
+                  </span>
+                </>
+              ) : (
+                <div>
+                  <div className="font-semibold">
+                    <ShortDate timestamp={meeting.scheduledTime} />
+                  </div>
+                  <div className="text-muted-foreground">
+                    <ShortTimeRange startTime={meeting.scheduledTime} endTime={endTime} /> ({meeting.duration} min)
+                  </div>
                 </div>
-                <div className="text-muted-foreground">
-                  {new Date(meeting.scheduledTime).toLocaleTimeString("en-US", {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
-                  {" - "}
-                  {new Date(
-                    meeting.scheduledTime + meeting.duration * 60000
-                  ).toLocaleTimeString("en-US", {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
-                  {" "}({meeting.duration} min)
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
 
           {meeting.location && (
@@ -227,17 +216,7 @@ export function MeetingCard({
           {creator && (
             <div className="text-sm">
               <span className="text-muted-foreground">Hosted by: </span>
-              {isCompact ? (
-                <span className="font-semibold">{creator.name}</span>
-              ) : (
-                <Link
-                  to="/user/$userId"
-                  params={{ userId: creator._id }}
-                  className="font-semibold text-primary hover:underline underline-offset-4"
-                >
-                  {creator.name}
-                </Link>
-              )}
+              <UserName user={creator} />
             </div>
           )}
         </div>

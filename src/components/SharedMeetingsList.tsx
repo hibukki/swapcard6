@@ -1,6 +1,7 @@
 import { Calendar } from "lucide-react";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { Card, CardContent } from "@/components/ui/card";
+import { ShortDate } from "@/components/patterns/ShortDate";
 
 interface SharedMeetingsListProps {
   meetings: Doc<"meetings">[];
@@ -32,13 +33,7 @@ export function SharedMeetingsList({
             >
               <div className="font-semibold">{meeting.title}</div>
               <div className="text-sm text-muted-foreground">
-                {new Date(meeting.scheduledTime).toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
+                <ShortDate timestamp={meeting.scheduledTime} />
                 {" · "}
                 {meeting.duration} min
                 {meeting.location && ` · ${meeting.location}`}

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { Id, Doc } from "../../../convex/_generated/dataModel";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { formatShortDate } from "@/lib/date-format";
 
 interface ChatRoomWithDetails {
   room: Doc<"chatRooms">;
@@ -17,28 +18,13 @@ interface ChatRoomListProps {
 
 function formatTimestamp(timestamp: number | undefined): string {
   if (!timestamp) return "";
-
-  const date = new Date(timestamp);
-  const now = new Date();
-
-  const isToday =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate();
-
-  if (isToday) {
-    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  }
-
-  const daysDiff = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  if (daysDiff < 7) {
-    return date.toLocaleDateString([], { weekday: "long" });
-  }
-
-  return date.toISOString().split("T")[0];
+  // For chat: today shows time only, recent shows weekday only
+  const { display } = formatShortDate(timestamp, { includeTime: true });
+  // If it's today, formatShortDate returns just the time (e.g., "10:30 AM")
+  // If it's recent, it returns "Tuesday, 10:30 AM" - we just want the weekday
+  // If it's older, it returns "Jan 15, 10:30 AM" - we just want the date
+  const parts = display.split(", ");
+  return parts.length > 1 ? parts[0] : display;
 }
 
 function getOtherParticipants(
