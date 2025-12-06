@@ -155,7 +155,7 @@ export function ChatRoom({
                     </div>
                   </div>
 
-                  {/* Reply button on hover */}
+                  {/* Reply button - always visible on mobile, hover on desktop */}
                   <Button
                     variant="ghost"
                     size="icon-xs"
@@ -163,7 +163,7 @@ export function ChatRoom({
                       setReplyingTo(message);
                       inputRef.current?.focus();
                     }}
-                    className="opacity-0 group-hover:opacity-100 self-center"
+                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 self-center"
                     title="Reply"
                   >
                     <Reply className="w-3 h-3" />
