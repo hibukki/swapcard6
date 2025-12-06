@@ -112,7 +112,7 @@ export const categoryStyles: Record<
   going: {
     bg: "bg-success/20",
     border: "border-success",
-    text: "text-success-foreground",
+    text: "text-success",
   },
   "not-responded": {
     bg: "bg-background",
@@ -138,12 +138,12 @@ export const categoryStyles: Record<
   "public-available": {
     bg: "bg-secondary/20",
     border: "border-secondary",
-    text: "text-secondary-foreground",
+    text: "text-foreground",
   },
   other: {
     bg: "bg-warning/20",
     border: "border-warning",
-    text: "text-warning-foreground",
+    text: "text-foreground",
   },
 };
 
