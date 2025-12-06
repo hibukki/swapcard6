@@ -41,8 +41,12 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96", autoFo
 
   useEffect(() => {
     if (autoFocus) {
-      inputRef.current?.focus();
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Focus after scroll animation completes
+      const timeout = setTimeout(() => {
+        inputRef.current?.focus({ preventScroll: true });
+      }, 400);
+      return () => clearTimeout(timeout);
     }
   }, [autoFocus]);
 
