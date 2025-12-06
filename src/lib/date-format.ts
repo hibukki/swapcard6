@@ -9,6 +9,11 @@
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+/**
+ * Check if two dates are on the same day.
+ * Note: This compares in local timezone. Near midnight boundaries, this may
+ * show "Today" for timestamps that are technically in a different UTC day.
+ */
 function isSameDay(d1: Date, d2: Date): boolean {
   return (
     d1.getFullYear() === d2.getFullYear() &&
@@ -25,6 +30,7 @@ function getDaysDiff(from: Date, to: Date): number {
 
 interface FormatOptions {
   includeTime?: boolean;
+  locale?: string | string[];
 }
 
 /**
@@ -38,17 +44,17 @@ export function formatShortDate(
   timestamp: number,
   options: FormatOptions = {}
 ): { display: string; tooltip: string } {
-  const { includeTime = true } = options;
+  const { includeTime = true, locale = [] } = options;
   const date = new Date(timestamp);
   const now = new Date();
   const daysDiff = getDaysDiff(now, date);
 
-  const timeStr = date.toLocaleTimeString([], {
+  const timeStr = date.toLocaleTimeString(locale, {
     hour: "numeric",
     minute: "2-digit",
   });
 
-  const fullDate = date.toLocaleDateString([], {
+  const fullDate = date.toLocaleDateString(locale, {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -60,19 +66,15 @@ export function formatShortDate(
   let display: string;
 
   if (isSameDay(date, now)) {
-    // Today: just show time
     display = includeTime ? timeStr : "Today";
   } else if (daysDiff >= 0 && daysDiff <= 5) {
-    // Within 5 days: show weekday
-    const weekday = date.toLocaleDateString([], { weekday: "long" });
+    const weekday = date.toLocaleDateString(locale, { weekday: "long" });
     display = includeTime ? `${weekday}, ${timeStr}` : weekday;
   } else if (daysDiff >= -5 && daysDiff < 0) {
-    // Past 5 days: show weekday (for recent past events)
-    const weekday = date.toLocaleDateString([], { weekday: "long" });
+    const weekday = date.toLocaleDateString(locale, { weekday: "long" });
     display = includeTime ? `${weekday}, ${timeStr}` : weekday;
   } else {
-    // Further out: show date
-    const shortDate = date.toLocaleDateString([], {
+    const shortDate = date.toLocaleDateString(locale, {
       month: "short",
       day: "numeric",
     });
@@ -95,14 +97,4 @@ export function formatTimeRange(startTime: number, endTime: number): string {
     minute: "2-digit",
   });
   return `${start} - ${end}`;
-}
-
-/**
- * Format just the time portion of a timestamp.
- */
-export function formatTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }

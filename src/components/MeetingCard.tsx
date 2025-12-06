@@ -172,26 +172,27 @@ export function MeetingCard({
             )}
           >
             <Clock className="w-4 h-4 text-muted-foreground" />
-            {(() => {
-              const endTime = meeting.scheduledTime + meeting.duration * 60000;
-              return isCompact ? (
-                <>
+            {isCompact ? (
+              <>
+                <ShortDate timestamp={meeting.scheduledTime} />
+                <span className="text-muted-foreground">
+                  ({meeting.duration} min)
+                </span>
+              </>
+            ) : (
+              <div>
+                <div className="font-semibold">
                   <ShortDate timestamp={meeting.scheduledTime} />
-                  <span className="text-muted-foreground">
-                    ({meeting.duration} min)
-                  </span>
-                </>
-              ) : (
-                <div>
-                  <div className="font-semibold">
-                    <ShortDate timestamp={meeting.scheduledTime} />
-                  </div>
-                  <div className="text-muted-foreground">
-                    <ShortTimeRange startTime={meeting.scheduledTime} endTime={endTime} /> ({meeting.duration} min)
-                  </div>
                 </div>
-              );
-            })()}
+                <div className="text-muted-foreground">
+                  <ShortTimeRange
+                    startTime={meeting.scheduledTime}
+                    endTime={meeting.scheduledTime + meeting.duration * 60000}
+                  />{" "}
+                  ({meeting.duration} min)
+                </div>
+              </div>
+            )}
           </div>
 
           {meeting.location && (

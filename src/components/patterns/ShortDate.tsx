@@ -4,7 +4,7 @@ import { formatShortDate, formatTimeRange } from "@/lib/date-format";
 
 interface ShortDateProps {
   timestamp: number;
-  showTime?: boolean;
+  includeTime?: boolean;
   className?: string;
 }
 
@@ -19,15 +19,15 @@ interface ShortDateProps {
  */
 export function ShortDate({
   timestamp,
-  showTime = true,
+  includeTime = true,
   className,
 }: ShortDateProps) {
   const { display, tooltip } = formatShortDate(timestamp, {
-    includeTime: showTime,
+    includeTime,
   });
 
   return (
-    <Tippy content={tooltip} delay={0}>
+    <Tippy content={tooltip} delay={[200, 0]}>
       <span className={className}>{display}</span>
     </Tippy>
   );
