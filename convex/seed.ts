@@ -1,4 +1,4 @@
-import { internalMutation, mutation } from "./_generated/server";
+import { internalMutation, mutation, MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
@@ -232,11 +232,18 @@ export const seedData = internalMutation({
         // Create the public meeting with a random seed user as creator
         const creator = seedUserIds[Math.floor(Math.random() * seedUserIds.length)];
 
+        // Move past meetings forward by 7 days until they're in the future
+        let scheduledTime = template.scheduledTime;
+        const oneDayAgo = now - oneDay;
+        while (scheduledTime < oneDayAgo) {
+          scheduledTime += 7 * oneDay;
+        }
+
         const meetingId = await ctx.db.insert("meetings", {
           creatorId: creator,
           title: template.title,
           description: template.description,
-          scheduledTime: template.scheduledTime,
+          scheduledTime,
           duration: template.duration,
           location: template.location,
           isPublic: true,
@@ -252,6 +259,15 @@ export const seedData = internalMutation({
           status: "creator",
         });
       } else {
+        // Update existing meeting if it's more than 1 day in the past
+        const oneDayAgo = now - oneDay;
+        if (existing.scheduledTime < oneDayAgo) {
+          let newTime = existing.scheduledTime;
+          while (newTime < oneDayAgo) {
+            newTime += 7 * oneDay;
+          }
+          await ctx.db.patch(existing._id, { scheduledTime: newTime });
+        }
         publicMeetingIds.push(existing._id);
       }
     }
@@ -335,12 +351,41 @@ export const seedData = internalMutation({
   },
 });
 
+// Convenience mutation that uses current time (requires auth)
+export const seedDataWithCurrentUserNow = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    return await seedDataWithCurrentUserHandler(ctx, { baseTimestamp: now });
+  },
+});
+
+// Public seed function for CLI usage (no auth required, just seeds base data)
+export const seedNow = mutation({
+  args: {
+    baseTimestamp: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const now = args.baseTimestamp ?? Date.now();
+    await ctx.scheduler.runAfter(0, internal.seed.seedData, { baseTimestamp: now });
+    return { success: true, message: "Seed data scheduled" };
+  },
+});
+
 // Main seeding mutation that includes the current authenticated user
 export const seedDataWithCurrentUser = mutation({
   args: {
     baseTimestamp: v.number(),
   },
   handler: async (ctx, args) => {
+    return await seedDataWithCurrentUserHandler(ctx, args);
+  },
+});
+
+async function seedDataWithCurrentUserHandler(
+  ctx: MutationCtx,
+  args: { baseTimestamp: number }
+) {
     const currentUser = await getCurrentUserOrCrash(ctx);
     const now = args.baseTimestamp;
     const oneHour = 60 * 60 * 1000;
@@ -716,5 +761,4 @@ export const seedDataWithCurrentUser = mutation({
       success: true,
       message: "Seed data created with current user included in relationships",
     };
-  },
-});
+}
