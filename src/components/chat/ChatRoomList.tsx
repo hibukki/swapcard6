@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { Id, Doc } from "../../../convex/_generated/dataModel";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { formatChatTimestamp } from "@/lib/date-format";
 
 interface ChatRoomWithDetails {
   room: Doc<"chatRooms">;
@@ -13,32 +14,6 @@ interface ChatRoomListProps {
   users: Map<Id<"users">, Doc<"users">>;
   currentUserId: Id<"users">;
   selectedRoomId?: Id<"chatRooms">;
-}
-
-function formatTimestamp(timestamp: number | undefined): string {
-  if (!timestamp) return "";
-
-  const date = new Date(timestamp);
-  const now = new Date();
-
-  const isToday =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate();
-
-  if (isToday) {
-    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  }
-
-  const daysDiff = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  if (daysDiff < 7) {
-    return date.toLocaleDateString([], { weekday: "long" });
-  }
-
-  return date.toISOString().split("T")[0];
 }
 
 function getOtherParticipants(
@@ -108,7 +83,9 @@ export function ChatRoomList({
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-medium truncate">{displayName}</span>
                 <span className="text-xs text-muted-foreground flex-shrink-0">
-                  {formatTimestamp(room.lastMessageAt)}
+                  {room.lastMessageAt
+                    ? formatChatTimestamp(room.lastMessageAt)
+                    : ""}
                 </span>
               </div>
             </div>

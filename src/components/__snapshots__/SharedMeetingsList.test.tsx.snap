@@ -60,7 +60,9 @@ exports[`SharedMeetingsList > renders meeting with location 1`] = `
           <div
             class="text-sm text-muted-foreground"
           >
-            Wed, Jan 15, 2:00 PM
+            <span>
+              Jan 15, 2:00 PM
+            </span>
              · 
             30
              min
@@ -133,7 +135,9 @@ exports[`SharedMeetingsList > renders multiple meetings 1`] = `
           <div
             class="text-sm text-muted-foreground"
           >
-            Wed, Jan 15, 9:00 AM
+            <span>
+              Jan 15, 9:00 AM
+            </span>
              · 
             15
              min
@@ -151,7 +155,9 @@ exports[`SharedMeetingsList > renders multiple meetings 1`] = `
           <div
             class="text-sm text-muted-foreground"
           >
-            Wed, Jan 15, 12:00 PM
+            <span>
+              Jan 15, 12:00 PM
+            </span>
              · 
             60
              min
@@ -170,7 +176,9 @@ exports[`SharedMeetingsList > renders multiple meetings 1`] = `
           <div
             class="text-sm text-muted-foreground"
           >
-            Wed, Jan 15, 3:30 PM
+            <span>
+              Jan 15, 3:30 PM
+            </span>
              · 
             45
              min
@@ -245,7 +253,9 @@ exports[`SharedMeetingsList > renders single meeting 1`] = `
           <div
             class="text-sm text-muted-foreground"
           >
-            Wed, Jan 15, 10:00 AM
+            <span>
+              Jan 15, 10:00 AM
+            </span>
              · 
             30
              min
@@ -317,7 +327,9 @@ exports[`SharedMeetingsList > renders with click handler 1`] = `
           <div
             class="text-sm text-muted-foreground"
           >
-            Thu, Jan 16, 10:00 AM
+            <span>
+              Jan 16, 10:00 AM
+            </span>
              · 
             30
              min

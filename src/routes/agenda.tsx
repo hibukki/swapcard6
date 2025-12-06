@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/patterns/EmptyState";
+import { UserName } from "@/components/patterns/UserName";
+import { ShortDate } from "@/components/patterns/ShortDate";
 import { handleMutationError } from "@/lib/error-handling";
 
 const myParticipationsQuery = convexQuery(
@@ -142,7 +144,7 @@ function AgendaPage() {
                         <h3 className="font-semibold">{meeting.title}</h3>
                         <p className="text-sm mt-2 text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {new Date(meeting.scheduledTime).toLocaleString()}
+                          <ShortDate timestamp={meeting.scheduledTime} />
                           {` (${meeting.duration} min)`}
                         </p>
                         {meeting.description && (
@@ -190,8 +192,8 @@ function AgendaPage() {
                         <div className="mt-2 space-y-1">
                           <p className="text-sm flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {new Date(meeting.scheduledTime).toLocaleString()} (
-                            {meeting.duration} min)
+                            <ShortDate timestamp={meeting.scheduledTime} />
+                            {` (${meeting.duration} min)`}
                           </p>
                           {meeting.location && (
                             <p className="text-sm flex items-center gap-1">
@@ -257,7 +259,13 @@ function IncomingRequestCard({
       <CardContent className="pt-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <h3 className="font-semibold">{requester?.name ?? "Unknown"}</h3>
+            <h3 className="font-semibold">
+              {requester ? (
+                <UserName user={requester} />
+              ) : (
+                "Unknown"
+              )}
+            </h3>
             {requester?.role && (
               <p className="text-sm text-muted-foreground">{requester.role}</p>
             )}
@@ -267,7 +275,7 @@ function IncomingRequestCard({
             <div className="mt-2 space-y-1">
               <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {new Date(scheduledTime).toLocaleString()}
+                <ShortDate timestamp={scheduledTime} />
                 {` (${duration} min)`}
               </p>
               {location && (
