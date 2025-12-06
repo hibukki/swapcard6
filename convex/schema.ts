@@ -94,6 +94,8 @@ export default defineSchema({
     calendarToken: v.optional(v.string()),
     // isDemoBot: undefined means false
     isDemoBot: v.optional(v.boolean()),
+    // Calendar preference: show public events (undefined means true)
+    showPublicEvents: v.optional(v.boolean()),
   })
     .index("by_clerkId", ["clerkId"])
     .index("by_email", ["email"])

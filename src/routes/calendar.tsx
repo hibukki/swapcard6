@@ -1,7 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
@@ -34,7 +34,6 @@ const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
 const calendarSearchSchema = z.object({
   view: z.enum(["week", "month"]).optional().default("week"),
   date: z.string().optional(),
-  showPublic: z.boolean().optional().default(false),
 });
 
 export const Route = createFileRoute("/calendar")({
@@ -56,13 +55,16 @@ function CalendarPage() {
   const { data: publicMeetingsData } = useSuspenseQuery(publicMeetingsQuery);
   const allMeetings = useQuery(api.meetings.list, {});
   const allUsers = useQuery(api.users.listUsers, {});
+  const currentUser = useQuery(api.users.getCurrentUser, {});
+  const setShowPublicEventsMutation = useMutation(api.users.setShowPublicEvents);
   const navigate = useNavigate({ from: "/calendar" });
   const search = Route.useSearch();
 
   // URL params with defaults
   const view = search.view;
   const currentDate = search.date ? new Date(search.date) : new Date();
-  const showPublicEvents = search.showPublic;
+  // Show public events: default to true if user hasn't set a preference
+  const showPublicEvents = currentUser?.showPublicEvents ?? true;
 
   // Get all meeting IDs for fetching participant data
   const myMeetingIds_all = useMemo(() => {
@@ -86,26 +88,23 @@ function CalendarPage() {
     myMeetingIds_all.length > 0 ? { meetingIds: myMeetingIds_all } : "skip"
   );
 
-  // On mount, restore from localStorage if URL params match defaults
+  // On mount, restore view/date from localStorage if URL params match defaults
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       const urlView = new URLSearchParams(window.location.search).get("view");
       const urlDate = new URLSearchParams(window.location.search).get("date");
-      const urlShowPublic = new URLSearchParams(window.location.search).get("showPublic");
 
-      const shouldRestore = !urlView && !urlDate && !urlShowPublic;
+      const shouldRestore = !urlView && !urlDate;
 
       if (shouldRestore) {
         const savedView = localStorage.getItem("calendarView");
         const savedDate = localStorage.getItem("calendarDate");
-        const savedShowPublic = localStorage.getItem("calendarShowPublic");
 
-        if (savedView || savedDate || savedShowPublic) {
+        if (savedView || savedDate) {
           void navigate({
             search: {
               view: (savedView as "week" | "month") || "week",
               date: savedDate || undefined,
-              showPublic: savedShowPublic === "true",
             },
             replace: true,
           });
@@ -115,16 +114,15 @@ function CalendarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Save calendar state to localStorage whenever it changes
+  // Save view/date to localStorage whenever they change
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("calendarView", view);
-      localStorage.setItem("calendarShowPublic", String(showPublicEvents));
       if (search.date) {
         localStorage.setItem("calendarDate", search.date);
       }
     }
-  }, [view, showPublicEvents, search.date]);
+  }, [view, search.date]);
 
   // Helper to update URL params
   const updateSearch = (updates: Partial<typeof search>) => {
@@ -137,7 +135,9 @@ function CalendarPage() {
 
   const setView = (newView: "week" | "month") => updateSearch({ view: newView });
   const setCurrentDate = (date: Date) => updateSearch({ date: date.toISOString().split('T')[0] });
-  const toggleShowPublic = () => updateSearch({ showPublic: !showPublicEvents });
+  const toggleShowPublic = () => {
+    void setShowPublicEventsMutation({ showPublicEvents: !showPublicEvents });
+  };
 
   // Build lookup maps
   const meetingsMap = useMemo(() => {
