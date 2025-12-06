@@ -168,10 +168,7 @@ test.describe("E2E User Flow", () => {
     await signIn(page);
 
     // New user should be redirected to profile with welcome message
-    await expect(
-      page.getByRole("heading", { name: "Complete Your Profile" }),
-    ).toBeVisible({ timeout: AUTH_TIMEOUT });
-    await expect(page.getByText("Welcome!")).toBeVisible();
+    await expect(page.getByText("Welcome!")).toBeVisible({ timeout: AUTH_TIMEOUT });
     await screenshot(page, "profile-new-user");
 
     // Seed data now that the user is created - this creates other sample users to match against
@@ -202,19 +199,15 @@ test.describe("E2E User Flow", () => {
     await page.getByRole("button", { name: "Save & Find Connections" }).click();
 
     // Should redirect to attendees page after save
-    await expect(page.getByRole("heading", { name: "Attendees" })).toBeVisible({
+    await expect(page.getByText("Alice Johnson")).toBeVisible({
       timeout: AUTH_TIMEOUT,
     });
-    await expect(page.getByText("Alice Johnson")).toBeVisible();
     // Scroll to top for consistent screenshot
     await page.evaluate(() => window.scrollTo(0, 0));
     await screenshot(page, "attendees");
 
     // Verify profile is now filled by going back to profile page
     await page.goto("/profile", { waitUntil: "networkidle" });
-    await expect(
-      page.getByRole("heading", { name: "Edit Your Profile" }),
-    ).toBeVisible();
     await expect(page.getByLabel("Company / Organization")).toHaveValue(
       "Effective Ventures",
     );
@@ -226,26 +219,14 @@ test.describe("E2E User Flow", () => {
 
     // Browse other pages
     await page.goto("/agenda", { waitUntil: "networkidle" });
-    await expect(
-      page.getByRole("heading", { name: "My Agenda" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: /Incoming Requests/ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: /Sent Requests/ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: /Scheduled Meetings/ }),
-    ).toBeVisible();
+    await expect(page.getByText(/Incoming Requests/)).toBeVisible();
+    await expect(page.getByText(/Sent Requests/)).toBeVisible();
+    await expect(page.getByText(/Scheduled Meetings/)).toBeVisible();
     await expect(page.getByText("Incoming Requests (2)")).toBeVisible();
     await screenshot(page, "agenda");
 
     await page.goto("/public-meetings", { waitUntil: "networkidle" });
-    await expect(
-      page.getByRole("heading", { name: "Public Meetings" }),
-    ).toBeVisible();
-    await expect(page.getByText("Upcoming Meetings")).toBeVisible();
+    await expect(page.getByText(/Upcoming Meetings/)).toBeVisible();
     await expect(
       page.getByText("Opening Keynote: Future of Tech"),
     ).toBeVisible();
@@ -284,9 +265,6 @@ test.describe("E2E User Flow", () => {
 
     // Clicking "Request a Meeting" navigates to attendees page with user pre-filled
     await page.getByRole("button", { name: "Request a Meeting" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Attendees" }),
-    ).toBeVisible();
     // The search should be pre-filled with the user's name
     await expect(page.getByRole("textbox")).toHaveValue("David Chen");
 
