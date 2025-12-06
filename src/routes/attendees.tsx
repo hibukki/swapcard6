@@ -124,7 +124,13 @@ function AttendeesPage() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="card-title text-base mt-0">{user.name}</h3>
+                    <Link
+                      to="/user/$userId"
+                      params={{ userId: user._id }}
+                      className="card-title text-base mt-0 hover:underline"
+                    >
+                      {user.name}
+                    </Link>
                     {user.role && (
                       <p className="text-sm opacity-80">{user.role}</p>
                     )}
@@ -181,6 +187,7 @@ function AttendeesPage() {
                   <Link
                     to="/user/$userId"
                     params={{ userId: user._id }}
+                    search={{ chat: "focus" }}
                     className="btn btn-ghost btn-sm btn-square"
                     title="Message"
                   >

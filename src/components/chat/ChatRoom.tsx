@@ -10,6 +10,7 @@ interface ChatRoomProps {
   chatRoomId: Id<"chatRooms">;
   currentUserId: Id<"users">;
   maxHeight?: string;
+  autoFocus?: boolean;
 }
 
 function formatMessageTime(timestamp: number): string {
@@ -19,7 +20,7 @@ function formatMessageTime(timestamp: number): string {
   });
 }
 
-export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96" }: ChatRoomProps) {
+export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96", autoFocus = false }: ChatRoomProps) {
   const { data: messages } = useSuspenseQuery(
     convexQuery(api.chatRoomMessages.listByRoom, { chatRoomId }),
   );
@@ -39,8 +40,11 @@ export function ChatRoom({ chatRoomId, currentUserId, maxHeight = "h-96" }: Chat
   const participantsMap = new Map(participants.map((p) => [p._id, p]));
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (autoFocus) {
+      inputRef.current?.focus();
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [autoFocus]);
 
   const handleSend = async () => {
     const content = newMessage.trim();

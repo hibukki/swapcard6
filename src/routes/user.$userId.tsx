@@ -3,13 +3,19 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ArrowLeft } from "lucide-react";
+import { z } from "zod";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { ChatEmbed } from "../components/chat/ChatEmbed";
 import { SharedMeetingsList } from "../components/SharedMeetingsList";
 import { UserProfileCard } from "../components/UserProfileCard";
 
+const userSearchSchema = z.object({
+  chat: z.enum(["focus"]).optional(),
+});
+
 export const Route = createFileRoute("/user/$userId")({
+  validateSearch: userSearchSchema,
   loader: async ({ context: { queryClient }, params }) => {
     const userQuery = convexQuery(api.users.get, {
       userId: params.userId as Id<"users">,
@@ -23,6 +29,7 @@ export const Route = createFileRoute("/user/$userId")({
 
 function UserPage() {
   const { userId } = Route.useParams();
+  const search = Route.useSearch();
   const navigate = useNavigate();
 
   const { data: user } = useSuspenseQuery(
@@ -67,7 +74,7 @@ function UserPage() {
           />
         )}
         <div className="not-prose">
-          <ChatEmbed otherUserId={userId as Id<"users">} />
+          <ChatEmbed otherUserId={userId as Id<"users">} autoFocus={search.chat === "focus"} />
         </div>
       </div>
     </div>

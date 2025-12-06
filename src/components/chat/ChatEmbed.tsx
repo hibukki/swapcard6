@@ -9,11 +9,12 @@ import { MessageCircle } from "lucide-react";
 
 interface ChatEmbedProps {
   otherUserId: Id<"users">;
+  autoFocus?: boolean;
 }
 
 const currentUserQuery = convexQuery(api.users.getCurrentUser, {});
 
-export function ChatEmbed({ otherUserId }: ChatEmbedProps) {
+export function ChatEmbed({ otherUserId, autoFocus = false }: ChatEmbedProps) {
   const { data: currentUser } = useSuspenseQuery(currentUserQuery);
   const getOrCreateRoom = useMutation(api.chatRooms.getOrCreate);
   const [chatRoomId, setChatRoomId] = useState<Id<"chatRooms"> | null>(null);
@@ -69,6 +70,7 @@ export function ChatEmbed({ otherUserId }: ChatEmbedProps) {
             chatRoomId={chatRoomId}
             currentUserId={currentUser._id}
             maxHeight="h-80"
+            autoFocus={autoFocus}
           />
         </Suspense>
       </div>
