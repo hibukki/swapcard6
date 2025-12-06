@@ -5,6 +5,12 @@ import { v } from "convex/values";
 export const utcTimestamp = v.number();
 export type UtcTimestamp = number;
 
+/** Relaxed URL validator - accepts domain-like strings (e.g., "example.com", "https://foo.bar") */
+export const urlString = v.string();
+
+/** Email validator - accepts basic email format */
+export const emailString = v.string();
+
 // Reusable field validators
 export const conferenceFields = {
   name: v.string(),
@@ -13,8 +19,8 @@ export const conferenceFields = {
   endDate: utcTimestamp,
   timezone: v.string(), // IANA timezone (e.g., "America/New_York") for display
   location: v.optional(v.string()),
-  imageUrl: v.optional(v.string()),
-  websiteUrl: v.optional(v.string()),
+  imageUrl: v.optional(urlString),
+  websiteUrl: v.optional(urlString),
 };
 
 export const meetingFields = {
@@ -87,14 +93,14 @@ export default defineSchema({
   users: defineTable({
     clerkId: v.string(),
     name: v.string(),
-    email: v.string(),
+    email: emailString,
     bio: v.optional(v.string()),
     company: v.optional(v.string()),
     role: v.optional(v.string()),
     interests: v.optional(v.array(v.string())),
     canHelpWith: v.optional(v.string()),
     needsHelpWith: v.optional(v.string()),
-    imageUrl: v.optional(v.string()),
+    imageUrl: v.optional(urlString),
     calendarToken: v.optional(v.string()),
     // isDemoBot: undefined means false
     isDemoBot: v.optional(v.boolean()),

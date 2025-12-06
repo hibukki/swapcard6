@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUserOrCrash } from "./users";
 import { getMeetingById, getMeetingOrCrash } from "./meetingUtils";
-import { meetingFields } from "./schema";
+import { meetingFields, utcTimestamp } from "./schema";
 
 const optionalMeetingFields = {
   title: v.optional(meetingFields.title),
@@ -156,8 +156,8 @@ export const remove = mutation({
 export const getBusySlots = query({
   args: {
     userId: v.id("users"),
-    startDate: v.number(),
-    endDate: v.number(),
+    startDate: utcTimestamp,
+    endDate: utcTimestamp,
   },
   handler: async (ctx, args) => {
     const participations = await ctx.db

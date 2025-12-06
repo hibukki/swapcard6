@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { getCurrentUserOrCrash } from "./users";
+import { utcTimestamp } from "./schema";
 
 export const clearAllData = internalMutation({
   args: {},
@@ -51,7 +52,7 @@ export const clearAllData = internalMutation({
 
 export const seedData = internalMutation({
   args: {
-    baseTimestamp: v.number(),
+    baseTimestamp: utcTimestamp,
     testRunId: v.optional(v.string()), // For test isolation - prefixes clerkIds
   },
   handler: async (ctx, args) => {
@@ -365,7 +366,7 @@ export const seedDataWithCurrentUserNow = mutation({
 // Public seed function for CLI usage (no auth required, just seeds base data)
 export const seedNow = mutation({
   args: {
-    baseTimestamp: v.optional(v.number()),
+    baseTimestamp: v.optional(utcTimestamp),
     testRunId: v.optional(v.string()), // For test isolation
   },
   handler: async (ctx, args) => {
@@ -381,7 +382,7 @@ export const seedNow = mutation({
 // Main seeding mutation that includes the current authenticated user
 export const seedDataWithCurrentUser = mutation({
   args: {
-    baseTimestamp: v.number(),
+    baseTimestamp: utcTimestamp,
   },
   handler: async (ctx, args) => {
     return await seedDataWithCurrentUserHandler(ctx, args);

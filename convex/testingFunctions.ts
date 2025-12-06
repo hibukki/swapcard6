@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { customMutation, customQuery } from "convex-helpers/server/customFunctions";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { utcTimestamp } from "./schema";
 
 function assertTestEnvironment() {
   if (process.env.IS_TEST !== "true") {
@@ -114,7 +115,7 @@ export const clearAllData = testingMutation({
 // Seed data with a fixed timestamp for deterministic e2e tests
 export const seedWithFixedTimestamp = testingMutation({
   args: {
-    baseTimestamp: v.number(),
+    baseTimestamp: utcTimestamp,
     userName: v.string(),
     testRunId: v.optional(v.string()), // For test isolation
   },
