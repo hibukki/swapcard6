@@ -201,6 +201,14 @@ export const listUsers = query({
   },
 });
 
+export const setShowPublicEvents = mutation({
+  args: { showPublicEvents: v.boolean() },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUserOrCrash(ctx);
+    await ctx.db.patch(user._id, { showPublicEvents: args.showPublicEvents });
+  },
+});
+
 // Find users who might be good connections based on text matching
 // Matches: current user's needsHelpWith vs others' canHelpWith, and vice versa
 // Also matches interests
