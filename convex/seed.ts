@@ -52,16 +52,18 @@ export const clearAllData = internalMutation({
 export const seedData = internalMutation({
   args: {
     baseTimestamp: v.number(),
+    testRunId: v.optional(v.string()), // For test isolation - prefixes clerkIds
   },
   handler: async (ctx, args) => {
     const now = args.baseTimestamp;
     const oneHour = 60 * 60 * 1000;
     const oneDay = 24 * oneHour;
+    const prefix = args.testRunId ? `${args.testRunId}_` : "";
 
     // Create sample users if they don't exist
     const sampleUsers = [
       {
-        clerkId: "seed_user_1",
+        clerkId: `${prefix}seed_user_1`,
         name: "Alice Johnson",
         email: "alice@example.com",
         bio: "Product Manager passionate about building great user experiences",
@@ -73,7 +75,7 @@ export const seedData = internalMutation({
         isDemoBot: true,
       },
       {
-        clerkId: "seed_user_2",
+        clerkId: `${prefix}seed_user_2`,
         name: "Bob Smith",
         email: "bob@example.com",
         bio: "Full-stack developer with 10+ years of experience",
@@ -85,7 +87,7 @@ export const seedData = internalMutation({
         isDemoBot: true,
       },
       {
-        clerkId: "seed_user_3",
+        clerkId: `${prefix}seed_user_3`,
         name: "Carol Davis",
         email: "carol@example.com",
         bio: "Marketing strategist helping companies grow",
@@ -97,7 +99,7 @@ export const seedData = internalMutation({
         isDemoBot: true,
       },
       {
-        clerkId: "seed_user_4",
+        clerkId: `${prefix}seed_user_4`,
         name: "David Chen",
         email: "david@example.com",
         bio: "Designer focused on creating delightful experiences",
@@ -109,7 +111,7 @@ export const seedData = internalMutation({
         isDemoBot: true,
       },
       {
-        clerkId: "seed_user_5",
+        clerkId: `${prefix}seed_user_5`,
         name: "Emma Wilson",
         email: "emma@example.com",
         bio: "Data scientist uncovering insights from data",
@@ -364,11 +366,15 @@ export const seedDataWithCurrentUserNow = mutation({
 export const seedNow = mutation({
   args: {
     baseTimestamp: v.optional(v.number()),
+    testRunId: v.optional(v.string()), // For test isolation
   },
   handler: async (ctx, args) => {
     const now = args.baseTimestamp ?? Date.now();
-    await ctx.scheduler.runAfter(0, internal.seed.seedData, { baseTimestamp: now });
-    return { success: true, message: "Seed data scheduled" };
+    await ctx.scheduler.runAfter(0, internal.seed.seedData, {
+      baseTimestamp: now,
+      testRunId: args.testRunId,
+    });
+    return { success: true, message: "Seed data scheduled", testRunId: args.testRunId };
   },
 });
 

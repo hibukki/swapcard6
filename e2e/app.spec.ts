@@ -83,6 +83,9 @@ const AUTH_TIMEOUT = 15000;
 // Fixed timestamp for deterministic screenshots: 2025-01-15T10:00:00Z
 const SEED_BASE_TIMESTAMP = 1736935200000;
 
+// Generate unique test run ID for isolation
+const TEST_RUN_ID = `test_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
 let convex: ConvexTestingHelper | ConvexHttpTestingHelper;
 
 test.beforeAll(async () => {
@@ -123,8 +126,13 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   try {
+    // Clean up test user
     await convex.mutation(api.testingFunctions.deleteTestUser, {
       name: TEST_USER_NAME,
+    });
+    // Clean up isolated test data
+    await convex.mutation(api.testingFunctions.cleanupTestRun, {
+      testRunId: TEST_RUN_ID,
     });
   } catch {
     // Ignore cleanup errors
@@ -175,6 +183,7 @@ test.describe("E2E User Flow", () => {
     await convex.mutation(api.testingFunctions.seedWithFixedTimestamp, {
       baseTimestamp: SEED_BASE_TIMESTAMP,
       userName: TEST_USER_NAME,
+      testRunId: TEST_RUN_ID,
     });
     // Wait for scheduled seed data to complete
     await page.waitForTimeout(2000);
@@ -199,7 +208,7 @@ test.describe("E2E User Flow", () => {
     await page.getByRole("button", { name: "Save & Find Connections" }).click();
 
     // Should redirect to attendees page after save
-    await expect(page.getByText("Alice Johnson")).toBeVisible({
+    await expect(page.getByText("Alice Johnson").first()).toBeVisible({
       timeout: AUTH_TIMEOUT,
     });
     // Scroll to top for consistent screenshot
@@ -277,11 +286,12 @@ test.describe("E2E User Flow", () => {
 
     // Go to attendees and find someone to chat with
     await page.goto("/attendees", { waitUntil: "networkidle" });
-    await expect(page.getByText("Alice Johnson")).toBeVisible();
+    await expect(page.getByText("Alice Johnson").first()).toBeVisible();
 
     // Click the message icon on Alice's card
     await page
       .getByText("Alice Johnson")
+      .first()
       .locator("../../../..")
       .getByRole("link", { name: "Message" })
       .click();

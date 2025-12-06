@@ -116,8 +116,9 @@ export const seedWithFixedTimestamp = testingMutation({
   args: {
     baseTimestamp: v.number(),
     userName: v.string(),
+    testRunId: v.optional(v.string()), // For test isolation
   },
-  handler: async (ctx, { baseTimestamp, userName }) => {
+  handler: async (ctx, { baseTimestamp, userName, testRunId }) => {
     // Find the test user
     const user = await ctx.db
       .query("users")
@@ -130,31 +131,89 @@ export const seedWithFixedTimestamp = testingMutation({
 
     const oneHour = 60 * 60 * 1000;
     const oneDay = 24 * oneHour;
+    const prefix = testRunId ? `${testRunId}_` : "";
 
-    // Run base seed data with fixed timestamp
-    await ctx.scheduler.runAfter(0, internal.seed.seedData, { baseTimestamp });
-
-    // Get or create seed users
+    // Create seed users synchronously (with prefix for isolation)
+    // These are the same users as in seed.ts but we create them here to ensure they exist
+    // before we create meetings that reference them
     const sampleUserData = [
-      { clerkId: "seed_user_1", name: "Alice Johnson", email: "alice@example.com", role: "Senior Product Manager", company: "TechCorp" },
-      { clerkId: "seed_user_2", name: "Bob Smith", email: "bob@example.com", role: "Lead Engineer", company: "StartupXYZ" },
-      { clerkId: "seed_user_3", name: "Carol Davis", email: "carol@example.com", role: "VP of Marketing", company: "GrowthLab" },
-      { clerkId: "seed_user_4", name: "David Chen", email: "david@example.com", role: "UX Designer", company: "DesignStudio" },
-      { clerkId: "seed_user_5", name: "Emma Wilson", email: "emma@example.com", role: "Senior Data Scientist", company: "DataCorp" },
+      {
+        clerkId: `${prefix}seed_user_1`,
+        name: "Alice Johnson",
+        email: "alice@example.com",
+        role: "Senior Product Manager",
+        company: "TechCorp",
+        bio: "Passionate about building products that make a difference. 10+ years in tech.",
+        interests: ["AI Safety", "Product Strategy", "User Research"],
+        canHelpWith: "Product management, roadmap planning, user research",
+        needsHelpWith: "AI/ML integration, data science",
+      },
+      {
+        clerkId: `${prefix}seed_user_2`,
+        name: "Bob Smith",
+        email: "bob@example.com",
+        role: "Lead Engineer",
+        company: "StartupXYZ",
+        bio: "Full-stack developer with a passion for clean code and scalable systems.",
+        interests: ["System Design", "Open Source", "DevOps"],
+        canHelpWith: "Technical architecture, code reviews, mentoring",
+        needsHelpWith: "Product design, fundraising",
+      },
+      {
+        clerkId: `${prefix}seed_user_3`,
+        name: "Carol Davis",
+        email: "carol@example.com",
+        role: "VP of Marketing",
+        company: "GrowthLab",
+        bio: "Marketing strategies that grow brands. Ex-Google, ex-Meta.",
+        interests: ["Growth Hacking", "Content Strategy", "Analytics"],
+        canHelpWith: "Marketing strategy, brand building, growth",
+        needsHelpWith: "Engineering resources, product design",
+      },
+      {
+        clerkId: `${prefix}seed_user_4`,
+        name: "David Chen",
+        email: "david@example.com",
+        role: "UX Designer",
+        company: "DesignStudio",
+        bio: "Creating delightful user experiences. Design thinking advocate.",
+        interests: ["UI Design", "Accessibility", "Design Systems"],
+        canHelpWith: "UX design, user testing, design systems",
+        needsHelpWith: "Engineering implementation, analytics",
+      },
+      {
+        clerkId: `${prefix}seed_user_5`,
+        name: "Emma Wilson",
+        email: "emma@example.com",
+        role: "Senior Data Scientist",
+        company: "DataCorp",
+        bio: "Data scientist passionate about using ML for social good.",
+        interests: ["Machine Learning", "AI Ethics", "Data Visualization"],
+        canHelpWith: "Data science, ML models, analytics",
+        needsHelpWith: "Product management, front-end development",
+      },
     ];
 
     const seedUserIds: typeof user._id[] = [];
     for (const userData of sampleUserData) {
+      // Check if user already exists
       const existing = await ctx.db
         .query("users")
         .withIndex("by_clerkId", (q) => q.eq("clerkId", userData.clerkId))
         .unique();
       if (existing) {
         seedUserIds.push(existing._id);
+      } else {
+        // Create the user
+        const newUserId = await ctx.db.insert("users", userData);
+        seedUserIds.push(newUserId);
       }
     }
 
-    // Create meetings for the test user (same as seedDataWithCurrentUser)
+    // Run base seed data (public meetings, conferences) with fixed timestamp
+    await ctx.scheduler.runAfter(0, internal.seed.seedData, { baseTimestamp, testRunId });
+
+    // Create meetings for the test user
     if (seedUserIds[1]) {
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: seedUserIds[1],
@@ -183,6 +242,92 @@ export const seedWithFixedTimestamp = testingMutation({
       await ctx.db.insert("meetingParticipants", { meetingId, userId: user._id, status: "pending" });
     }
 
-    return { success: true };
+    return { success: true, testRunId };
+  },
+});
+
+// Clean up test data by testRunId prefix
+export const cleanupTestRun = testingMutation({
+  args: {
+    testRunId: v.string(),
+  },
+  handler: async (ctx, { testRunId }) => {
+    const prefix = `${testRunId}_`;
+
+    // Find all users with the testRunId prefix in their clerkId
+    const users = await ctx.db.query("users").collect();
+    const testUsers = users.filter((u) => u.clerkId.startsWith(prefix));
+    const testUserIds = new Set(testUsers.map((u) => u._id));
+
+    // Delete meeting participants for test users
+    const participants = await ctx.db.query("meetingParticipants").collect();
+    for (const p of participants) {
+      if (testUserIds.has(p.userId)) {
+        await ctx.db.delete(p._id);
+      }
+    }
+
+    // Delete meetings created by test users
+    const meetings = await ctx.db.query("meetings").collect();
+    for (const m of meetings) {
+      if (testUserIds.has(m.creatorId)) {
+        // Delete remaining participants of this meeting
+        const meetingParticipants = await ctx.db
+          .query("meetingParticipants")
+          .withIndex("by_meeting", (q) => q.eq("meetingId", m._id))
+          .collect();
+        for (const p of meetingParticipants) {
+          await ctx.db.delete(p._id);
+        }
+        await ctx.db.delete(m._id);
+      }
+    }
+
+    // Delete chat room users for test users
+    const chatRoomUsers = await ctx.db.query("chatRoomUsers").collect();
+    for (const u of chatRoomUsers) {
+      if (testUserIds.has(u.userId)) {
+        await ctx.db.delete(u._id);
+      }
+    }
+
+    // Delete chat messages from test users
+    const chatMessages = await ctx.db.query("chatRoomMessages").collect();
+    for (const m of chatMessages) {
+      if (testUserIds.has(m.senderId)) {
+        await ctx.db.delete(m._id);
+      }
+    }
+
+    // Delete conferences created by test users
+    const conferences = await ctx.db.query("conferences").collect();
+    for (const c of conferences) {
+      if (testUserIds.has(c.createdBy)) {
+        // Delete conference attendees first
+        const attendees = await ctx.db
+          .query("conferenceAttendees")
+          .withIndex("by_conference", (q) => q.eq("conferenceId", c._id))
+          .collect();
+        for (const a of attendees) {
+          await ctx.db.delete(a._id);
+        }
+        await ctx.db.delete(c._id);
+      }
+    }
+
+    // Delete notifications for test users
+    const notifications = await ctx.db.query("notifications").collect();
+    for (const n of notifications) {
+      if (testUserIds.has(n.userId)) {
+        await ctx.db.delete(n._id);
+      }
+    }
+
+    // Finally, delete the test users themselves
+    for (const user of testUsers) {
+      await ctx.db.delete(user._id);
+    }
+
+    return { success: true, deletedUsers: testUsers.length };
   },
 });
