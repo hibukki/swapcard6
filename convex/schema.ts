@@ -1,12 +1,16 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+/** UTC timestamp in milliseconds since epoch */
+export const utcTimestamp = v.number();
+export type UtcTimestamp = number;
+
 // Reusable field validators
 export const conferenceFields = {
   name: v.string(),
   description: v.optional(v.string()),
-  startDate: v.number(), // UTC timestamp
-  endDate: v.number(), // UTC timestamp
+  startDate: utcTimestamp,
+  endDate: utcTimestamp,
   timezone: v.string(), // IANA timezone (e.g., "America/New_York") for display
   location: v.optional(v.string()),
   imageUrl: v.optional(v.string()),
@@ -16,7 +20,7 @@ export const conferenceFields = {
 export const meetingFields = {
   title: v.string(),
   description: v.optional(v.string()),
-  scheduledTime: v.number(), // UTC timestamp
+  scheduledTime: utcTimestamp,
   duration: v.number(), // in minutes
   location: v.optional(v.string()),
   isPublic: v.boolean(),
@@ -137,13 +141,13 @@ export default defineSchema({
   // LLM rate limiting - tracks usage per window (minute/hour/day)
   llmRateLimits: defineTable({
     window: llmRateLimitWindowValidator,
-    windowStart: v.number(), // UTC timestamp of window start
+    windowStart: utcTimestamp,
     count: v.number(),
   }).index("by_window_and_start", ["window", "windowStart"]),
 
   // Chat rooms - identified by participants, no names for MVP
   chatRooms: defineTable({
-    lastMessageAt: v.optional(v.number()), // For sorting room list by recent activity
+    lastMessageAt: v.optional(utcTimestamp),
   }).index("by_lastMessage", ["lastMessageAt"]),
 
   // Chat room participants
