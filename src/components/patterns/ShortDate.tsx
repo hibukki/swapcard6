@@ -10,12 +10,7 @@ interface ShortDateProps {
 
 /**
  * Displays a date with short formatting and a tooltip showing the full date.
- *
- * - Today: "10:30 AM"
- * - Within 5 days: "Tuesday, 10:30 AM"
- * - Later: "Jan 15, 10:30 AM"
- *
- * Hover shows full date like "Wednesday, January 15, 2025, 10:30 AM"
+ * See `formatShortDate` in date-format.ts for formatting rules.
  */
 export function ShortDate({
   timestamp,
@@ -24,6 +19,7 @@ export function ShortDate({
 }: ShortDateProps) {
   const { display, tooltip } = formatShortDate(timestamp, {
     includeTime,
+    locale: "en-US",
   });
 
   return (
@@ -48,6 +44,8 @@ export function ShortTimeRange({
   className,
 }: ShortTimeRangeProps) {
   return (
-    <span className={className}>{formatTimeRange(startTime, endTime)}</span>
+    <span className={className}>
+      {formatTimeRange(startTime, endTime, "en-US")}
+    </span>
   );
 }

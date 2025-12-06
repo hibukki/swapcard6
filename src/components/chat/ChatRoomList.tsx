@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { Id, Doc } from "../../../convex/_generated/dataModel";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { formatShortDate } from "@/lib/date-format";
+import { formatChatTimestamp } from "@/lib/date-format";
 
 interface ChatRoomWithDetails {
   room: Doc<"chatRooms">;
@@ -14,17 +14,6 @@ interface ChatRoomListProps {
   users: Map<Id<"users">, Doc<"users">>;
   currentUserId: Id<"users">;
   selectedRoomId?: Id<"chatRooms">;
-}
-
-function formatTimestamp(timestamp: number | undefined): string {
-  if (!timestamp) return "";
-  // For chat: today shows time only, recent shows weekday only
-  const { display } = formatShortDate(timestamp, { includeTime: true });
-  // If it's today, formatShortDate returns just the time (e.g., "10:30 AM")
-  // If it's recent, it returns "Tuesday, 10:30 AM" - we just want the weekday
-  // If it's older, it returns "Jan 15, 10:30 AM" - we just want the date
-  const parts = display.split(", ");
-  return parts.length > 1 ? parts[0] : display;
 }
 
 function getOtherParticipants(
@@ -94,7 +83,9 @@ export function ChatRoomList({
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-medium truncate">{displayName}</span>
                 <span className="text-xs text-muted-foreground flex-shrink-0">
-                  {formatTimestamp(room.lastMessageAt)}
+                  {room.lastMessageAt
+                    ? formatChatTimestamp(room.lastMessageAt)
+                    : ""}
                 </span>
               </div>
             </div>
