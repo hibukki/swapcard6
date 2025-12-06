@@ -6,6 +6,9 @@ interface FormFieldProps {
   label: string;
   htmlFor: string;
   description?: string;
+  // TODO: Consider accepting StandardSchemaV1Issue[] directly instead of string
+  // TanStack Form provides errors as StandardSchemaV1Issue[] with .message property,
+  // requiring manual mapping: errors.map((e) => e.message).join(", ")
   error?: string;
   className?: string;
   children: React.ReactNode;

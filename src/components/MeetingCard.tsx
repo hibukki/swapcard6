@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { handleMutationError } from "@/lib/error-handling";
 
 type ParticipantStatus =
   | "creator"
@@ -63,7 +64,7 @@ export function MeetingCard({
       await join({ meetingId: meeting._id });
       onActionComplete?.();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to join meeting");
+      handleMutationError(error, "Failed to join meeting");
     } finally {
       setIsLoading(false);
     }
@@ -75,9 +76,7 @@ export function MeetingCard({
       await leave({ meetingId: meeting._id });
       onActionComplete?.();
     } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Failed to leave meeting"
-      );
+      handleMutationError(error, "Failed to leave meeting");
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +88,7 @@ export function MeetingCard({
       await respond({ meetingId: meeting._id, accept });
       onActionComplete?.();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to respond");
+      handleMutationError(error, "Failed to respond");
     } finally {
       setIsLoading(false);
     }

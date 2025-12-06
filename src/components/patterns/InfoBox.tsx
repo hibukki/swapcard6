@@ -17,15 +17,7 @@ const infoBoxVariants = cva("flex items-start gap-3 p-3 rounded-lg", {
   },
 });
 
-const iconColorMap = {
-  default: "text-muted-foreground",
-  success: "text-success",
-  info: "text-info",
-  warning: "text-warning",
-  destructive: "text-destructive",
-} as const;
-
-const titleColorMap = {
+const colorMap = {
   default: "text-muted-foreground",
   success: "text-success",
   info: "text-info",
@@ -47,6 +39,10 @@ export function InfoBox({
   variant = "default",
   className,
 }: InfoBoxProps) {
+  // VariantProps makes variant nullable in the type system, even though it has a default value
+  // Using nullish coalescing to satisfy TypeScript's type checker
+  const safeVariant = variant ?? "default";
+
   if (!icon && !title) {
     return (
       <div className={cn(infoBoxVariants({ variant }), className)}>
@@ -61,7 +57,7 @@ export function InfoBox({
         <div
           className={cn(
             "flex-shrink-0 mt-0.5 [&>svg]:h-5 [&>svg]:w-5",
-            iconColorMap[variant ?? "default"]
+            colorMap[safeVariant]
           )}
         >
           {icon}
@@ -72,7 +68,7 @@ export function InfoBox({
           <span
             className={cn(
               "text-sm font-semibold",
-              titleColorMap[variant ?? "default"]
+              colorMap[safeVariant]
             )}
           >
             {title}

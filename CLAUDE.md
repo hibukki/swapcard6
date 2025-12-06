@@ -5,7 +5,7 @@ These are suggestions/preferences. If you don't like them, I prefer if you said 
 - Full-stack TypeScript app: React + Vite + TanStack Router (frontend), Convex (backend), Clerk (auth)
 
 - Import alias: `@/` maps to `src/` directory
-- Tailwind CSS 4, daisyUI 5: All config in `src/index.css` via CSS syntax, NOT tailwind.config.js
+- Tailwind CSS 4 + shadcn/ui: Component library built on Radix UI with Tailwind CSS styling
 - Typography: Uses `@tailwindcss/typography` with `prose prose-invert` at root level, use `not-prose` to escape (e.g., for buttons/tables)
 - Environment variables: Client vars need `VITE_` prefix, Convex vars set in dashboard
 - Package manager: Always use `pnpm` and `pnpx`, NOT `npm` or `npx`
@@ -185,63 +185,73 @@ pnpx convex deploy --preview-name my-unique-preview-name
 - Disable during submit: `<button disabled={!form.state.canSubmit || form.state.isSubmitting}>`
 - Async validation: use `onChangeAsync` for server-side checks
 
-## Styling with DaisyUI
+## Styling with shadcn/ui
 
-### Class Organization
+### Component System
 
-- `component`: Main class (btn), `part`: Child elements (card-title), `style`: Visual variants (btn-outline)
-- `behavior`: State (btn-active), `color`: Colors (btn-primary), `size`: Sizes (btn-lg)
-- `placement`: Position (dropdown-top), `direction`: Orientation (menu-horizontal), `modifier`: Special (btn-wide)
+- Components are built on Radix UI primitives with Tailwind CSS styling
+- Import components directly from their files: `import { Button } from "@/components/ui/button"`
+- Customize via `src/index.css` using CSS variables for theming
+- Use the `cn()` utility from `@/lib/utils` to merge Tailwind classes safely
 
-### v4 → v5 Breaking Changes
+### Available UI Components
 
-- artboard / phone-\* → (removed) ➔ use Tailwind w-/h- classes
-- btm-nav / btm-nav-\*/btm-nav-active → dock / dock-\*/dock-active
-- online / offline / placeholder (avatars) → avatar-online / avatar-offline / avatar-placeholder
-- card-bordered → card-border
-- card-compact → (removed) ➔ use card-sm (or card-xs, etc.)
-- .active/.disabled (menus) → menu-active / menu-disabled (add w-full if needed)
-- tabs-bordered / tabs-boxed / tabs-lifted → tabs-border / tabs-box / tabs-lift
-- btn-group / input-group → join + join-item on each child
-- form-control / label-text / label-text-alt → (removed) ➔ use fieldset/legend or new DaisyUI form-group utilities
-- input-bordered / select-bordered / file-input-bordered / textarea-border → (removed) ➔ base classes include border; use –ghost variants for no border
-- footer (horizontal by default) → add footer-horizontal at desired breakpoint
-- .hover on <tr> → (removed) ➔ use Tailwind hover:bg-\* (e.g., hover:bg-base-300)
-- mask-parallelogram / mask-parallelogram-2/3/4 → (removed) ➔ implement with custom CSS
-- .menu (vertical) no longer w-full by default → add w-full if you need full width
+Base components in `src/components/ui/`:
+- `Button`: Clickable buttons with variants (default, destructive, success, outline, secondary, ghost, link)
+- `Card`: Container with CardHeader, CardTitle, CardDescription, CardContent, CardFooter parts
+- `Badge`: Small status indicators with variants (default, secondary, success, warning, destructive, outline)
+- `Input`, `Textarea`, `Label`: Form input components
+- `Dialog`: Modal dialogs with DialogTrigger, DialogContent, DialogHeader, DialogTitle, etc.
+- `DropdownMenu`: Dropdown menus with various sub-components
+- `Avatar`: User avatars with AvatarImage and AvatarFallback
+- `Separator`: Visual dividers
+- `Checkbox`: Checkbox inputs
+- `Spinner`: Loading indicators
 
-### Key or Unfamiliar Components Reference
+Pattern components in `src/components/patterns/`:
+- `FormField`: Form field wrapper with label, description, and error display
+- `InfoBox`: Callout boxes with icon, title, and variant styling (default, success, info, warning, destructive)
+- `StatusBadge`: Meeting status badges with appropriate colors
+- `UserAvatarRow`: User avatar with name in a row layout
+- `EmptyState`: Empty state displays with icon, title, and description
 
-- When using a component you aren't familiar with, always check its docs page.
-- `dock`: Bottom navigation bar with `dock-label` parts, see [docs](https://daisyui.com/components/dock/)
-- `filter`: Radio button groups with `filter-reset` for clearing selection, see [docs](https://daisyui.com/components/filter/)
-- `list`: Vertical layout for data rows using `list-row` class for each item
-- `fieldset`: Form grouping with `fieldset-legend` for titles and `label` for descriptions
-- `floating-label`: Labels that float above inputs when focused, use as parent wrapper
-- `status`: Tiny status indicators (`status-success`, `status-error`, etc.)
-- `validator`: Automatic form validation styling with `validator-hint` for error messages
-- `theme-controller`: Controls page theme via checkbox/radio with `value="{theme-name}"`
-- `diff`: Side-by-side comparison with `diff-item-1`, `diff-item-2`, `diff-resizer` parts
-- `calendar`: Apply `cally`, `pika-single`, or `react-day-picker` classes to respective libraries
-- `swap`: Toggle visibility of elements using `swap-on`/`swap-off` with checkbox or `swap-active` class
-- [Modal](https://daisyui.com/components/modal/): use with HTML dialog
-- [Drawer](https://daisyui.com/components/drawer/): Grid layout with sidebar toggle using `drawer-toggle` checkbox
-- [Dropdown](https://daisyui.com/components/dropdown/): Details/summary, popover API, or CSS focus methods
-- [Accordion](https://daisyui.com/components/accordion/): Radio inputs for exclusive opening using `collapse` class
+### Custom Additions
 
-### Usage Rules
+**Button component customizations:**
+- `active` prop: Applies accent background to indicate active state (custom addition, not in standard shadcn)
+- `success` variant: Green success button styling
+- Custom sizes: `xs`, `icon-sm`, `icon-xs` for smaller buttons
 
-- Responsive patterns: `lg:menu-horizontal`, `sm:card-horizontal`
-- Prefer daisyUI colors (`bg-primary`) over Tailwind colors (`bg-blue-500`) for theme consistency
-- Use `*-content` colors for text on colored backgrounds
-- Typography plugin adds default margins to headings (h1, h2, h3, etc.) - use `mt-0` to override when precise spacing is needed
+### Component Variants with CVA
+
+Components use `class-variance-authority` (cva) for variant management:
+```tsx
+const buttonVariants = cva("base-classes", {
+  variants: {
+    variant: { default: "...", destructive: "..." },
+    size: { default: "...", sm: "..." },
+  },
+  defaultVariants: { variant: "default", size: "default" },
+});
+```
 
 ### Color System
 
-- Semantic colors: `primary`, `secondary`, `accent`, `neutral`, `base-100/200/300`
-- Status colors: `info`, `success`, `warning`, `error`
-- Each color has matching `-content` variant for contrasting text
-- Custom themes use OKLCH format, create at [theme generator](https://daisyui.com/theme-generator/)
+CSS variables defined in `src/index.css`:
+- Semantic: `primary`, `secondary`, `accent`, `muted`, `card`, `popover`
+- Status: `success`, `info`, `warning`, `destructive`
+- Text: Each color has matching `-foreground` variant (e.g., `primary-foreground`)
+- Use Tailwind classes: `bg-primary`, `text-primary-foreground`, `border-border`
+- Dark mode automatically handled via CSS variables
+
+### Usage Guidelines
+
+- Always import components from individual files, not from `@/components/ui` barrel export
+- Use pattern components (`FormField`, `InfoBox`, etc.) for consistent UX
+- Combine components with Tailwind utilities for custom styling
+- For complex styling, use the `cn()` utility to merge classes
+- Typography plugin adds default margins to headings - use `mt-0` to override when precise spacing is needed
+- Reference shadcn/ui docs when unfamiliar: [ui.shadcn.com](https://ui.shadcn.com)
 
 ## Creating pull requests
 
@@ -251,7 +261,7 @@ This is like adding the product-manager request, and not only the engineering so
 
 ## Other Guidelines
 
-- When stuck: consider official docs (docs.convex.dev, tanstack.com, daisyui.com)
+- When stuck: consider official docs (docs.convex.dev, tanstack.com, ui.shadcn.com)
 - Verify responsive design at multiple breakpoints
 - Import icons from `lucide-react`
 - When making identical changes to multiple occurrences, use Edit with `replace_all: true` instead of MultiEdit. Avoid MultiEdit whenever possible, it is unreliable.

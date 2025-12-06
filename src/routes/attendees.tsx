@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { handleMutationError } from "@/lib/error-handling";
 import {
   Dialog,
   DialogContent,
@@ -412,7 +413,7 @@ function MeetingRequestModal({
       });
       onClose();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to send request");
+      handleMutationError(error, "Failed to send request");
     } finally {
       setIsSubmitting(false);
     }
