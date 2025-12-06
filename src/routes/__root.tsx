@@ -114,7 +114,7 @@ function RootComponent() {
                 </header>
 
                 {/* Main content */}
-                <main className="flex-1 p-4 prose prose-invert max-w-none">
+                <main className="flex-1 p-4 prose dark:prose-invert max-w-none">
                   <Outlet />
                 </main>
 
@@ -162,7 +162,7 @@ function UnauthenticatedView() {
           </div>
         </div>
       </header>
-      <main className="flex-1 container mx-auto p-4 prose prose-invert max-w-none">
+      <main className="flex-1 container mx-auto p-4 prose dark:prose-invert max-w-none">
         <Outlet />
       </main>
       <footer className="text-center p-4 text-muted-foreground">
