@@ -345,9 +345,6 @@ function CalendarPage() {
           usersMap={usersMap}
           participantUserIds={(participantUserIds ?? {}) as MeetingParticipantsMap}
           onMeetingClick={setSelectedMeeting}
-          isEditingAvailability={isEditingAvailability}
-          onCreateBusy={handleCreateBusy}
-          onDeleteBusy={handleDeleteBusy}
         />
       )}
 
@@ -572,18 +569,12 @@ function MonthView({
   usersMap,
   participantUserIds,
   onMeetingClick,
-  isEditingAvailability,
-  onCreateBusy,
-  onDeleteBusy,
 }: {
   meetings: CalendarMeetingView[];
   currentDate: Date;
   usersMap: Map<Id<"users">, Doc<"users">>;
   participantUserIds: MeetingParticipantsMap;
   onMeetingClick: (meeting: CalendarMeetingView) => void;
-  isEditingAvailability: boolean;
-  onCreateBusy: (scheduledTime: number, durationMinutes: number) => Promise<void>;
-  onDeleteBusy: (meetingId: Id<"meetings">) => Promise<void>;
 }) {
   // Get first day of month
   const firstDay = new Date(
@@ -651,23 +642,10 @@ function MonthView({
             return meetingDate.toDateString() === date.toDateString();
           });
 
-          const handleDayClick = () => {
-            if (isEditingAvailability) {
-              const busyTime = new Date(date);
-              busyTime.setHours(7, 0, 0, 0);
-              void onCreateBusy(busyTime.getTime(), 900); // 7am-10pm = 15 hours
-            }
-          };
-
           return (
             <div
               key={day}
-              className={`border-r border-b border-border p-2 min-h-[100px] transition-colors ${
-                isEditingAvailability
-                  ? "cursor-pointer hover:bg-destructive/10"
-                  : "hover:bg-muted/50"
-              }`}
-              onClick={handleDayClick}
+              className="border-r border-b border-border p-2 min-h-[100px] hover:bg-muted/50 transition-colors"
             >
               <div
                 className={`text-sm mb-1 ${isToday ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center font-bold" : ""}`}
@@ -677,27 +655,22 @@ function MonthView({
               <div className="space-y-1">
                 {dayMeetings.slice(0, 3).map((calendarMeeting) => {
                   const styles = categoryStyles[calendarMeeting.display.category];
-                  const isBusy = calendarMeeting.display.category === "busy";
-                  const displayTitle = isBusy ? "Busy" : getDisplayTitle(calendarMeeting, usersMap, participantUserIds);
+                  const displayTitle = calendarMeeting.display.category === "busy"
+                    ? "Busy"
+                    : getDisplayTitle(calendarMeeting, usersMap, participantUserIds);
                   const tooltip = getEventTooltip(
                     calendarMeeting,
                     usersMap.get(calendarMeeting.meeting.creatorId)?.name
                   );
 
-                  const handleEventClick = (e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    if (isEditingAvailability && isBusy) {
-                      void onDeleteBusy(calendarMeeting.meeting._id);
-                    } else if (!isEditingAvailability) {
-                      onMeetingClick(calendarMeeting);
-                    }
-                  };
-
                   return (
                     <div
                       key={calendarMeeting.meeting._id}
-                      className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity border-l-4 ${styles.border} ${styles.borderOnly ? "bg-background" : styles.bg} ${styles.text} ${styles.strikethrough ? "line-through" : ""} ${isEditingAvailability && !isBusy ? "opacity-40" : ""}`}
-                      onClick={handleEventClick}
+                      className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity border-l-4 ${styles.border} ${styles.borderOnly ? "bg-background" : styles.bg} ${styles.text} ${styles.strikethrough ? "line-through" : ""}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMeetingClick(calendarMeeting);
+                      }}
                       title={tooltip}
                     >
                       {styles.warningIcon && "⚠️ "}
