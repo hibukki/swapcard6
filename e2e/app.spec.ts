@@ -1,3 +1,4 @@
+import { clerk } from "@clerk/testing/playwright";
 import { expect, test } from "@playwright/test";
 import { ConvexTestingHelper } from "convex-helpers/testing";
 import { ConvexHttpClient } from "convex/browser";
@@ -78,7 +79,6 @@ async function screenshot(
 
 const TEST_EMAIL = "e2e+clerk_test@example.com";
 const TEST_USER_NAME = "E2E";
-const CLERK_TEST_CODE = "424242";
 const AUTH_TIMEOUT = 15000;
 // Fixed timestamp for deterministic screenshots: 2025-01-15T10:00:00Z
 const SEED_BASE_TIMESTAMP = 1736935200000;
@@ -141,22 +141,20 @@ test.afterAll(async () => {
 });
 
 async function signIn(page: import("@playwright/test").Page) {
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await page.getByRole("textbox", { name: "Email address" }).fill(TEST_EMAIL);
-  await page.getByRole("button", { name: "Continue" }).click();
-  // Wait for Clerk to be ready to accept the verification code
-  const codeInput = page.getByRole("textbox", { name: "Enter verification code" });
-  await codeInput.waitFor({ state: "visible", timeout: AUTH_TIMEOUT });
-  await page.waitForTimeout(500); // Give Clerk a moment to initialize
-  await codeInput.pressSequentially(CLERK_TEST_CODE);
+  await clerk.signIn({
+    page,
+    signInParams: {
+      strategy: "email_code",
+      identifier: TEST_EMAIL,
+    },
+  });
   await expect(
     page.getByRole("button", { name: "Open user menu" }),
   ).toBeVisible({ timeout: AUTH_TIMEOUT });
 }
 
 async function signOut(page: import("@playwright/test").Page) {
-  await page.getByRole("button", { name: "Open user menu" }).click();
-  await page.getByRole("menuitem", { name: "Sign out" }).click();
+  await clerk.signOut({ page });
   await expect(
     page.getByRole("button", { name: "Sign in", exact: true }),
   ).toBeVisible({ timeout: AUTH_TIMEOUT });

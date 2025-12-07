@@ -47,6 +47,10 @@ export default defineConfig({
   retries: 1,
   projects: [
     {
+      name: "setup",
+      testMatch: /global\.setup\.ts/,
+    },
+    {
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
@@ -60,6 +64,7 @@ export default defineConfig({
           },
         }),
       },
+      dependencies: ["setup"],
     },
   ],
   webServer: {
