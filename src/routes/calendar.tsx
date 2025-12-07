@@ -458,7 +458,7 @@ function WeekView({
               });
 
               const handleSlotClick = () => {
-                if (isEditingAvailability && slotMeetings.length === 0) {
+                if (isEditingAvailability) {
                   void onCreateBusy(slotStart.getTime());
                 }
               };
