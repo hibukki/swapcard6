@@ -138,12 +138,12 @@ function CalendarPage() {
   const createMeeting = useMutation(api.meetings.create);
   const removeMeeting = useMutation(api.meetings.remove);
 
-  const handleCreateBusy = async (scheduledTime: number) => {
+  const handleCreateBusy = async (scheduledTime: number, durationMinutes: number) => {
     await createMeeting({
       title: "",
       description: "",
       scheduledTime,
-      duration: 30,
+      duration: durationMinutes,
       location: "",
       isPublic: false,
       maxParticipants: 1,
@@ -284,15 +284,17 @@ function CalendarPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            size="sm"
-            variant={isEditingAvailability ? "default" : "outline"}
-            onClick={() => setIsEditingAvailability(!isEditingAvailability)}
-            className={isEditingAvailability ? "bg-destructive hover:bg-destructive/90" : ""}
-          >
-            <CalendarClock className="w-4 h-4 mr-1" />
-            {isEditingAvailability ? "Done" : "Edit Availability"}
-          </Button>
+          {view === "week" && (
+            <Button
+              size="sm"
+              variant={isEditingAvailability ? "default" : "outline"}
+              onClick={() => setIsEditingAvailability(!isEditingAvailability)}
+              className={isEditingAvailability ? "bg-destructive hover:bg-destructive/90" : ""}
+            >
+              <CalendarClock className="w-4 h-4 mr-1" />
+              {isEditingAvailability ? "Done" : "Edit Availability"}
+            </Button>
+          )}
           <div className="flex gap-1">
             <Button
               size="sm"
@@ -305,6 +307,7 @@ function CalendarPage() {
               size="sm"
               variant={view === "month" ? "default" : "outline"}
               onClick={() => setView("month")}
+              disabled={isEditingAvailability}
             >
               Month
             </Button>
@@ -388,7 +391,7 @@ function WeekView({
   participantUserIds: MeetingParticipantsMap;
   onMeetingClick: (meeting: CalendarMeetingView) => void;
   isEditingAvailability: boolean;
-  onCreateBusy: (scheduledTime: number) => Promise<void>;
+  onCreateBusy: (scheduledTime: number, durationMinutes: number) => Promise<void>;
   onDeleteBusy: (meetingId: Id<"meetings">) => Promise<void>;
 }) {
   // Get the start of the week (Sunday)
@@ -486,7 +489,7 @@ function WeekView({
                   if (isBottomHalf) {
                     slotTime.setMinutes(30);
                   }
-                  void onCreateBusy(slotTime.getTime());
+                  void onCreateBusy(slotTime.getTime(), 30);
                 }
               };
 
@@ -579,7 +582,7 @@ function MonthView({
   participantUserIds: MeetingParticipantsMap;
   onMeetingClick: (meeting: CalendarMeetingView) => void;
   isEditingAvailability: boolean;
-  onCreateBusy: (scheduledTime: number) => Promise<void>;
+  onCreateBusy: (scheduledTime: number, durationMinutes: number) => Promise<void>;
   onDeleteBusy: (meetingId: Id<"meetings">) => Promise<void>;
 }) {
   // Get first day of month
@@ -651,8 +654,8 @@ function MonthView({
           const handleDayClick = () => {
             if (isEditingAvailability) {
               const busyTime = new Date(date);
-              busyTime.setHours(9, 0, 0, 0);
-              void onCreateBusy(busyTime.getTime());
+              busyTime.setHours(7, 0, 0, 0);
+              void onCreateBusy(busyTime.getTime(), 900); // 7am-10pm = 15 hours
             }
           };
 
