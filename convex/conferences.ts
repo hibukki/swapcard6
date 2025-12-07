@@ -67,6 +67,7 @@ export const update = mutation({
   },
 });
 
+
 export const remove = mutation({
   args: { conferenceId: v.id("conferences") },
   handler: async (ctx, args) => {

@@ -15,6 +15,7 @@ import type * as chatRoomUsers from "../chatRoomUsers.js";
 import type * as chatRooms from "../chatRooms.js";
 import type * as conferenceAttendees from "../conferenceAttendees.js";
 import type * as conferenceAttendeesUtils from "../conferenceAttendeesUtils.js";
+import type * as conferenceMeetingSpots from "../conferenceMeetingSpots.js";
 import type * as conferenceUtils from "../conferenceUtils.js";
 import type * as conferences from "../conferences.js";
 import type * as health from "../health.js";
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   chatRooms: typeof chatRooms;
   conferenceAttendees: typeof conferenceAttendees;
   conferenceAttendeesUtils: typeof conferenceAttendeesUtils;
+  conferenceMeetingSpots: typeof conferenceMeetingSpots;
   conferenceUtils: typeof conferenceUtils;
   conferences: typeof conferences;
   health: typeof health;

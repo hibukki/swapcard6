@@ -47,6 +47,7 @@ const navLinks = [
   { to: "/agenda", label: "Agenda" },
   { to: "/chats", label: "Chat" },
   { to: "/profile", label: "Profile" },
+  { to: "/config", label: "Config" },
 ] as const;
 
 function RootComponent() {
