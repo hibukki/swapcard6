@@ -27,49 +27,29 @@ These are suggestions/preferences. If you don't like them, I prefer if you said 
 
 You can't run a local backend, but you can deploy a Convex preview deployment. This requires a `CONVEX_DEPLOY_KEY` environment variable (should be pre-configured).
 
-See [Convex Preview Deployments docs](https://docs.convex.dev/production/hosting/preview-deployments).
-
-**Step 1: Deploy the preview**
+**Quick setup:**
 ```sh
-# Use a unique name (e.g., branch name or feature name)
-pnpx convex deploy --preview-create my-unique-preview-name
+pnpm run setup:preview    # Creates preview deployment and .env.local
+pnpm run dev:frontend     # Start the frontend
 ```
 
-This will output the preview URL, e.g., `https://aware-tapir-512.convex.cloud`
+The script uses `claude-dev` as the default preview name. Pass a custom name: `pnpm run setup:preview my-feature`
 
-**Step 2: Create .env.local with the preview URL**
+**Re-deploy after backend changes:**
 ```sh
-cat > .env.local << 'EOF'
-VITE_CLERK_PUBLISHABLE_KEY=pk_test_d29ya2FibGUtZG9nLTkzLmNsZXJrLmFjY291bnRzLmRldiQ
-VITE_CONVEX_URL=https://YOUR-PREVIEW-URL.convex.cloud
-EOF
+pnpx convex deploy --preview-name claude-dev
 ```
 
-**Step 3: Run the frontend**
+**Verify the backend:**
 ```sh
-pnpm run dev:frontend
-```
-
-**Verify the backend is working:**
-```sh
-# Via CLI:
-pnpx convex run health:check --preview-name my-unique-preview-name
-
-# Via HTTP:
 curl -s https://YOUR-PREVIEW-URL.convex.cloud/api/query \
   -H "Content-Type: application/json" \
   -d '{"path":"health:check","args":{},"format":"json"}'
 ```
 
-**Re-deploy after changes:**
-```sh
-pnpx convex deploy --preview-name my-unique-preview-name
-```
-
 **Notes:**
-- `--preview-create` creates a new preview, `--preview-name` uses an existing one
 - Previews auto-expire after 5 days (14 days on Professional plan)
-- To delete earlier, use the [Convex dashboard](https://dashboard.convex.dev/)
+- See [Convex Preview Deployments docs](https://docs.convex.dev/production/hosting/preview-deployments)
 
 ## Convex
 
