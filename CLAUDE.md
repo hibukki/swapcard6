@@ -23,33 +23,20 @@ These are suggestions/preferences. If you don't like them, I prefer if you said 
       - `VITE_CONVEX_URL` (for a local deployment, suitable e.g for running in a github action, you can use `http://127.0.0.1:3210`)
     - Values for this project might be found in `.env.claude` or `.env.example`
 
-#### When running in an Anthropic environment (with CONVEX_DEPLOY_KEY)
+#### Preview deployment setup
 
-You can't run a local backend, but you can deploy a Convex preview deployment. This requires a `CONVEX_DEPLOY_KEY` environment variable (should be pre-configured).
+For environments where you can't run a local backend:
 
-**Quick setup:**
 ```sh
-pnpm run setup:preview    # Creates preview deployment and .env.local
-pnpm run dev:frontend     # Start the frontend
+pnpm run setup:preview              # Initial setup (uses branch name as preview name)
+pnpm run setup:preview my-feature   # Or pass custom name
+pnpm run dev:frontend               # Start frontend
 ```
 
-The script uses `claude-dev` as the default preview name. Pass a custom name: `pnpm run setup:preview my-feature`
-
-**Re-deploy after backend changes:**
+After backend changes:
 ```sh
-pnpx convex deploy --preview-name claude-dev
+pnpm run deploy:preview
 ```
-
-**Verify the backend:**
-```sh
-curl -s https://YOUR-PREVIEW-URL.convex.cloud/api/query \
-  -H "Content-Type: application/json" \
-  -d '{"path":"health:check","args":{},"format":"json"}'
-```
-
-**Notes:**
-- Previews auto-expire after 5 days (14 days on Professional plan)
-- See [Convex Preview Deployments docs](https://docs.convex.dev/production/hosting/preview-deployments)
 
 ## Convex
 

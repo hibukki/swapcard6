@@ -1,15 +1,13 @@
 #!/bin/bash
-# Setup script for Anthropic environment (with CONVEX_DEPLOY_KEY)
 # Creates a Convex preview deployment and configures .env.local
 
 set -e
 
-PREVIEW_NAME="${1:-claude-dev}"
+PREVIEW_NAME="${1:-preview-$(git branch --show-current | sed 's/[^a-z0-9-]/-/g')}"
 CLERK_KEY="pk_test_d29ya2FibGUtZG9nLTkzLmNsZXJrLmFjY291bnRzLmRldiQ"
 
 if [ -z "$CONVEX_DEPLOY_KEY" ]; then
-    echo "Error: CONVEX_DEPLOY_KEY not set. This script is for Anthropic environments."
-    echo "For local development, use: pnpm run dev:backend"
+    echo "Error: CONVEX_DEPLOY_KEY not set."
     exit 1
 fi
 
@@ -24,7 +22,7 @@ OUTPUT=$(pnpx convex deploy --preview-create "$PREVIEW_NAME" 2>&1) || {
 echo "$OUTPUT"
 
 # Extract the Convex URL from output
-CONVEX_URL=$(echo "$OUTPUT" | grep -oP 'https://[a-z-]+\.convex\.cloud' | head -1)
+CONVEX_URL=$(echo "$OUTPUT" | grep -oP 'https://[a-z0-9-]+\.convex\.cloud' | head -1)
 
 if [ -z "$CONVEX_URL" ]; then
     echo "Error: Could not extract Convex URL from deploy output"

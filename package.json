@@ -9,6 +9,7 @@
     "dev:backend": "convex dev",
     "dev:backend:noninteractive": "./start-local-convex.mjs",
     "setup:preview": "./setup-preview.sh",
+    "deploy:preview": "convex deploy --preview-name \"${PREVIEW_NAME:-preview-$(git branch --show-current | sed 's/[^a-z0-9-]/-/g')}\"",
     "build": "tsc -b && vite build",
     "lint": "tsc -b && eslint .  --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write .",
