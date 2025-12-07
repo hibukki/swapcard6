@@ -23,53 +23,20 @@ These are suggestions/preferences. If you don't like them, I prefer if you said 
       - `VITE_CONVEX_URL` (for a local deployment, suitable e.g for running in a github action, you can use `http://127.0.0.1:3210`)
     - Values for this project might be found in `.env.claude` or `.env.example`
 
-#### When running in an Anthropic environment (with CONVEX_DEPLOY_KEY)
+#### Preview deployment setup
 
-You can't run a local backend, but you can deploy a Convex preview deployment. This requires a `CONVEX_DEPLOY_KEY` environment variable (should be pre-configured).
+For environments where you can't run a local backend:
 
-See [Convex Preview Deployments docs](https://docs.convex.dev/production/hosting/preview-deployments).
-
-**Step 1: Deploy the preview**
 ```sh
-# Use a unique name (e.g., branch name or feature name)
-pnpx convex deploy --preview-create my-unique-preview-name
+pnpm run setup:preview              # Initial setup (uses branch name as preview name)
+pnpm run setup:preview my-feature   # Or pass custom name
+pnpm run dev:frontend               # Start frontend
 ```
 
-This will output the preview URL, e.g., `https://aware-tapir-512.convex.cloud`
-
-**Step 2: Create .env.local with the preview URL**
+After backend changes:
 ```sh
-cat > .env.local << 'EOF'
-VITE_CLERK_PUBLISHABLE_KEY=pk_test_d29ya2FibGUtZG9nLTkzLmNsZXJrLmFjY291bnRzLmRldiQ
-VITE_CONVEX_URL=https://YOUR-PREVIEW-URL.convex.cloud
-EOF
+pnpm run deploy:preview
 ```
-
-**Step 3: Run the frontend**
-```sh
-pnpm run dev:frontend
-```
-
-**Verify the backend is working:**
-```sh
-# Via CLI:
-pnpx convex run health:check --preview-name my-unique-preview-name
-
-# Via HTTP:
-curl -s https://YOUR-PREVIEW-URL.convex.cloud/api/query \
-  -H "Content-Type: application/json" \
-  -d '{"path":"health:check","args":{},"format":"json"}'
-```
-
-**Re-deploy after changes:**
-```sh
-pnpx convex deploy --preview-name my-unique-preview-name
-```
-
-**Notes:**
-- `--preview-create` creates a new preview, `--preview-name` uses an existing one
-- Previews auto-expire after 5 days (14 days on Professional plan)
-- To delete earlier, use the [Convex dashboard](https://dashboard.convex.dev/)
 
 ## Convex
 
