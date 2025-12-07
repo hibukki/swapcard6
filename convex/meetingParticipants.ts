@@ -363,3 +363,27 @@ export const getParticipantSummaries = query({
     return summaries;
   },
 });
+
+/**
+ * Get participant counts for multiple meetings (for detecting busy/solo events).
+ * Returns a map of meetingId -> total participant count (including creator).
+ */
+export const getParticipantCounts = query({
+  args: { meetingIds: v.array(v.id("meetings")) },
+  handler: async (ctx, args): Promise<Record<Id<"meetings">, number>> => {
+    const counts: Record<Id<"meetings">, number> = {};
+
+    for (const meetingId of args.meetingIds) {
+      await getViewableMeetingOrCrash(ctx, meetingId);
+
+      const participants = await ctx.db
+        .query("meetingParticipants")
+        .withIndex("by_meeting", (q) => q.eq("meetingId", meetingId))
+        .collect();
+
+      counts[meetingId] = participants.length;
+    }
+
+    return counts;
+  },
+});

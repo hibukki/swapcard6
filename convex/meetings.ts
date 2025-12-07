@@ -24,14 +24,26 @@ export const create = mutation({
     location: meetingFields.location,
     isPublic: meetingFields.isPublic,
     maxParticipants: meetingFields.maxParticipants,
+    addCurrentUserAs: v.optional(v.literal("creator")),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrCrash(ctx);
 
-    return await ctx.db.insert("meetings", {
-      ...args,
+    const { addCurrentUserAs, ...meetingData } = args;
+    const meetingId = await ctx.db.insert("meetings", {
+      ...meetingData,
       creatorId: user._id,
     });
+
+    if (addCurrentUserAs === "creator") {
+      await ctx.db.insert("meetingParticipants", {
+        meetingId,
+        userId: user._id,
+        status: "creator",
+      });
+    }
+
+    return meetingId;
   },
 });
 
