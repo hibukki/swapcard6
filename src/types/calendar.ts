@@ -44,6 +44,7 @@ export interface CalendarMeetingView {
  * - declined: User explicitly declined
  * - all-rejected: Creator's meeting where all invitees declined
  * - public-available: Public event user hasn't joined
+ * - busy: User's availability block (solo event with no title)
  * - other: Fallback for edge cases
  */
 export type CalendarDisplayCategory =
@@ -52,7 +53,23 @@ export type CalendarDisplayCategory =
   | "declined"
   | "all-rejected"
   | "public-available"
+  | "busy"
   | "other";
+
+/**
+ * Checks if a meeting is a "busy" event (availability block).
+ * A busy event is a private meeting with no title and only the creator as participant.
+ */
+export function isBusyEvent(
+  meeting: Doc<"meetings">,
+  participantSummary?: ParticipantSummary
+): boolean {
+  return (
+    meeting.title === "" &&
+    !meeting.isPublic &&
+    (!participantSummary || participantSummary.totalInvited === 0)
+  );
+}
 
 /**
  * Determines the display category for a meeting based on user's relationship to it.
@@ -62,6 +79,13 @@ export function getMeetingDisplayCategory(
   participationStatus: "creator" | "accepted" | "pending" | "declined" | undefined,
   participantSummary?: ParticipantSummary
 ): CalendarDisplayCategory {
+  // Check for busy event first (creator's availability block)
+  if (
+    participationStatus === "creator" &&
+    isBusyEvent(meeting, participantSummary)
+  ) {
+    return "busy";
+  }
   // User explicitly declined
   if (participationStatus === "declined") {
     return "declined";
@@ -140,6 +164,11 @@ export const categoryStyles: Record<
     border: "border-secondary",
     text: "text-foreground",
   },
+  busy: {
+    bg: "bg-destructive/20",
+    border: "border-destructive",
+    text: "text-destructive",
+  },
   other: {
     bg: "bg-warning/20",
     border: "border-warning",
@@ -152,7 +181,8 @@ export const categoryStyles: Record<
  */
 export function getEventTooltip(
   calendarMeeting: CalendarMeetingView,
-  creatorName?: string
+  creatorName?: string,
+  isEditingAvailability?: boolean
 ): string {
   const { display, userStatus, meeting } = calendarMeeting;
 
@@ -167,6 +197,8 @@ export function getEventTooltip(
       return `All invitees declined: ${meeting.title}`;
     case "public-available":
       return `Public event: ${meeting.title}`;
+    case "busy":
+      return isEditingAvailability ? "Busy (click to remove)" : "Busy";
     case "other":
       return userStatus.isOutgoing
         ? `Sent request: ${meeting.title}`

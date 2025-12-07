@@ -155,6 +155,7 @@ function CreatePublicMeetingModal({
       location: formData.location || undefined,
       isPublic: true,
       maxParticipants: formData.maxParticipants,
+      addCurrentUserAs: "creator",
     });
 
     onClose();
