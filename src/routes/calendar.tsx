@@ -2,7 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, CalendarClock } from "lucide-react";
 import React, { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
@@ -132,6 +132,18 @@ function CalendarPage() {
   };
 
   const [selectedMeeting, setSelectedMeeting] = useState<CalendarMeetingView | null>(null);
+  const [isEditingAvailability, setIsEditingAvailability] = useState(false);
+
+  const createBusy = useMutation(api.meetings.createBusy);
+  const removeMeeting = useMutation(api.meetings.remove);
+
+  const handleCreateBusy = async (scheduledTime: number) => {
+    await createBusy({ scheduledTime, duration: 60 });
+  };
+
+  const handleDeleteBusy = async (meetingId: Id<"meetings">) => {
+    await removeMeeting({ meetingId });
+  };
 
   const setView = (newView: "week" | "month") => updateSearch({ view: newView });
   const setCurrentDate = (date: Date) => updateSearch({ date: date.toISOString().split('T')[0] });
@@ -262,6 +274,15 @@ function CalendarPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            size="sm"
+            variant={isEditingAvailability ? "default" : "outline"}
+            onClick={() => setIsEditingAvailability(!isEditingAvailability)}
+            className={isEditingAvailability ? "bg-destructive hover:bg-destructive/90" : ""}
+          >
+            <CalendarClock className="w-4 h-4 mr-1" />
+            {isEditingAvailability ? "Done" : "Edit Availability"}
+          </Button>
           <div className="flex gap-1">
             <Button
               size="sm"
@@ -294,9 +315,27 @@ function CalendarPage() {
 
       {/* Calendar Grid */}
       {view === "week" ? (
-        <WeekView meetings={meetings} currentDate={currentDate} usersMap={usersMap} participantUserIds={(participantUserIds ?? {}) as MeetingParticipantsMap} onMeetingClick={setSelectedMeeting} />
+        <WeekView
+          meetings={meetings}
+          currentDate={currentDate}
+          usersMap={usersMap}
+          participantUserIds={(participantUserIds ?? {}) as MeetingParticipantsMap}
+          onMeetingClick={setSelectedMeeting}
+          isEditingAvailability={isEditingAvailability}
+          onCreateBusy={handleCreateBusy}
+          onDeleteBusy={handleDeleteBusy}
+        />
       ) : (
-        <MonthView meetings={meetings} currentDate={currentDate} usersMap={usersMap} participantUserIds={(participantUserIds ?? {}) as MeetingParticipantsMap} onMeetingClick={setSelectedMeeting} />
+        <MonthView
+          meetings={meetings}
+          currentDate={currentDate}
+          usersMap={usersMap}
+          participantUserIds={(participantUserIds ?? {}) as MeetingParticipantsMap}
+          onMeetingClick={setSelectedMeeting}
+          isEditingAvailability={isEditingAvailability}
+          onCreateBusy={handleCreateBusy}
+          onDeleteBusy={handleDeleteBusy}
+        />
       )}
 
       {/* Show public events toggle - below calendar */}
@@ -329,12 +368,18 @@ function WeekView({
   usersMap,
   participantUserIds,
   onMeetingClick,
+  isEditingAvailability,
+  onCreateBusy,
+  onDeleteBusy,
 }: {
   meetings: CalendarMeetingView[];
   currentDate: Date;
   usersMap: Map<Id<"users">, Doc<"users">>;
   participantUserIds: MeetingParticipantsMap;
   onMeetingClick: (meeting: CalendarMeetingView) => void;
+  isEditingAvailability: boolean;
+  onCreateBusy: (scheduledTime: number) => Promise<void>;
+  onDeleteBusy: (meetingId: Id<"meetings">) => Promise<void>;
 }) {
   // Get the start of the week (Sunday)
   const startOfWeek = new Date(currentDate);
@@ -412,10 +457,21 @@ function WeekView({
                 return meetingStart < slotEnd && meetingEnd > slotStart;
               });
 
+              const handleSlotClick = () => {
+                if (isEditingAvailability) {
+                  void onCreateBusy(slotStart.getTime());
+                }
+              };
+
               return (
                 <div
                   key={`${hour}-${dayIndex}`}
-                  className="border-b border-l border-border p-1 min-h-[60px] relative hover:bg-muted/50 transition-colors"
+                  className={`border-b border-l border-border p-1 min-h-[60px] relative transition-colors ${
+                    isEditingAvailability
+                      ? "cursor-pointer hover:bg-destructive/10"
+                      : "hover:bg-muted/50"
+                  }`}
+                  onClick={handleSlotClick}
                 >
                   {slotMeetings.map((calendarMeeting) => {
                     const meetingStart = new Date(calendarMeeting.meeting.scheduledTime);
@@ -423,13 +479,24 @@ function WeekView({
 
                     if (!isFirstSlot) return null;
 
+                    const isBusy = calendarMeeting.display.category === "busy";
+
+                    const handleCardClick = () => {
+                      if (isEditingAvailability && isBusy) {
+                        void onDeleteBusy(calendarMeeting.meeting._id);
+                      } else if (!isEditingAvailability) {
+                        onMeetingClick(calendarMeeting);
+                      }
+                    };
+
                     return (
                       <CalendarGridCard
                         key={calendarMeeting.meeting._id}
                         calendarMeeting={calendarMeeting}
                         usersMap={usersMap}
                         participantUserIds={participantUserIds}
-                        onClick={() => onMeetingClick(calendarMeeting)}
+                        onClick={handleCardClick}
+                        dimmed={isEditingAvailability && !isBusy}
                       />
                     );
                   })}
@@ -449,12 +516,18 @@ function MonthView({
   usersMap,
   participantUserIds,
   onMeetingClick,
+  isEditingAvailability,
+  onCreateBusy,
+  onDeleteBusy,
 }: {
   meetings: CalendarMeetingView[];
   currentDate: Date;
   usersMap: Map<Id<"users">, Doc<"users">>;
   participantUserIds: MeetingParticipantsMap;
   onMeetingClick: (meeting: CalendarMeetingView) => void;
+  isEditingAvailability: boolean;
+  onCreateBusy: (scheduledTime: number) => Promise<void>;
+  onDeleteBusy: (meetingId: Id<"meetings">) => Promise<void>;
 }) {
   // Get first day of month
   const firstDay = new Date(
@@ -522,10 +595,23 @@ function MonthView({
             return meetingDate.toDateString() === date.toDateString();
           });
 
+          const handleDayClick = () => {
+            if (isEditingAvailability) {
+              const busyTime = new Date(date);
+              busyTime.setHours(9, 0, 0, 0);
+              void onCreateBusy(busyTime.getTime());
+            }
+          };
+
           return (
             <div
               key={day}
-              className="border-r border-b border-border p-2 min-h-[100px] hover:bg-muted/50 transition-colors"
+              className={`border-r border-b border-border p-2 min-h-[100px] transition-colors ${
+                isEditingAvailability
+                  ? "cursor-pointer hover:bg-destructive/10"
+                  : "hover:bg-muted/50"
+              }`}
+              onClick={handleDayClick}
             >
               <div
                 className={`text-sm mb-1 ${isToday ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center font-bold" : ""}`}
@@ -535,17 +621,27 @@ function MonthView({
               <div className="space-y-1">
                 {dayMeetings.slice(0, 3).map((calendarMeeting) => {
                   const styles = categoryStyles[calendarMeeting.display.category];
-                  const displayTitle = getDisplayTitle(calendarMeeting, usersMap, participantUserIds);
+                  const isBusy = calendarMeeting.display.category === "busy";
+                  const displayTitle = isBusy ? "Busy" : getDisplayTitle(calendarMeeting, usersMap, participantUserIds);
                   const tooltip = getEventTooltip(
                     calendarMeeting,
                     usersMap.get(calendarMeeting.meeting.creatorId)?.name
                   );
 
+                  const handleEventClick = (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    if (isEditingAvailability && isBusy) {
+                      void onDeleteBusy(calendarMeeting.meeting._id);
+                    } else if (!isEditingAvailability) {
+                      onMeetingClick(calendarMeeting);
+                    }
+                  };
+
                   return (
                     <div
                       key={calendarMeeting.meeting._id}
-                      className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity border-l-4 ${styles.border} ${styles.borderOnly ? "bg-background" : styles.bg} ${styles.text} ${styles.strikethrough ? "line-through" : ""}`}
-                      onClick={() => onMeetingClick(calendarMeeting)}
+                      className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity border-l-4 ${styles.border} ${styles.borderOnly ? "bg-background" : styles.bg} ${styles.text} ${styles.strikethrough ? "line-through" : ""} ${isEditingAvailability && !isBusy ? "opacity-40" : ""}`}
+                      onClick={handleEventClick}
                       title={tooltip}
                     >
                       {styles.warningIcon && "⚠️ "}
@@ -615,17 +711,20 @@ function CalendarGridCard({
   usersMap,
   participantUserIds,
   onClick,
+  dimmed = false,
 }: {
   calendarMeeting: CalendarMeetingView;
   usersMap: Map<Id<"users">, Doc<"users">>;
   participantUserIds: MeetingParticipantsMap;
   onClick: () => void;
+  dimmed?: boolean;
 }) {
   const { meeting, display } = calendarMeeting;
   const startTime = new Date(meeting.scheduledTime);
   const endTime = new Date(meeting.scheduledTime + meeting.duration * 60000);
   const styles = categoryStyles[display.category];
-  const displayTitle = getDisplayTitle(calendarMeeting, usersMap, participantUserIds);
+  const isBusy = display.category === "busy";
+  const displayTitle = isBusy ? "Busy" : getDisplayTitle(calendarMeeting, usersMap, participantUserIds);
   const tooltip = getEventTooltip(
     calendarMeeting,
     usersMap.get(meeting.creatorId)?.name
@@ -633,19 +732,28 @@ function CalendarGridCard({
 
   return (
     <div
-      className={`border-l-4 ${styles.border} p-1 rounded text-xs mb-1 cursor-pointer hover:opacity-80 transition-opacity ${styles.borderOnly ? "bg-background" : styles.bg}`}
-      onClick={onClick}
+      className={`border-l-4 ${styles.border} p-1 rounded text-xs mb-1 cursor-pointer hover:opacity-80 transition-opacity ${styles.borderOnly ? "bg-background" : styles.bg} ${dimmed ? "opacity-40" : ""}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
       title={tooltip}
     >
-      <Link
-        to="/meeting/$meetingId"
-        params={{ meetingId: meeting._id }}
-        className={`font-semibold ${styles.text} truncate block hover:underline ${styles.strikethrough ? "line-through" : ""}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {styles.warningIcon && "⚠️ "}
-        {displayTitle}
-      </Link>
+      {isBusy ? (
+        <div className={`font-semibold ${styles.text} truncate`}>
+          {displayTitle}
+        </div>
+      ) : (
+        <Link
+          to="/meeting/$meetingId"
+          params={{ meetingId: meeting._id }}
+          className={`font-semibold ${styles.text} truncate block hover:underline ${styles.strikethrough ? "line-through" : ""}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {styles.warningIcon && "⚠️ "}
+          {displayTitle}
+        </Link>
+      )}
       <div className="text-muted-foreground">
         {startTime.toLocaleTimeString("en-US", {
           hour: "numeric",

@@ -153,6 +153,32 @@ export const remove = mutation({
   },
 });
 
+export const createBusy = mutation({
+  args: {
+    scheduledTime: meetingFields.scheduledTime,
+    duration: v.optional(meetingFields.duration),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUserOrCrash(ctx);
+
+    const meetingId = await ctx.db.insert("meetings", {
+      title: "",
+      scheduledTime: args.scheduledTime,
+      duration: args.duration ?? 60,
+      isPublic: false,
+      creatorId: user._id,
+    });
+
+    await ctx.db.insert("meetingParticipants", {
+      meetingId,
+      userId: user._id,
+      status: "creator",
+    });
+
+    return meetingId;
+  },
+});
+
 export const getBusySlots = query({
   args: {
     userId: v.id("users"),
