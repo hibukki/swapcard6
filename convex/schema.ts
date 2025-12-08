@@ -17,31 +17,12 @@ export const conferenceFields = {
   websiteUrl: v.optional(v.string()),
 };
 
-// Meeting location: either a conference meeting spot or free-text
-export const meetingLocationValidator = v.optional(
-  v.union(
-    v.object({
-      type: v.literal("spot"),
-      spotId: v.id("conferenceMeetingSpots"),
-    }),
-    v.object({
-      type: v.literal("custom"),
-      text: v.string(),
-    })
-  )
-);
-export type MeetingLocation =
-  | { type: "spot"; spotId: string }
-  | { type: "custom"; text: string }
-  | undefined;
-
 export const meetingFields = {
   title: v.string(),
   description: v.optional(v.string()),
   scheduledTime: utcTimestamp,
   duration: v.number(), // in minutes
-  location: v.optional(v.string()), // Legacy field for backward compatibility
-  locationV2: meetingLocationValidator, // New structured location field
+  location: v.optional(v.string()),
   isPublic: v.boolean(),
   maxParticipants: v.optional(v.number()),
   notes: v.optional(v.string()),
