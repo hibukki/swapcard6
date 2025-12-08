@@ -1,4 +1,13 @@
 {
+  "files.exclude": {
+    "node_modules": true,
+    ".pnpm-store": true,
+    "dist": true,
+    "build": true,
+    "convex/_generated": true,
+    ".tanstack": true,
+    "pnpm-lock.yaml": true
+  },
   "files.associations": {
     "*.css": "tailwindcss"
   },
