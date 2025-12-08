@@ -41,11 +41,13 @@ export function MeetingCard({
   onActionComplete,
 }: MeetingCardProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const navigate = useNavigate();
 
   const join = useMutation(api.meetingParticipants.join);
   const leave = useMutation(api.meetingParticipants.leave);
   const respond = useMutation(api.meetingParticipants.respond);
+  const remove = useMutation(api.meetings.remove);
 
   const participants = useQuery(
     api.meetingParticipants.listByMeeting,
@@ -93,6 +95,19 @@ export function MeetingCard({
       handleMutationError(error, "Failed to respond");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    setIsLoading(true);
+    try {
+      await remove({ meetingId: meeting._id });
+      onActionComplete?.();
+    } catch (error) {
+      handleMutationError(error, "Failed to cancel meeting");
+    } finally {
+      setIsLoading(false);
+      setShowCancelConfirm(false);
     }
   };
 
@@ -295,6 +310,39 @@ export function MeetingCard({
               >
                 {isLoading ? "Leaving..." : "Leave Meeting"}
               </Button>
+            )}
+
+            {isCreator && !showCancelConfirm && (
+              <Button
+                variant="destructive"
+                size={isCompact ? "sm" : "default"}
+                onClick={() => setShowCancelConfirm(true)}
+                disabled={isLoading}
+              >
+                Cancel Meeting
+              </Button>
+            )}
+
+            {isCreator && showCancelConfirm && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Cancel?</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCancelConfirm(false)}
+                  disabled={isLoading}
+                >
+                  No
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => void handleCancel()}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "..." : "Yes"}
+                </Button>
+              </div>
             )}
           </div>
         )}
