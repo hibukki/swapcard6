@@ -64,6 +64,8 @@ jobs:
             4. Remove the hardcoded API key from ...
             ```
 
+            It is ok to use emojis to indicate how important things are (like: ❌ for something that seems important. ⚠️ for probably-good-to-fix. you can also improvise with emojis and have fun)
+
             This is nice because it allows us to say "let's fix 1,2,4" or "let's do 3 in a separate PR".
 
             Here are main topics to review:
