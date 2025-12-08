@@ -151,10 +151,16 @@ export default defineSchema({
     count: v.number(),
   }).index("by_window_and_start", ["window", "windowStart"]),
 
-  // Chat rooms - identified by participants, no names for MVP
+  // Chat rooms - can be private (1-on-1) or public (named, open to all)
   chatRooms: defineTable({
     lastMessageAt: v.optional(utcTimestamp),
-  }).index("by_lastMessage", ["lastMessageAt"]),
+    // Public rooms have a name and are open to all users
+    isPublic: v.optional(v.boolean()),
+    name: v.optional(v.string()),
+  })
+    .index("by_lastMessage", ["lastMessageAt"])
+    .index("by_public", ["isPublic", "lastMessageAt"])
+    .index("by_name", ["name"]),
 
   // Chat room participants
   chatRoomUsers: defineTable({

@@ -345,8 +345,40 @@ export const seedData = internalMutation({
       });
     }
 
+    // Create public chat rooms if they don't exist
+    const publicChatRoomTemplates = [
+      { name: "General Discussion" },
+      { name: "Announcements" },
+    ];
+
+    for (const template of publicChatRoomTemplates) {
+      const existingRoom = await ctx.db
+        .query("chatRooms")
+        .withIndex("by_name", (q) => q.eq("name", template.name))
+        .first();
+
+      if (!existingRoom) {
+        const roomId = await ctx.db.insert("chatRooms", {
+          name: template.name,
+          isPublic: true,
+        });
+
+        // Add seed users to the room
+        for (const userId of seedUserIds) {
+          await ctx.db.insert("chatRoomUsers", {
+            chatRoomId: roomId,
+            userId,
+          });
+        }
+      }
+    }
+
     const totalMeetings = await ctx.db.query("meetings").collect();
     const totalParticipations = await ctx.db.query("meetingParticipants").collect();
+    const totalPublicChatRooms = await ctx.db
+      .query("chatRooms")
+      .withIndex("by_public", (q) => q.eq("isPublic", true))
+      .collect();
 
     return {
       success: true,
@@ -354,6 +386,7 @@ export const seedData = internalMutation({
         totalUsers: allUsers.length,
         totalMeetings: totalMeetings.length,
         totalParticipations: totalParticipations.length,
+        totalPublicChatRooms: totalPublicChatRooms.length,
       },
     };
   },

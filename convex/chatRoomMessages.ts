@@ -12,16 +12,23 @@ export const listByRoom = query({
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUserOrCrash(ctx);
 
-    // Verify current user is a participant
-    const membership = await ctx.db
-      .query("chatRoomUsers")
-      .withIndex("by_chatRoom_and_user", (q) =>
-        q.eq("chatRoomId", args.chatRoomId).eq("userId", currentUser._id),
-      )
-      .unique();
+    const room = await ctx.db.get(args.chatRoomId);
+    if (!room) {
+      throw new ConvexError("Chat room not found");
+    }
 
-    if (!membership) {
-      throw new ConvexError("Not a participant of this chat room");
+    // For private rooms, verify current user is a participant
+    if (!room.isPublic) {
+      const membership = await ctx.db
+        .query("chatRoomUsers")
+        .withIndex("by_chatRoom_and_user", (q) =>
+          q.eq("chatRoomId", args.chatRoomId).eq("userId", currentUser._id),
+        )
+        .unique();
+
+      if (!membership) {
+        throw new ConvexError("Not a participant of this chat room");
+      }
     }
 
     // Get messages ordered by creation time (oldest first)
@@ -43,7 +50,12 @@ export const send = mutation({
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUserOrCrash(ctx);
 
-    // Verify current user is a participant
+    const room = await ctx.db.get(args.chatRoomId);
+    if (!room) {
+      throw new ConvexError("Chat room not found");
+    }
+
+    // Check if user is already a participant
     const membership = await ctx.db
       .query("chatRoomUsers")
       .withIndex("by_chatRoom_and_user", (q) =>
@@ -52,7 +64,15 @@ export const send = mutation({
       .unique();
 
     if (!membership) {
-      throw new ConvexError("Not a participant of this chat room");
+      // For public rooms, auto-join when sending a message
+      if (room.isPublic) {
+        await ctx.db.insert("chatRoomUsers", {
+          chatRoomId: args.chatRoomId,
+          userId: currentUser._id,
+        });
+      } else {
+        throw new ConvexError("Not a participant of this chat room");
+      }
     }
 
     // Verify parent message exists and is in the same room (if provided)
