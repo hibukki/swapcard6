@@ -78,7 +78,7 @@ export const remove = mutation({
   handler: async (ctx, args) => {
     await getEditableConferenceOrCrash(ctx, args.conferenceId);
 
-    // Delete all attendees first
+    // Delete all attendees
     const attendees = await ctx.db
       .query("conferenceAttendees")
       .withIndex("by_conference", (q) =>
@@ -88,6 +88,18 @@ export const remove = mutation({
 
     for (const a of attendees) {
       await ctx.db.delete(a._id);
+    }
+
+    // Delete all meeting spots
+    const meetingSpots = await ctx.db
+      .query("conferenceMeetingSpots")
+      .withIndex("by_conference", (q) =>
+        q.eq("conferenceId", args.conferenceId),
+      )
+      .collect();
+
+    for (const spot of meetingSpots) {
+      await ctx.db.delete(spot._id);
     }
 
     await ctx.db.delete(args.conferenceId);

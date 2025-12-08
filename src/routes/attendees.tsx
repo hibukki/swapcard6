@@ -19,6 +19,7 @@ import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
+import { LocationPicker } from "../components/LocationPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -532,11 +533,11 @@ function MeetingRequestModal({
 
           {/* Location */}
           <div className="space-y-2">
-            <Label htmlFor="meeting-location">Location (optional)</Label>
-            <Input
-              id="meeting-location"
+            <Label>Location (optional)</Label>
+            <LocationPicker
+              conferenceId={conference?._id}
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={setLocation}
               placeholder="Coffee shop, booth #5, etc."
             />
           </div>
