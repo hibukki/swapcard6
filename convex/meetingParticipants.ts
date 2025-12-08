@@ -284,6 +284,65 @@ export const remove = mutation({
 });
 
 /**
+ * Get existing meeting requests between the current user and other users.
+ * Returns a map of otherUserId -> meeting request info.
+ * Only includes active requests (not declined) for private (non-public) meetings.
+ */
+export const getMeetingRequestsForCurrentUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const currentUser = await getCurrentUserOrNull(ctx);
+    if (!currentUser) return {};
+
+    // Get all meeting participations for the current user
+    const myParticipations = await ctx.db
+      .query("meetingParticipants")
+      .withIndex("by_user_only", (q) => q.eq("userId", currentUser._id))
+      .collect();
+
+    const result: Record<
+      Id<"users">,
+      {
+        meetingId: Id<"meetings">;
+        myStatus: "creator" | "pending" | "accepted";
+        scheduledTime: number;
+      }
+    > = {};
+
+    for (const myParticipation of myParticipations) {
+      // Skip declined meetings
+      if (myParticipation.status === "declined") continue;
+
+      const meeting = await ctx.db.get(myParticipation.meetingId);
+      if (!meeting) continue;
+
+      // Only consider private meetings (meeting requests)
+      if (meeting.isPublic) continue;
+
+      // Get the other participant in this meeting
+      const otherParticipants = await ctx.db
+        .query("meetingParticipants")
+        .withIndex("by_meeting", (q) => q.eq("meetingId", meeting._id))
+        .collect();
+
+      for (const otherP of otherParticipants) {
+        if (otherP.userId === currentUser._id) continue;
+        // Skip if the other person declined
+        if (otherP.status === "declined") continue;
+
+        result[otherP.userId] = {
+          meetingId: meeting._id,
+          myStatus: myParticipation.status,
+          scheduledTime: meeting.scheduledTime,
+        };
+      }
+    }
+
+    return result;
+  },
+});
+
+/**
  * Get participant userIds for multiple meetings at once (for calendar view).
  * Returns a map of meetingId -> userId[] (excluding the current user).
  * Only returns data for meetings the user has permission to view.

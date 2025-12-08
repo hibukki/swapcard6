@@ -7,6 +7,8 @@ import {
   MessageSquare,
   Search,
   UserPlus,
+  UserMinus,
+  CalendarCheck,
   X,
   ChevronLeft,
   ChevronRight,
@@ -69,6 +71,11 @@ function AttendeesPage() {
   const [selectedUser, setSelectedUser] = useState<Id<"users"> | null>(null);
   const search = Route.useSearch();
   const [searchQuery, setSearchQuery] = useState(search.q ?? "");
+  const meetingRequests = useQuery(
+    api.meetingParticipants.getMeetingRequestsForCurrentUser
+  );
+  const cancelMeeting = useMutation(api.meetings.remove);
+  const declineMeeting = useMutation(api.meetingParticipants.respond);
 
   // Update search query when URL param changes
   useEffect(() => {
@@ -81,6 +88,21 @@ function AttendeesPage() {
     if (!searchQuery.trim()) return users;
     return users.filter((user) => matchesSearch(user, searchQuery.trim()));
   }, [users, searchQuery]);
+
+  const handleCancelRequest = async (userId: Id<"users">) => {
+    const request = meetingRequests?.[userId];
+    if (!request) return;
+
+    try {
+      if (request.myStatus === "creator") {
+        await cancelMeeting({ meetingId: request.meetingId });
+      } else if (request.myStatus === "pending") {
+        await declineMeeting({ meetingId: request.meetingId, accept: false });
+      }
+    } catch (error) {
+      handleMutationError(error, "Failed to cancel request");
+    }
+  };
 
   return (
     <div>
@@ -207,14 +229,11 @@ function AttendeesPage() {
                       <MessageCircle className="w-4 h-4" />
                     </Link>
                   </Button>
-                  <Button
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setSelectedUser(user._id)}
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    Request Meeting
-                  </Button>
+                  <MeetingRequestButton
+                    existingRequest={meetingRequests?.[user._id]}
+                    onRequestMeeting={() => setSelectedUser(user._id)}
+                    onCancelRequest={() => void handleCancelRequest(user._id)}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -229,6 +248,66 @@ function AttendeesPage() {
         onClose={() => setSelectedUser(null)}
       />
     </div>
+  );
+}
+
+type MeetingRequest = {
+  meetingId: Id<"meetings">;
+  myStatus: "creator" | "pending" | "accepted";
+  scheduledTime: number;
+};
+
+function MeetingRequestButton({
+  existingRequest,
+  onRequestMeeting,
+  onCancelRequest,
+}: {
+  existingRequest: MeetingRequest | undefined;
+  onRequestMeeting: () => void;
+  onCancelRequest: () => void;
+}) {
+  if (!existingRequest) {
+    return (
+      <Button size="sm" className="flex-1" onClick={onRequestMeeting}>
+        <UserPlus className="w-4 h-4" />
+        Request Meeting
+      </Button>
+    );
+  }
+
+  if (existingRequest.myStatus === "accepted") {
+    return (
+      <Button size="sm" variant="success" className="flex-1" asChild>
+        <Link to="/meeting/$meetingId" params={{ meetingId: existingRequest.meetingId }}>
+          <CalendarCheck className="w-4 h-4" />
+          View Meeting
+        </Link>
+      </Button>
+    );
+  }
+
+  if (existingRequest.myStatus === "creator") {
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        className="flex-1"
+        onClick={onCancelRequest}
+      >
+        <UserMinus className="w-4 h-4" />
+        Cancel Request
+      </Button>
+    );
+  }
+
+  // myStatus === "pending" - I received a request from this person
+  return (
+    <Button size="sm" variant="secondary" className="flex-1" asChild>
+      <Link to="/meeting/$meetingId" params={{ meetingId: existingRequest.meetingId }}>
+        <CalendarCheck className="w-4 h-4" />
+        View Request
+      </Link>
+    </Button>
   );
 }
 
