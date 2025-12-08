@@ -2,6 +2,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { Clock, MapPin, Users, ExternalLink } from "lucide-react";
 import { useState, useMemo } from "react";
+import Tippy from "@tippyjs/react";
+import "tippy.js/dist/tippy.css";
 import { api } from "../../convex/_generated/api";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { ParticipantList } from "./ParticipantList";
@@ -22,7 +24,7 @@ type ParticipantStatus =
   | "participant";
 
 interface MeetingCardProps {
-  meeting: Doc<"meetings">;
+  meeting: Doc<"meetings"> & { participantCount?: number };
   userStatus?: ParticipantStatus | null;
   variant?: "compact" | "full";
   showParticipants?: boolean;
@@ -131,9 +133,16 @@ export function MeetingCard({
           <div className="flex gap-2 flex-wrap">
             {meeting.isPublic && <Badge size="sm">Public</Badge>}
             {meeting.maxParticipants && (
-              <Badge variant="warning" size="sm">
-                Max {meeting.maxParticipants}
-              </Badge>
+              <Tippy
+                content={`Registered: ${meeting.participantCount ?? "?"} · Max: ${meeting.maxParticipants}`}
+                delay={[200, 0]}
+              >
+                <span>
+                  <Badge variant="warning" size="sm">
+                    {meeting.participantCount ?? "?"}/{meeting.maxParticipants}
+                  </Badge>
+                </span>
+              </Tippy>
             )}
             {isPending && (
               <Badge variant="warning" size="sm">
@@ -208,10 +217,18 @@ export function MeetingCard({
           )}
 
           {!isCompact && meeting.maxParticipants && (
-            <div className="flex items-center gap-3 text-sm">
-              <Users className="w-4 h-4 text-muted-foreground" />
-              <span>Max {meeting.maxParticipants} participants</span>
-            </div>
+            <Tippy
+              content={`Registered: ${meeting.participantCount ?? "?"} · Max: ${meeting.maxParticipants}`}
+              delay={[200, 0]}
+            >
+              <div className="flex items-center gap-3 text-sm cursor-help">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                <span>
+                  {meeting.participantCount ?? "?"}/{meeting.maxParticipants}{" "}
+                  participants
+                </span>
+              </div>
+            </Tippy>
           )}
 
           {creator && (

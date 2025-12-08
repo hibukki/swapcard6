@@ -64,10 +64,27 @@ export const list = query({
 export const listPublic = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db
+    const meetings = await ctx.db
       .query("meetings")
       .withIndex("by_public", (q) => q.eq("isPublic", true))
       .collect();
+
+    const meetingsWithCounts = await Promise.all(
+      meetings.map(async (meeting) => {
+        const participants = await ctx.db
+          .query("meetingParticipants")
+          .withIndex("by_meeting", (q) => q.eq("meetingId", meeting._id))
+          .collect();
+
+        const participantCount = participants.filter(
+          (p) => p.status === "accepted" || p.status === "creator"
+        ).length;
+
+        return { ...meeting, participantCount };
+      })
+    );
+
+    return meetingsWithCounts;
   },
 });
 
