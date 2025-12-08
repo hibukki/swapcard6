@@ -40,26 +40,42 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
-            Please review this pull request and provide feedback on:
+            Please review this pull request.
+            Please list things that should be improved, not things that are already ok.
+            Please phrase your response as a numbered list, where each list item is a suggestion for something to improve, phrased as a task for a developer. If you want, you can then add a newline and say "Why: ...".
+
+            Please split up the feedback into "In scope for the PR" (e.g a bug added) - things where this PR might have made the code worse, "Follow up tasks" - things that seem good but we might avoid in the current PR because of scope creep, and "Unrelated problems found in the code" - if you notice something wrong with the project while doing your review, like a bug somewhere eles.
+            Don't repeat bullet points please. (it isn't very important if a bullet is in the 2nd or 3rd section)
+
+            For example:
+
+            ```
+            # Suggestions for current PR:
+
+            1. Fix the code duplication in ... by extracting a function named ... .
+            2. Undo the auth change in the file ... . Why: Scope creep, ...
+
+            # Possible follow up tasks:
+
+            3. Add a setting in the config screen for ...
+
+            # Unrelated problems found in the code:
+
+            4. Remove the hardcoded API key from ...
+            ```
+
+            This is nice because it allows us to say "let's fix 1,2,4" or "let's do 3 in a separate PR".
+
+            Here are main topics to review:
             - Code quality and best practices (see relevant claude.md files, like convex/claude.md of convex/ files were changed)
-            - Potential bugs or issues
             - Security concerns (are security assumptions grouped in one place which is simple to review?)
-            - DRY (also in md. md shouldn't repeat code and shouldn't write the same thing twice, like "reminder: how to run the backend: ...")
+            - DRY (also in md. md shouldn't repeat code and shouldn't write the same thing twice, like "reminder: how to run the backend: ..." is bad if somewhere else already wrote how to run the backend)
             - Scope creep (is the PR trying to solve too many problems at once?)
             - API changes / function signature changes (clean readable APIs are more important than the implementation)
-            - UX / user flow problems ("don't make me think")
-
-            If there is nothing to say about one of the sections, be short, like just a green V, not "There are no security issues in the code". (no managers to write fluff for, only engineers)
+            - UX / user flow problems ("don't make me think"). What is the user trying to do in this screen? Is the screen reactive and simple for that? Does it have too many unrelated options?
 
             Things that don't matter:
             - Performance (it is better to keep simple maintainable code. avoid premature optimization.)
-
-            If you feel like it:
-            - If you notice something out-of-scope-for-the-PR that bugs you or you feel like improving for any reason, you can suggest it as a follow up task, each such task as numbered li phrased as a task that a developer could pick up. As a naive example, "Possible follow up tasks:\n 6. Remove redundant comments from convex/users.ts, such as '// set x to 5' before 'x = 5'.\n 7. Add getMeetingByIdOrCrash and search convex/ for files that could use it."
-
-            Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
-
-            Use the same numbered list throughout the review. If you have 1,2,3 and then you move to another section, use 4,5,6, which makes it easier to respond to specific points. Sub bullets like 4.1 are also ok.
 
             Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
 
