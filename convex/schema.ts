@@ -75,6 +75,12 @@ export default defineSchema({
     .index("by_start_date", ["startDate"])
     .index("by_name", ["name"]),
 
+  conferenceMeetingSpots: defineTable({
+    conferenceId: v.id("conferences"),
+    name: v.string(),
+  })
+    .index("by_conference", ["conferenceId"]),
+
   conferenceAttendees: defineTable({
     conferenceId: v.id("conferences"),
     userId: v.id("users"),

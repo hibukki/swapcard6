@@ -1,8 +1,9 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, MutationCtx, query, QueryCtx } from "./_generated/server";
 import { getCurrentUserOrCrash } from "./users";
 import { getConferenceById, getConferenceOrCrash } from "./conferenceUtils";
 import { conferenceFields } from "./schema";
+import { Id } from "./_generated/dataModel";
 
 const optionalConferenceFields = {
   name: v.optional(conferenceFields.name),
@@ -48,18 +49,23 @@ export const list = query({
   },
 });
 
+const getEditableConferenceOrCrash = async (
+  ctx: QueryCtx | MutationCtx,
+  conferenceId: Id<"conferences">,
+) => {
+  const conference = await getConferenceOrCrash(ctx, conferenceId);
+
+  // For now, anyone can edit a conference
+
+  return conference;
+};
 export const update = mutation({
   args: {
     conferenceId: v.id("conferences"),
     ...optionalConferenceFields,
   },
   handler: async (ctx, args) => {
-    const user = await getCurrentUserOrCrash(ctx);
-    const conference = await getConferenceOrCrash(ctx, args.conferenceId);
-
-    if (conference.createdBy !== user._id) {
-      throw new ConvexError("Only the creator can update this conference");
-    }
+    await getEditableConferenceOrCrash(ctx, args.conferenceId);
 
     const { conferenceId, ...updates } = args;
     await ctx.db.patch(conferenceId, updates);
@@ -70,21 +76,30 @@ export const update = mutation({
 export const remove = mutation({
   args: { conferenceId: v.id("conferences") },
   handler: async (ctx, args) => {
-    const user = await getCurrentUserOrCrash(ctx);
-    const conference = await getConferenceOrCrash(ctx, args.conferenceId);
+    await getEditableConferenceOrCrash(ctx, args.conferenceId);
 
-    if (conference.createdBy !== user._id) {
-      throw new ConvexError("Only the creator can delete this conference");
-    }
-
-    // Delete all attendees first
+    // Delete all attendees
     const attendees = await ctx.db
       .query("conferenceAttendees")
-      .withIndex("by_conference", (q) => q.eq("conferenceId", args.conferenceId))
+      .withIndex("by_conference", (q) =>
+        q.eq("conferenceId", args.conferenceId),
+      )
       .collect();
 
     for (const a of attendees) {
       await ctx.db.delete(a._id);
+    }
+
+    // Delete all meeting spots
+    const meetingSpots = await ctx.db
+      .query("conferenceMeetingSpots")
+      .withIndex("by_conference", (q) =>
+        q.eq("conferenceId", args.conferenceId),
+      )
+      .collect();
+
+    for (const spot of meetingSpots) {
+      await ctx.db.delete(spot._id);
     }
 
     await ctx.db.delete(args.conferenceId);

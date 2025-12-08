@@ -13,6 +13,12 @@ export const clearAllData = internalMutation({
       await ctx.db.delete(n._id);
     }
 
+    // Delete conferenceMeetingSpots
+    const meetingSpots = await ctx.db.query("conferenceMeetingSpots").collect();
+    for (const spot of meetingSpots) {
+      await ctx.db.delete(spot._id);
+    }
+
     // Delete conferenceAttendees
     const conferenceAttendees = await ctx.db.query("conferenceAttendees").collect();
     for (const ca of conferenceAttendees) {
@@ -441,6 +447,25 @@ async function seedDataWithCurrentUserHandler(
       });
     } else {
       techConnectId = existingTechConnect._id;
+    }
+
+    // Create meeting spots for TechConnect
+    if (techConnectId) {
+      const existingSpots = await ctx.db
+        .query("conferenceMeetingSpots")
+        .withIndex("by_conference", (q) => q.eq("conferenceId", techConnectId))
+        .collect();
+
+      if (existingSpots.length === 0) {
+        const sampleSpots = ["Lobby Lounge", "Cafe Corner", "Garden Terrace", "Innovation Hub"];
+
+        for (const name of sampleSpots) {
+          await ctx.db.insert("conferenceMeetingSpots", {
+            conferenceId: techConnectId,
+            name,
+          });
+        }
+      }
     }
 
     // Create AI Summit conference

@@ -1,12 +1,13 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Calendar, Plus } from "lucide-react";
 import { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { MeetingCard } from "../components/MeetingCard";
+import { LocationPicker } from "../components/LocationPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -133,6 +134,9 @@ function CreatePublicMeetingModal({
   onClose: () => void;
 }) {
   const create = useMutation(api.meetings.create);
+  const conferences = useQuery(api.conferences.list);
+  const conference = conferences?.[0];
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -227,13 +231,11 @@ function CreatePublicMeetingModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
+            <Label>Location</Label>
+            <LocationPicker
+              conferenceId={conference?._id}
               value={formData.location}
-              onChange={(e) =>
-                setFormData({ ...formData, location: e.target.value })
-              }
+              onChange={(location) => setFormData({ ...formData, location })}
               placeholder="Room name, Zoom link, or meeting point"
             />
           </div>
