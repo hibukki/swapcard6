@@ -30,3 +30,6 @@ test-results/
 playwright-report/
 playwright/.cache/
 .env.claude.gitworktree
+
+# Local Netlify folder
+.netlify
