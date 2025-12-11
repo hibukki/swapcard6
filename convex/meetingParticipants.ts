@@ -69,6 +69,7 @@ export const getCurrentUserParticipation = query({
 export const sendRequest = mutation({
   args: {
     recipientId: v.id("users"),
+    conferenceId: meetingFields.conferenceId,
     title: meetingFields.title,
     description: meetingFields.description,
     scheduledTime: meetingFields.scheduledTime,
@@ -86,6 +87,7 @@ export const sendRequest = mutation({
     // Create the meeting
     const meetingId = await ctx.db.insert("meetings", {
       creatorId: requester._id,
+      conferenceId: args.conferenceId,
       title: args.title,
       description: args.description,
       scheduledTime: args.scheduledTime,

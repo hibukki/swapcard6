@@ -18,6 +18,7 @@ export const conferenceFields = {
 };
 
 export const meetingFields = {
+  conferenceId: v.id("conferences"),
   title: v.string(),
   description: v.optional(v.string()),
   scheduledTime: utcTimestamp,
@@ -116,6 +117,7 @@ export default defineSchema({
     ...meetingFields,
     creatorId: v.id("users"),
   })
+    .index("by_conference", ["conferenceId"])
     .index("by_creator", ["creatorId", "scheduledTime"])
     .index("by_time", ["scheduledTime"])
     .index("by_public", ["isPublic", "scheduledTime"])

@@ -19,6 +19,7 @@ export function createMockMeeting(overrides: Partial<Doc<"meetings">> = {}): Doc
   return {
     _id: "meeting_123" as Id<"meetings">,
     _creationTime: FIXED_TIMESTAMP,
+    conferenceId: "conference_123" as Id<"conferences">,
     title: "Test Meeting",
     scheduledTime: FIXED_TIMESTAMP + 86400000, // Day after fixed date
     duration: 30,

@@ -15,6 +15,7 @@ interface Attendee {
 
 interface MeetingWithDetails {
   meeting: Doc<"meetings">;
+  timezone: string;
   creatorName: string;
   creatorEmail: string;
   attendees: Attendee[];
@@ -44,7 +45,7 @@ export function generateICSFeed(meetings: MeetingWithDetails[], options: FeedOpt
   const lastUpdated = formatLastUpdated(new Date());
   const calendarUrl = baseUrl ? `${baseUrl}/calendar` : undefined;
 
-  for (const { meeting, creatorName, creatorEmail, attendees } of meetings) {
+  for (const { meeting, timezone, creatorName, creatorEmail, attendees } of meetings) {
     const meetingUrl = baseUrl ? `${baseUrl}/meeting/${meeting._id}` : undefined;
 
     const descriptionParts: string[] = [];
@@ -65,6 +66,7 @@ export function generateICSFeed(meetings: MeetingWithDetails[], options: FeedOpt
       id: `meeting-${meeting._id}@opencon`,
       start: new Date(meeting.scheduledTime),
       end: new Date(meeting.scheduledTime + meeting.duration * 60 * 1000),
+      timezone,
       summary: meeting.title,
       description: descriptionParts.join("\n"),
       location: meeting.location ?? undefined,

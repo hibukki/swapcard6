@@ -149,9 +149,12 @@ function CreatePublicMeetingModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!conference) return;
+
     const scheduledTime = new Date(formData.scheduledTime).getTime();
 
     await create({
+      conferenceId: conference._id,
       title: formData.title,
       description: formData.description || undefined,
       scheduledTime,

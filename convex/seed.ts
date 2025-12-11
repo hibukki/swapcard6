@@ -66,6 +66,32 @@ export const seedData = internalMutation({
     const oneDay = 24 * oneHour;
     const prefix = args.testRunId ? `${args.testRunId}_` : "";
 
+    // Get or create default conference for seed meetings
+    let defaultConferenceId: Id<"conferences">;
+    const existingConference = await ctx.db
+      .query("conferences")
+      .withIndex("by_name", (q) => q.eq("name", "TechConnect 2025"))
+      .first();
+
+    if (existingConference) {
+      defaultConferenceId = existingConference._id;
+    } else {
+      // Create a temporary user ID placeholder - will be updated later
+      const anyUser = await ctx.db.query("users").first();
+      if (!anyUser) {
+        throw new Error("Need at least one user to create seed conference");
+      }
+      defaultConferenceId = await ctx.db.insert("conferences", {
+        name: "TechConnect 2025",
+        description: "The premier technology conference",
+        startDate: now,
+        endDate: now + 3 * oneDay,
+        timezone: "America/Los_Angeles",
+        location: "San Francisco Convention Center",
+        createdBy: anyUser._id,
+      });
+    }
+
     // Create sample users if they don't exist
     const sampleUsers = [
       {
@@ -248,6 +274,7 @@ export const seedData = internalMutation({
         }
 
         const meetingId = await ctx.db.insert("meetings", {
+          conferenceId: defaultConferenceId,
           creatorId: creator,
           title: template.title,
           description: template.description,
@@ -323,6 +350,7 @@ export const seedData = internalMutation({
       const scheduledTime = now + (i + 1) * oneDay + 3 * oneHour;
 
       const meetingId = await ctx.db.insert("meetings", {
+        conferenceId: defaultConferenceId,
         creatorId: user1,
         title: template.title,
         description: template.description,
@@ -581,8 +609,9 @@ async function seedDataWithCurrentUserHandler(
     // === MEETINGS INVOLVING CURRENT USER ===
 
     // 1. Confirmed meeting - current user created and Bob accepted
-    if (seedUserIds[1]) {
+    if (seedUserIds[1] && techConnectId) {
       const meetingId = await ctx.db.insert("meetings", {
+        conferenceId: techConnectId,
         creatorId: currentUser._id,
         title: "Product Roadmap Discussion",
         description: "Let's align on Q2 product roadmap priorities",
@@ -606,8 +635,9 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 2. Confirmed meeting - Alice created and current user accepted
-    if (seedUserIds[0]) {
+    if (seedUserIds[0] && techConnectId) {
       const meetingId = await ctx.db.insert("meetings", {
+        conferenceId: techConnectId,
         creatorId: seedUserIds[0],
         title: "User Research Findings Review",
         description: "Alice wants to share latest user research insights",
@@ -631,8 +661,9 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 3. Pending incoming request - Bob wants to meet current user
-    if (seedUserIds[1]) {
+    if (seedUserIds[1] && techConnectId) {
       const meetingId = await ctx.db.insert("meetings", {
+        conferenceId: techConnectId,
         creatorId: seedUserIds[1],
         title: "Technical Architecture Review",
         description: "Would love to get your input on our new architecture design",
@@ -656,8 +687,9 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 4. Pending incoming request - Carol wants to meet current user
-    if (seedUserIds[2]) {
+    if (seedUserIds[2] && techConnectId) {
       const meetingId = await ctx.db.insert("meetings", {
+        conferenceId: techConnectId,
         creatorId: seedUserIds[2],
         title: "Marketing Collaboration",
         description: "Let's explore how we can collaborate on upcoming campaigns",
@@ -681,8 +713,9 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 5. Pending outgoing request - current user wants to meet David
-    if (seedUserIds[3]) {
+    if (seedUserIds[3] && techConnectId) {
       const meetingId = await ctx.db.insert("meetings", {
+        conferenceId: techConnectId,
         creatorId: currentUser._id,
         title: "Design Feedback Session",
         description: "Would like your expertise on our new UI designs",
@@ -706,8 +739,9 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 6. Declined meeting - Emma declined current user's request
-    if (seedUserIds[4]) {
+    if (seedUserIds[4] && techConnectId) {
       const meetingId = await ctx.db.insert("meetings", {
+        conferenceId: techConnectId,
         creatorId: currentUser._id,
         title: "Data Analysis Review",
         description: "Review of quarterly analytics data",
