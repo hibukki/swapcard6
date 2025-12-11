@@ -31,6 +31,7 @@ type MeetingParticipantsMap = Record<Id<"meetings">, Id<"users">[]>;
 
 const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
 const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
+const conferencesQuery = convexQuery(api.conferences.list, {});
 
 const calendarSearchSchema = z.object({
   view: z.enum(["week", "month"]).optional().default("week"),
@@ -44,6 +45,7 @@ export const Route = createFileRoute("/calendar")({
       await Promise.all([
         queryClient.ensureQueryData(myParticipationsQuery),
         queryClient.ensureQueryData(publicMeetingsQuery),
+        queryClient.ensureQueryData(conferencesQuery),
       ]);
     }
   },
@@ -54,6 +56,8 @@ export const Route = createFileRoute("/calendar")({
 function CalendarPage() {
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
   const { data: publicMeetingsData } = useSuspenseQuery(publicMeetingsQuery);
+  const { data: conferences } = useSuspenseQuery(conferencesQuery);
+  const conference = conferences?.[0];
   const allMeetings = useQuery(api.meetings.list, {});
   const allUsers = useQuery(api.users.listUsers, {});
   const currentUser = useQuery(api.users.getCurrentUser, {});
@@ -139,7 +143,9 @@ function CalendarPage() {
   const removeMeeting = useMutation(api.meetings.remove);
 
   const handleCreateBusy = async (scheduledTime: number, durationMinutes: number) => {
+    if (!conference) return;
     await createMeeting({
+      conferenceId: conference._id,
       title: "",
       description: "",
       scheduledTime,

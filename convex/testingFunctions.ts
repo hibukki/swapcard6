@@ -213,9 +213,20 @@ export const seedWithFixedTimestamp = testingMutation({
     // Run base seed data (public meetings, conferences) with fixed timestamp
     await ctx.scheduler.runAfter(0, internal.seed.seedData, { baseTimestamp, testRunId });
 
+    // Get the conference created by seedData
+    const conference = await ctx.db
+      .query("conferences")
+      .withIndex("by_name", (q) => q.eq("name", "TechConnect 2025"))
+      .first();
+
+    if (!conference) {
+      throw new Error("TechConnect 2025 conference not found - seedData may not have run yet");
+    }
+
     // Create meetings for the test user
     if (seedUserIds[1]) {
       const meetingId = await ctx.db.insert("meetings", {
+        conferenceId: conference._id,
         creatorId: seedUserIds[1],
         title: "Technical Architecture Review",
         description: "Would love to get your input on our new architecture design",
@@ -230,6 +241,7 @@ export const seedWithFixedTimestamp = testingMutation({
 
     if (seedUserIds[2]) {
       const meetingId = await ctx.db.insert("meetings", {
+        conferenceId: conference._id,
         creatorId: seedUserIds[2],
         title: "Marketing Collaboration",
         description: "Let's explore how we can collaborate on upcoming campaigns",

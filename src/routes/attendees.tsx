@@ -396,7 +396,7 @@ function MeetingRequestModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedSlot) {
+    if (!selectedSlot || !conference) {
       return;
     }
 
@@ -406,6 +406,7 @@ function MeetingRequestModal({
     try {
       await sendRequest({
         recipientId,
+        conferenceId: conference._id,
         title: `Meeting with ${recipientName}`,
         description: undefined,
         location: location || undefined,

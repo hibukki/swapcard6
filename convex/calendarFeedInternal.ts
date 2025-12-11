@@ -28,6 +28,7 @@ export const getCalendarFeed = internalQuery({
         const meeting = await ctx.db.get(p.meetingId);
         if (!meeting) return null;
 
+        const conference = await ctx.db.get(meeting.conferenceId);
         const creator = await ctx.db.get(meeting.creatorId);
 
         const allParticipants = await ctx.db
@@ -48,6 +49,7 @@ export const getCalendarFeed = internalQuery({
 
         return {
           meeting,
+          timezone: conference?.timezone ?? "UTC",
           creatorName: creator?.name ?? "Unknown",
           creatorEmail: creator?.email ?? "noreply@opencon.local",
           attendees,

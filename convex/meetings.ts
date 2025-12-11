@@ -17,6 +17,7 @@ const optionalMeetingFields = {
 
 export const create = mutation({
   args: {
+    conferenceId: meetingFields.conferenceId,
     title: meetingFields.title,
     description: meetingFields.description,
     scheduledTime: meetingFields.scheduledTime,
