@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicMeetingsRouteImport } from './routes/public-meetings'
+import { Route as PublicChatsRouteImport } from './routes/public-chats'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ConfigRouteImport } from './routes/config'
 import { Route as ChatsRouteImport } from './routes/chats'
@@ -18,12 +19,18 @@ import { Route as AttendeesRouteImport } from './routes/attendees'
 import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserUserIdRouteImport } from './routes/user.$userId'
+import { Route as PublicChatChatRoomIdRouteImport } from './routes/public-chat.$chatRoomId'
 import { Route as MeetingMeetingIdRouteImport } from './routes/meeting.$meetingId'
 import { Route as ChatChatRoomIdRouteImport } from './routes/chat.$chatRoomId'
 
 const PublicMeetingsRoute = PublicMeetingsRouteImport.update({
   id: '/public-meetings',
   path: '/public-meetings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicChatsRoute = PublicChatsRouteImport.update({
+  id: '/public-chats',
+  path: '/public-chats',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -66,6 +73,11 @@ const UserUserIdRoute = UserUserIdRouteImport.update({
   path: '/user/$userId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PublicChatChatRoomIdRoute = PublicChatChatRoomIdRouteImport.update({
+  id: '/public-chat/$chatRoomId',
+  path: '/public-chat/$chatRoomId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MeetingMeetingIdRoute = MeetingMeetingIdRouteImport.update({
   id: '/meeting/$meetingId',
   path: '/meeting/$meetingId',
@@ -85,9 +97,11 @@ export interface FileRoutesByFullPath {
   '/chats': typeof ChatsRoute
   '/config': typeof ConfigRoute
   '/profile': typeof ProfileRoute
+  '/public-chats': typeof PublicChatsRoute
   '/public-meetings': typeof PublicMeetingsRoute
   '/chat/$chatRoomId': typeof ChatChatRoomIdRoute
   '/meeting/$meetingId': typeof MeetingMeetingIdRoute
+  '/public-chat/$chatRoomId': typeof PublicChatChatRoomIdRoute
   '/user/$userId': typeof UserUserIdRoute
 }
 export interface FileRoutesByTo {
@@ -98,9 +112,11 @@ export interface FileRoutesByTo {
   '/chats': typeof ChatsRoute
   '/config': typeof ConfigRoute
   '/profile': typeof ProfileRoute
+  '/public-chats': typeof PublicChatsRoute
   '/public-meetings': typeof PublicMeetingsRoute
   '/chat/$chatRoomId': typeof ChatChatRoomIdRoute
   '/meeting/$meetingId': typeof MeetingMeetingIdRoute
+  '/public-chat/$chatRoomId': typeof PublicChatChatRoomIdRoute
   '/user/$userId': typeof UserUserIdRoute
 }
 export interface FileRoutesById {
@@ -112,9 +128,11 @@ export interface FileRoutesById {
   '/chats': typeof ChatsRoute
   '/config': typeof ConfigRoute
   '/profile': typeof ProfileRoute
+  '/public-chats': typeof PublicChatsRoute
   '/public-meetings': typeof PublicMeetingsRoute
   '/chat/$chatRoomId': typeof ChatChatRoomIdRoute
   '/meeting/$meetingId': typeof MeetingMeetingIdRoute
+  '/public-chat/$chatRoomId': typeof PublicChatChatRoomIdRoute
   '/user/$userId': typeof UserUserIdRoute
 }
 export interface FileRouteTypes {
@@ -127,9 +145,11 @@ export interface FileRouteTypes {
     | '/chats'
     | '/config'
     | '/profile'
+    | '/public-chats'
     | '/public-meetings'
     | '/chat/$chatRoomId'
     | '/meeting/$meetingId'
+    | '/public-chat/$chatRoomId'
     | '/user/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -140,9 +160,11 @@ export interface FileRouteTypes {
     | '/chats'
     | '/config'
     | '/profile'
+    | '/public-chats'
     | '/public-meetings'
     | '/chat/$chatRoomId'
     | '/meeting/$meetingId'
+    | '/public-chat/$chatRoomId'
     | '/user/$userId'
   id:
     | '__root__'
@@ -153,9 +175,11 @@ export interface FileRouteTypes {
     | '/chats'
     | '/config'
     | '/profile'
+    | '/public-chats'
     | '/public-meetings'
     | '/chat/$chatRoomId'
     | '/meeting/$meetingId'
+    | '/public-chat/$chatRoomId'
     | '/user/$userId'
   fileRoutesById: FileRoutesById
 }
@@ -167,9 +191,11 @@ export interface RootRouteChildren {
   ChatsRoute: typeof ChatsRoute
   ConfigRoute: typeof ConfigRoute
   ProfileRoute: typeof ProfileRoute
+  PublicChatsRoute: typeof PublicChatsRoute
   PublicMeetingsRoute: typeof PublicMeetingsRoute
   ChatChatRoomIdRoute: typeof ChatChatRoomIdRoute
   MeetingMeetingIdRoute: typeof MeetingMeetingIdRoute
+  PublicChatChatRoomIdRoute: typeof PublicChatChatRoomIdRoute
   UserUserIdRoute: typeof UserUserIdRoute
 }
 
@@ -180,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/public-meetings'
       fullPath: '/public-meetings'
       preLoaderRoute: typeof PublicMeetingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/public-chats': {
+      id: '/public-chats'
+      path: '/public-chats'
+      fullPath: '/public-chats'
+      preLoaderRoute: typeof PublicChatsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -238,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserUserIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/public-chat/$chatRoomId': {
+      id: '/public-chat/$chatRoomId'
+      path: '/public-chat/$chatRoomId'
+      fullPath: '/public-chat/$chatRoomId'
+      preLoaderRoute: typeof PublicChatChatRoomIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/meeting/$meetingId': {
       id: '/meeting/$meetingId'
       path: '/meeting/$meetingId'
@@ -263,9 +303,11 @@ const rootRouteChildren: RootRouteChildren = {
   ChatsRoute: ChatsRoute,
   ConfigRoute: ConfigRoute,
   ProfileRoute: ProfileRoute,
+  PublicChatsRoute: PublicChatsRoute,
   PublicMeetingsRoute: PublicMeetingsRoute,
   ChatChatRoomIdRoute: ChatChatRoomIdRoute,
   MeetingMeetingIdRoute: MeetingMeetingIdRoute,
+  PublicChatChatRoomIdRoute: PublicChatChatRoomIdRoute,
   UserUserIdRoute: UserUserIdRoute,
 }
 export const routeTree = rootRouteImport

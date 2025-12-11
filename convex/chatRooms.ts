@@ -104,9 +104,12 @@ export const get = query({
       throw new ConvexError("Chat room not found");
     }
 
-    const isParticipant = await isUserInRoom(ctx, room._id, currentUser._id);
-    if (!isParticipant) {
-      throw new ConvexError("Not a participant of this chat room");
+    // Public rooms are accessible to everyone, private rooms require membership
+    if (!room.isPublic) {
+      const isParticipant = await isUserInRoom(ctx, room._id, currentUser._id);
+      if (!isParticipant) {
+        throw new ConvexError("Not a participant of this chat room");
+      }
     }
 
     const participantIds = await getRoomParticipantIds(ctx, room._id);
@@ -147,5 +150,97 @@ export const getOrCreate = mutation({
     }
 
     return roomId;
+  },
+});
+
+// List all public chat rooms
+export const listPublic = query({
+  args: {},
+  handler: async (ctx) => {
+    await getCurrentUserOrCrash(ctx);
+
+    const rooms = await ctx.db
+      .query("chatRooms")
+      .withIndex("by_public", (q) => q.eq("isPublic", true))
+      .collect();
+
+    // Sort by lastMessageAt desc (most recent first)
+    return rooms.sort(
+      (a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0),
+    );
+  },
+});
+
+// Create a new public chat room
+export const createPublic = mutation({
+  args: { name: v.string() },
+  handler: async (ctx, args) => {
+    const currentUser = await getCurrentUserOrCrash(ctx);
+
+    const trimmedName = args.name.trim();
+    if (!trimmedName) {
+      throw new ConvexError("Room name cannot be empty");
+    }
+
+    // Check if a room with this name already exists
+    const existingRoom = await ctx.db
+      .query("chatRooms")
+      .withIndex("by_name", (q) => q.eq("name", trimmedName))
+      .first();
+
+    if (existingRoom) {
+      throw new ConvexError("A room with this name already exists");
+    }
+
+    // Create the public room
+    const roomId = await ctx.db.insert("chatRooms", {
+      name: trimmedName,
+      isPublic: true,
+    });
+
+    // Add creator as first participant
+    await ctx.db.insert("chatRoomUsers", {
+      chatRoomId: roomId,
+      userId: currentUser._id,
+    });
+
+    return roomId;
+  },
+});
+
+// Join a public chat room
+export const joinPublic = mutation({
+  args: { chatRoomId: v.id("chatRooms") },
+  handler: async (ctx, args) => {
+    const currentUser = await getCurrentUserOrCrash(ctx);
+
+    const room = await ctx.db.get(args.chatRoomId);
+    if (!room) {
+      throw new ConvexError("Chat room not found");
+    }
+
+    if (!room.isPublic) {
+      throw new ConvexError("This is not a public chat room");
+    }
+
+    // Check if already a member
+    const existingMembership = await ctx.db
+      .query("chatRoomUsers")
+      .withIndex("by_chatRoom_and_user", (q) =>
+        q.eq("chatRoomId", args.chatRoomId).eq("userId", currentUser._id),
+      )
+      .unique();
+
+    if (existingMembership) {
+      return args.chatRoomId;
+    }
+
+    // Add user as participant
+    await ctx.db.insert("chatRoomUsers", {
+      chatRoomId: args.chatRoomId,
+      userId: currentUser._id,
+    });
+
+    return args.chatRoomId;
   },
 });

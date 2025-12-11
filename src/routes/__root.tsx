@@ -45,6 +45,7 @@ const navLinks = [
   { to: "/public-meetings", label: "Public Meetings" },
   { to: "/calendar", label: "Calendar" },
   { to: "/agenda", label: "Agenda" },
+  { to: "/public-chats", label: "Chat Rooms" },
   { to: "/chats", label: "Chat" },
   { to: "/profile", label: "Profile" },
   { to: "/config", label: "Config" },
