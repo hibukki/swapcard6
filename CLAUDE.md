@@ -1,5 +1,11 @@
 These are suggestions/preferences. If you don't like them, I prefer if you said so explicitly, and we can hopefully gradually improve them. (some were copied from other places and are phrased as orders, gradually changing that)
 
+## Creating pull requests
+
+Please add the requested feature (as the user requested it) and not only what-was-done.
+Ideally, quote all relevant user messages and put them in the PR description.
+This is like adding the product-manager request, and not only the engineering solution.
+
 ## Project Overview
 
 - Full-stack TypeScript app: React + Vite + TanStack Router (frontend), Convex (backend), Clerk (auth)
@@ -34,6 +40,7 @@ pnpm run dev:frontend               # Start frontend
 ```
 
 After backend changes:
+
 ```sh
 pnpm run deploy:preview
 ```
@@ -164,6 +171,7 @@ pnpm run deploy:preview
 ### Available UI Components
 
 Base components in `src/components/ui/`:
+
 - `Button`: Clickable buttons with variants (default, destructive, success, outline, secondary, ghost, link)
 - `Card`: Container with CardHeader, CardTitle, CardDescription, CardContent, CardFooter parts
 - `Badge`: Small status indicators with variants (default, secondary, success, warning, destructive, outline)
@@ -176,6 +184,7 @@ Base components in `src/components/ui/`:
 - `Spinner`: Loading indicators
 
 Pattern components in `src/components/patterns/`:
+
 - `FormField`: Form field wrapper with label, description, and error display
 - `InfoBox`: Callout boxes with icon, title, and variant styling (default, success, info, warning, destructive)
 - `StatusBadge`: Meeting status badges with appropriate colors
@@ -185,6 +194,7 @@ Pattern components in `src/components/patterns/`:
 ### Custom Additions
 
 **Button component customizations:**
+
 - `active` prop: Applies accent background to indicate active state (custom addition, not in standard shadcn)
 - `success` variant: Green success button styling
 - Custom sizes: `xs`, `icon-sm`, `icon-xs` for smaller buttons
@@ -192,6 +202,7 @@ Pattern components in `src/components/patterns/`:
 ### Component Variants with CVA
 
 Components use `class-variance-authority` (cva) for variant management:
+
 ```tsx
 const buttonVariants = cva("base-classes", {
   variants: {
@@ -205,6 +216,7 @@ const buttonVariants = cva("base-classes", {
 ### Color System
 
 CSS variables defined in `src/index.css`:
+
 - Semantic: `primary`, `secondary`, `accent`, `muted`, `card`, `popover`
 - Status: `success`, `info`, `warning`, `destructive`
 - Text: Each color has matching `-foreground` variant (e.g., `primary-foreground`)
@@ -219,12 +231,6 @@ CSS variables defined in `src/index.css`:
 - For complex styling, use the `cn()` utility to merge classes
 - Typography plugin adds default margins to headings - use `mt-0` to override when precise spacing is needed
 - Reference shadcn/ui docs when unfamiliar: [ui.shadcn.com](https://ui.shadcn.com)
-
-## Creating pull requests
-
-Please add the requested feature (as the user requested it) and not only what-was-done.
-Ideally, quote all relevant user messages and put them in the PR description.
-This is like adding the product-manager request, and not only the engineering solution.
 
 ## Other Guidelines
 
