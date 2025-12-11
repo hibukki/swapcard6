@@ -243,4 +243,4 @@ CSS variables defined in `src/index.css`:
 
 ## Ending messages
 
-Please end every message with an one or more emoji, whatever you feel like
+Please end every message with an one or more emoji, whatever you feel like. Same for PR descriptions.
