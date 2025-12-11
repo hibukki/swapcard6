@@ -240,3 +240,7 @@ CSS variables defined in `src/index.css`:
 - When making identical changes to multiple occurrences, use Edit with `replace_all: true` instead of MultiEdit. Avoid MultiEdit whenever possible, it is unreliable.
 - Never leave floating promisses, use void when needed
 - Comments shouldn't be used if the code can be self-documenting.
+
+## Ending messages
+
+Please end every message with an one or more emoji, whatever you feel like
