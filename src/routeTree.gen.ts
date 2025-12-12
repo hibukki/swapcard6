@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicMeetingsRouteImport } from './routes/public-meetings'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as GridRouteImport } from './routes/grid'
 import { Route as ConfigRouteImport } from './routes/config'
 import { Route as ChatsRouteImport } from './routes/chats'
 import { Route as CalendarRouteImport } from './routes/calendar'
@@ -29,6 +30,11 @@ const PublicMeetingsRoute = PublicMeetingsRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GridRoute = GridRouteImport.update({
+  id: '/grid',
+  path: '/grid',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfigRoute = ConfigRouteImport.update({
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/chats': typeof ChatsRoute
   '/config': typeof ConfigRoute
+  '/grid': typeof GridRoute
   '/profile': typeof ProfileRoute
   '/public-meetings': typeof PublicMeetingsRoute
   '/chat/$chatRoomId': typeof ChatChatRoomIdRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/chats': typeof ChatsRoute
   '/config': typeof ConfigRoute
+  '/grid': typeof GridRoute
   '/profile': typeof ProfileRoute
   '/public-meetings': typeof PublicMeetingsRoute
   '/chat/$chatRoomId': typeof ChatChatRoomIdRoute
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/chats': typeof ChatsRoute
   '/config': typeof ConfigRoute
+  '/grid': typeof GridRoute
   '/profile': typeof ProfileRoute
   '/public-meetings': typeof PublicMeetingsRoute
   '/chat/$chatRoomId': typeof ChatChatRoomIdRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/chats'
     | '/config'
+    | '/grid'
     | '/profile'
     | '/public-meetings'
     | '/chat/$chatRoomId'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/chats'
     | '/config'
+    | '/grid'
     | '/profile'
     | '/public-meetings'
     | '/chat/$chatRoomId'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/chats'
     | '/config'
+    | '/grid'
     | '/profile'
     | '/public-meetings'
     | '/chat/$chatRoomId'
@@ -166,6 +178,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   ChatsRoute: typeof ChatsRoute
   ConfigRoute: typeof ConfigRoute
+  GridRoute: typeof GridRoute
   ProfileRoute: typeof ProfileRoute
   PublicMeetingsRoute: typeof PublicMeetingsRoute
   ChatChatRoomIdRoute: typeof ChatChatRoomIdRoute
@@ -187,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/grid': {
+      id: '/grid'
+      path: '/grid'
+      fullPath: '/grid'
+      preLoaderRoute: typeof GridRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/config': {
@@ -262,6 +282,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   ChatsRoute: ChatsRoute,
   ConfigRoute: ConfigRoute,
+  GridRoute: GridRoute,
   ProfileRoute: ProfileRoute,
   PublicMeetingsRoute: PublicMeetingsRoute,
   ChatChatRoomIdRoute: ChatChatRoomIdRoute,
