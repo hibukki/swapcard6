@@ -1,8 +1,8 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Settings } from "lucide-react";
 import { useState, useMemo, Fragment } from "react";
 import { z } from "zod";
 import { api } from "../../convex/_generated/api";
@@ -269,6 +269,15 @@ function RoomsPage() {
             </Fragment>
           ))}
         </div>
+      </div>
+
+      <div className="flex justify-end not-prose">
+        <Button variant="outline" asChild>
+          <Link to="/config">
+            <Settings className="w-4 h-4 mr-2" />
+            Configure rooms
+          </Link>
+        </Button>
       </div>
 
       <CreatePublicMeetingModal
