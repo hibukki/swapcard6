@@ -96,6 +96,10 @@ pnpm run deploy:preview
 - Never leave floating promisses, use void when needed
 - Comments shouldn't be used if the code can be self-documenting.
 
+## When done making a feature (e.g after `git commit`)
+
+Run the review agent. It often gives good feedback, you can ignore comments that you think are wrong (or out of scope).
+
 ## Ending messages
 
 Please end every message with a cat emoji, or one or more emojis of your choice (if you have a preference for that message). Same for PR descriptions.
