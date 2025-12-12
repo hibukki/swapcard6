@@ -131,10 +131,7 @@ export function DayView({
                   const isBusy = calendarMeeting.display.category === "busy";
                   const startsAtHalfHour = meetingStart.getMinutes() >= 30;
                   const durationMinutes = calendarMeeting.meeting.duration;
-                  const heightPercent = Math.min(
-                    (durationMinutes / 60) * 100,
-                    100
-                  );
+                  const heightPercent = (durationMinutes / 60) * 100;
                   const isNonBusyInEditMode = isEditingAvailability && !isBusy;
 
                   const handleCardClick = () => {

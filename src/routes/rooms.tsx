@@ -222,10 +222,7 @@ function RoomsPage() {
 
                       const startsAtHalfHour = meetingStart.getMinutes() >= 30;
                       const durationMinutes = meeting.duration;
-                      const heightPercent = Math.min(
-                        (durationMinutes / 60) * 100,
-                        100
-                      );
+                      const heightPercent = (durationMinutes / 60) * 100;
 
                       return (
                         <div
