@@ -14,6 +14,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { fromDateString, toLocalDateString } from "@/lib/date-format";
 
 const calendarSearchSchema = z.object({
   view: z.enum(["day", "week", "month"]).optional(),
@@ -52,7 +53,7 @@ function CalendarPage() {
   };
 
   const view = search.view ?? getDefaultView();
-  const currentDate = search.date ? new Date(search.date) : new Date();
+  const currentDate = search.date ? fromDateString(search.date) : new Date();
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -98,7 +99,7 @@ function CalendarPage() {
   const [isEditingAvailability, setIsEditingAvailability] = useState(false);
 
   const setView = (newView: "day" | "week" | "month") => updateSearch({ view: newView });
-  const setCurrentDate = (date: Date) => updateSearch({ date: date.toISOString().split('T')[0] });
+  const setCurrentDate = (date: Date) => updateSearch({ date: toLocalDateString(date) });
 
   const navigatePrevious = () => {
     const newDate = new Date(currentDate);
