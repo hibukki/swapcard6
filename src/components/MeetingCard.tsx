@@ -1,14 +1,17 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-import { Clock, MapPin, Users, ExternalLink } from "lucide-react";
+import { Clock, MapPin, Users, Pencil } from "lucide-react";
 import { useState, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { ParticipantList } from "./ParticipantList";
+import { LocationPicker } from "./LocationPicker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { UserName } from "@/components/patterns/UserName";
 import { ShortDate, ShortTimeRange } from "@/components/patterns/ShortDate";
 import { cn } from "@/lib/utils";
@@ -31,6 +34,15 @@ interface MeetingCardProps {
   onActionComplete?: () => void;
 }
 
+function formatDateTimeLocal(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 export function MeetingCard({
   meeting,
   userStatus,
@@ -42,12 +54,24 @@ export function MeetingCard({
 }: MeetingCardProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: meeting.title,
+    description: meeting.description ?? "",
+    scheduledTime: formatDateTimeLocal(new Date(meeting.scheduledTime)),
+    duration: meeting.duration,
+    location: meeting.location ?? "",
+  });
   const navigate = useNavigate();
 
   const join = useMutation(api.meetingParticipants.join);
   const leave = useMutation(api.meetingParticipants.leave);
   const respond = useMutation(api.meetingParticipants.respond);
   const remove = useMutation(api.meetings.remove);
+  const update = useMutation(api.meetings.update);
+
+  const conferences = useQuery(api.conferences.list);
+  const conference = conferences?.[0];
 
   const participants = useQuery(
     api.meetingParticipants.listByMeeting,
@@ -111,6 +135,41 @@ export function MeetingCard({
     }
   };
 
+  const handleStartEdit = () => {
+    setEditForm({
+      title: meeting.title,
+      description: meeting.description ?? "",
+      scheduledTime: formatDateTimeLocal(new Date(meeting.scheduledTime)),
+      duration: meeting.duration,
+      location: meeting.location ?? "",
+    });
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
+  const handleSaveEdit = async () => {
+    setIsLoading(true);
+    try {
+      await update({
+        meetingId: meeting._id,
+        title: editForm.title,
+        description: editForm.description || undefined,
+        scheduledTime: new Date(editForm.scheduledTime).getTime(),
+        duration: editForm.duration,
+        location: editForm.location || undefined,
+      });
+      setIsEditing(false);
+      onActionComplete?.();
+    } catch (error) {
+      handleMutationError(error, "Failed to update meeting");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const isParticipant =
     userStatus === "accepted" ||
     userStatus === "creator" ||
@@ -126,21 +185,43 @@ export function MeetingCard({
         {/* Header */}
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <h3
-              className={cn("font-semibold", isCompact ? "text-lg" : "text-2xl")}
-            >
-              {meeting.title}
-            </h3>
-            {showMeetingLink && (
+            {isEditing ? (
+              <Input
+                value={editForm.title}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, title: e.target.value })
+                }
+                className={cn(isCompact ? "text-lg" : "text-2xl", "font-semibold h-auto py-1")}
+                autoFocus
+              />
+            ) : showMeetingLink ? (
               <Link
                 to="/meeting/$meetingId"
                 params={{ meetingId: meeting._id }}
-                title="Open meeting page"
+                className="hover:underline"
               >
-                <Button variant="ghost" size="icon-xs">
-                  <ExternalLink className="w-3 h-3" />
-                </Button>
+                <h3
+                  className={cn("font-semibold", isCompact ? "text-lg" : "text-2xl")}
+                >
+                  {meeting.title}
+                </h3>
               </Link>
+            ) : (
+              <h3
+                className={cn("font-semibold", isCompact ? "text-lg" : "text-2xl")}
+              >
+                {meeting.title}
+              </h3>
+            )}
+            {isCreator && !isEditing && (
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={handleStartEdit}
+                title="Edit meeting"
+              >
+                <Pencil className="w-3 h-3" />
+              </Button>
             )}
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -165,7 +246,17 @@ export function MeetingCard({
         </div>
 
         {/* Description */}
-        {meeting.description && (
+        {isEditing ? (
+          <Textarea
+            value={editForm.description}
+            onChange={(e) =>
+              setEditForm({ ...editForm, description: e.target.value })
+            }
+            placeholder="Description (optional)"
+            className={cn(isCompact ? "text-sm mt-1" : "mt-2")}
+            rows={2}
+          />
+        ) : meeting.description ? (
           <p
             className={cn(
               "text-muted-foreground",
@@ -174,43 +265,84 @@ export function MeetingCard({
           >
             {meeting.description}
           </p>
-        )}
+        ) : null}
 
         {!isCompact && <Separator className="my-4" />}
 
         {/* Details */}
         <div className={cn("space-y-2", isCompact ? "mt-3" : "space-y-3")}>
-          <div
-            className={cn(
-              "flex items-center text-sm",
-              isCompact ? "gap-2" : "gap-3"
-            )}
-          >
-            <Clock className="w-4 h-4 text-muted-foreground" />
-            {isCompact ? (
-              <>
-                <ShortDate timestamp={meeting.scheduledTime} />
-                <span className="text-muted-foreground">
-                  ({meeting.duration} min)
-                </span>
-              </>
-            ) : (
-              <div>
-                <div className="font-semibold">
-                  <ShortDate timestamp={meeting.scheduledTime} />
-                </div>
-                <div className="text-muted-foreground">
-                  <ShortTimeRange
-                    startTime={meeting.scheduledTime}
-                    endTime={meeting.scheduledTime + meeting.duration * 60000}
-                  />{" "}
-                  ({meeting.duration} min)
-                </div>
+          {isEditing ? (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                  type="datetime-local"
+                  value={editForm.scheduledTime}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, scheduledTime: e.target.value })
+                  }
+                  className="text-sm"
+                />
               </div>
-            )}
-          </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={editForm.duration}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (value > 0) {
+                      setEditForm({ ...editForm, duration: value });
+                    }
+                  }}
+                  min="1"
+                  className="text-sm w-20"
+                />
+                <span className="text-sm text-muted-foreground">min</span>
+              </div>
+            </div>
+          ) : (
+            <div
+              className={cn(
+                "flex items-center text-sm",
+                isCompact ? "gap-2" : "gap-3"
+              )}
+            >
+              <Clock className="w-4 h-4 text-muted-foreground" />
+              {isCompact ? (
+                <>
+                  <ShortDate timestamp={meeting.scheduledTime} />
+                  <span className="text-muted-foreground">
+                    ({meeting.duration} min)
+                  </span>
+                </>
+              ) : (
+                <div>
+                  <div className="font-semibold">
+                    <ShortDate timestamp={meeting.scheduledTime} />
+                  </div>
+                  <div className="text-muted-foreground">
+                    <ShortTimeRange
+                      startTime={meeting.scheduledTime}
+                      endTime={meeting.scheduledTime + meeting.duration * 60000}
+                    />{" "}
+                    ({meeting.duration} min)
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
-          {meeting.location && (
+          {isEditing ? (
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+              <LocationPicker
+                conferenceId={conference?._id}
+                value={editForm.location}
+                onChange={(location) => setEditForm({ ...editForm, location })}
+                placeholder="Location (optional)"
+              />
+            </div>
+          ) : meeting.location ? (
             <div
               className={cn(
                 "flex items-center text-sm",
@@ -220,7 +352,7 @@ export function MeetingCard({
               <MapPin className="w-4 h-4 text-muted-foreground" />
               <span>{meeting.location}</span>
             </div>
-          )}
+          ) : null}
 
           {!isCompact && meeting.maxParticipants && (
             <div className="flex items-center gap-3 text-sm">
@@ -268,7 +400,27 @@ export function MeetingCard({
               isCompact ? "mt-4" : "mt-6"
             )}
           >
-            {isPending && (
+            {isEditing && (
+              <>
+                <Button
+                  variant="ghost"
+                  size={isCompact ? "sm" : "default"}
+                  onClick={handleCancelEdit}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size={isCompact ? "sm" : "default"}
+                  onClick={() => void handleSaveEdit()}
+                  disabled={isLoading || !editForm.title.trim()}
+                >
+                  {isLoading ? "Saving..." : "Save"}
+                </Button>
+              </>
+            )}
+
+            {!isEditing && isPending && (
               <>
                 <Button
                   variant="destructive"
@@ -289,7 +441,7 @@ export function MeetingCard({
               </>
             )}
 
-            {meeting.isPublic && !isParticipant && !isPending && (
+            {!isEditing && meeting.isPublic && !isParticipant && !isPending && (
               <Button
                 size={isCompact ? "sm" : "default"}
                 className={cn(isCompact && "w-full")}
@@ -300,7 +452,7 @@ export function MeetingCard({
               </Button>
             )}
 
-            {isParticipant && !isCreator && (
+            {!isEditing && isParticipant && !isCreator && (
               <Button
                 variant="destructive"
                 size={isCompact ? "sm" : "default"}
@@ -312,7 +464,7 @@ export function MeetingCard({
               </Button>
             )}
 
-            {isCreator && !showCancelConfirm && (
+            {!isEditing && isCreator && !showCancelConfirm && (
               <Button
                 variant="destructive"
                 size={isCompact ? "sm" : "default"}
@@ -323,7 +475,7 @@ export function MeetingCard({
               </Button>
             )}
 
-            {isCreator && showCancelConfirm && (
+            {!isEditing && isCreator && showCancelConfirm && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Cancel?</span>
                 <Button
