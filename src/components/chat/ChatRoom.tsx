@@ -82,10 +82,6 @@ export function ChatRoom({
   }, [messages, isAtBottom]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
-  }, []);
-
-  useEffect(() => {
     if (autoFocus) {
       inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       const timeout = setTimeout(() => {
