@@ -2,7 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMutation, useQuery } from "convex/react";
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import {
@@ -37,6 +37,17 @@ export interface UseCalendarDataResult {
 }
 
 export function useCalendarData(): UseCalendarDataResult {
+  const mountTime = useRef(performance.now());
+  const timingsLogged = useRef<Set<string>>(new Set());
+
+  const logTiming = (name: string, hasData: boolean) => {
+    if (hasData && !timingsLogged.current.has(name)) {
+      timingsLogged.current.add(name);
+      const elapsed = (performance.now() - mountTime.current).toFixed(0);
+      console.log(`[Calendar] ${name}: ${elapsed}ms`);
+    }
+  };
+
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
   const { data: publicMeetingsData } = useSuspenseQuery(publicMeetingsQuery);
   const allMeetings = useQuery(api.meetings.list, {});
@@ -45,6 +56,26 @@ export function useCalendarData(): UseCalendarDataResult {
   const setShowPublicEventsMutation = useMutation(api.users.setShowPublicEvents);
   const createMeetingMutation = useMutation(api.meetings.create);
   const removeMeetingMutation = useMutation(api.meetings.remove);
+
+  useEffect(() => {
+    logTiming("myParticipations", myParticipations !== undefined);
+  }, [myParticipations]);
+
+  useEffect(() => {
+    logTiming("publicMeetingsData", publicMeetingsData !== undefined);
+  }, [publicMeetingsData]);
+
+  useEffect(() => {
+    logTiming("allMeetings", allMeetings !== undefined);
+  }, [allMeetings]);
+
+  useEffect(() => {
+    logTiming("allUsers", allUsers !== undefined);
+  }, [allUsers]);
+
+  useEffect(() => {
+    logTiming("currentUser", currentUser !== undefined);
+  }, [currentUser]);
 
   const showPublicEvents = currentUser?.showPublicEvents ?? true;
 
@@ -65,6 +96,20 @@ export function useCalendarData(): UseCalendarDataResult {
     api.meetingParticipants.getParticipantUserIds,
     myMeetingIds_all.length > 0 ? { meetingIds: myMeetingIds_all } : "skip"
   );
+
+  useEffect(() => {
+    logTiming("participantSummaries", participantSummaries !== undefined);
+  }, [participantSummaries]);
+
+  useEffect(() => {
+    logTiming("participantUserIds", participantUserIdsRaw !== undefined);
+  }, [participantUserIdsRaw]);
+
+  const isLoading = !allMeetings || !allUsers || currentUser === undefined;
+
+  useEffect(() => {
+    logTiming("isLoading=false (ready)", !isLoading);
+  }, [isLoading]);
 
   const meetingsMap = useMemo(() => {
     if (!allMeetings) return new Map();
@@ -161,6 +206,6 @@ export function useCalendarData(): UseCalendarDataResult {
     toggleShowPublic,
     createBusy,
     deleteBusy,
-    isLoading: !allMeetings || !allUsers || currentUser === undefined,
+    isLoading,
   };
 }
