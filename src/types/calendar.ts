@@ -1,4 +1,14 @@
-import type { Doc } from "../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../convex/_generated/dataModel";
+
+/**
+ * Plain user info for calendar views (Convex-free for testability)
+ */
+export interface CalendarUser {
+  id: string;
+  name: string;
+}
+
+export type CalendarParticipantsMap = Record<string, string[]>;
 
 /**
  * Participant summary for a meeting - used to determine display style
@@ -204,4 +214,73 @@ export function getEventTooltip(
         ? `Sent request: ${meeting.title}`
         : meeting.title;
   }
+}
+
+/**
+ * Get the display title for a calendar event.
+ * Uses event title if available, otherwise shows participant names.
+ */
+export function getEventDisplayTitle(
+  calendarMeeting: CalendarMeetingView,
+  usersMap: Map<string, CalendarUser>,
+  participantUserIds: CalendarParticipantsMap
+): string {
+  const { meeting } = calendarMeeting;
+
+  if (calendarMeeting.display.category === "busy") {
+    return "Busy";
+  }
+
+  if (meeting.title && !meeting.title.startsWith("Meeting Request")) {
+    return meeting.title;
+  }
+
+  const otherParticipantIds = participantUserIds[meeting._id] ?? [];
+  if (otherParticipantIds.length > 0) {
+    const names = otherParticipantIds
+      .map((id) => usersMap.get(id)?.name)
+      .filter(Boolean);
+    if (names.length > 0) {
+      return names.length <= 2 ? names.join(" & ") : `${names[0]} +${names.length - 1}`;
+    }
+  }
+
+  if (calendarMeeting.userStatus.participationStatus !== "creator") {
+    const creatorName = usersMap.get(meeting.creatorId)?.name;
+    if (creatorName) return creatorName;
+  }
+
+  return meeting.title || "Meeting";
+}
+
+/**
+ * Convert Convex user documents to plain CalendarUser map
+ */
+export function toCalendarUsersMap(
+  users: Doc<"users">[]
+): Map<string, CalendarUser> {
+  return new Map(
+    users.map((u) => [u._id, { id: u._id, name: u.name ?? "Unknown" }])
+  );
+}
+
+/**
+ * Convert Convex participant IDs map to plain string map
+ */
+export function toCalendarParticipantsMap(
+  participantIds: Record<Id<"meetings">, Id<"users">[]>
+): CalendarParticipantsMap {
+  const result: CalendarParticipantsMap = {};
+  for (const [meetingId, userIds] of Object.entries(participantIds)) {
+    result[meetingId] = userIds;
+  }
+  return result;
+}
+
+export function isToday(date: Date): boolean {
+  return date.toDateString() === new Date().toDateString();
+}
+
+export function formatTime(date: Date): string {
+  return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
