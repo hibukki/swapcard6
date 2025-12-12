@@ -15,6 +15,11 @@ const optionalMeetingFields = {
   notes: v.optional(meetingFields.notes),
 };
 
+const scheduledTimeRangeArgs = {
+  scheduledTimeFrom: v.optional(v.number()),
+  scheduledTimeTo: v.optional(v.number()),
+};
+
 export const create = mutation({
   args: {
     title: meetingFields.title,
@@ -55,18 +60,16 @@ export const get = query({
 });
 
 export const list = query({
-  args: {
-    startTimeFrom: v.optional(v.number()),
-    startTimeTo: v.optional(v.number()),
-  },
+  args: scheduledTimeRangeArgs,
   handler: async (ctx, args) => {
+    const { scheduledTimeFrom, scheduledTimeTo } = args;
     const query = ctx.db.query("meetings").withIndex("by_time", (q) => {
-      if (args.startTimeFrom !== undefined && args.startTimeTo !== undefined) {
-        return q.gte("scheduledTime", args.startTimeFrom).lte("scheduledTime", args.startTimeTo);
-      } else if (args.startTimeFrom !== undefined) {
-        return q.gte("scheduledTime", args.startTimeFrom);
-      } else if (args.startTimeTo !== undefined) {
-        return q.lte("scheduledTime", args.startTimeTo);
+      if (scheduledTimeFrom !== undefined && scheduledTimeTo !== undefined) {
+        return q.gte("scheduledTime", scheduledTimeFrom).lte("scheduledTime", scheduledTimeTo);
+      } else if (scheduledTimeFrom !== undefined) {
+        return q.gte("scheduledTime", scheduledTimeFrom);
+      } else if (scheduledTimeTo !== undefined) {
+        return q.lte("scheduledTime", scheduledTimeTo);
       }
       return q;
     });
@@ -75,19 +78,17 @@ export const list = query({
 });
 
 export const listPublic = query({
-  args: {
-    startTimeFrom: v.optional(v.number()),
-    startTimeTo: v.optional(v.number()),
-  },
+  args: scheduledTimeRangeArgs,
   handler: async (ctx, args) => {
+    const { scheduledTimeFrom, scheduledTimeTo } = args;
     const query = ctx.db.query("meetings").withIndex("by_public", (q) => {
       const base = q.eq("isPublic", true);
-      if (args.startTimeFrom !== undefined && args.startTimeTo !== undefined) {
-        return base.gte("scheduledTime", args.startTimeFrom).lte("scheduledTime", args.startTimeTo);
-      } else if (args.startTimeFrom !== undefined) {
-        return base.gte("scheduledTime", args.startTimeFrom);
-      } else if (args.startTimeTo !== undefined) {
-        return base.lte("scheduledTime", args.startTimeTo);
+      if (scheduledTimeFrom !== undefined && scheduledTimeTo !== undefined) {
+        return base.gte("scheduledTime", scheduledTimeFrom).lte("scheduledTime", scheduledTimeTo);
+      } else if (scheduledTimeFrom !== undefined) {
+        return base.gte("scheduledTime", scheduledTimeFrom);
+      } else if (scheduledTimeTo !== undefined) {
+        return base.lte("scheduledTime", scheduledTimeTo);
       }
       return base;
     });

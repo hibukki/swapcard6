@@ -25,6 +25,11 @@ export async function preloadCalendarData(queryClient: QueryClient): Promise<voi
   ]);
 }
 
+export interface UseCalendarDataOptions {
+  scheduledTimeFrom?: number;
+  scheduledTimeTo?: number;
+}
+
 export interface UseCalendarDataResult {
   meetings: CalendarMeetingView[];
   usersMap: Map<string, CalendarUser>;
@@ -36,7 +41,8 @@ export interface UseCalendarDataResult {
   isLoading: boolean;
 }
 
-export function useCalendarData(): UseCalendarDataResult {
+export function useCalendarData(options: UseCalendarDataOptions = {}): UseCalendarDataResult {
+  const { scheduledTimeFrom, scheduledTimeTo } = options;
   const mountTime = useRef(performance.now());
   const timingsLogged = useRef<Set<string>>(new Set());
 
@@ -50,7 +56,10 @@ export function useCalendarData(): UseCalendarDataResult {
 
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
   const { data: publicMeetingsData } = useSuspenseQuery(publicMeetingsQuery);
-  const allMeetings = useQuery(api.meetings.list, {});
+  const timeRangeArgs = scheduledTimeFrom !== undefined || scheduledTimeTo !== undefined
+    ? { scheduledTimeFrom, scheduledTimeTo }
+    : {};
+  const allMeetings = useQuery(api.meetings.list, timeRangeArgs);
   const allUsers = useQuery(api.users.listUsers, {});
   const currentUser = useQuery(api.users.getCurrentUser, {});
   const setShowPublicEventsMutation = useMutation(api.users.setShowPublicEvents);

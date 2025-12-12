@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronDown, ChevronLeft, ChevronRight, CalendarClock } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { z } from "zod";
 import { CalendarSubscription } from "../components/CalendarSubscription";
 import { MeetingCard as MeetingCardComponent } from "../components/MeetingCard";
@@ -13,6 +13,27 @@ import { Spinner } from "@/components/ui/spinner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+
+function getViewDateRange(view: "week" | "month", currentDate: Date): { from: number; to: number } {
+  if (view === "week") {
+    const startOfWeek = new Date(currentDate);
+    const day = startOfWeek.getDay();
+    startOfWeek.setDate(startOfWeek.getDate() - day);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+    return { from: startOfWeek.getTime(), to: endOfWeek.getTime() };
+  } else {
+    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+
+    return { from: startOfMonth.getTime(), to: endOfMonth.getTime() };
+  }
+}
 
 const calendarSearchSchema = z.object({
   view: z.enum(["week", "month"]).optional().default("week"),
@@ -30,6 +51,18 @@ export const Route = createFileRoute("/calendar")({
 });
 
 function CalendarPage() {
+  const navigate = useNavigate({ from: "/calendar" });
+  const search = Route.useSearch();
+
+  const view = search.view;
+  const currentDate = search.date ? new Date(search.date) : new Date();
+  const currentDateTimestamp = currentDate.getTime();
+
+  const dateRange = useMemo(
+    () => getViewDateRange(view, new Date(currentDateTimestamp)),
+    [view, currentDateTimestamp]
+  );
+
   const {
     meetings,
     usersMap,
@@ -39,13 +72,10 @@ function CalendarPage() {
     createBusy,
     deleteBusy,
     isLoading,
-  } = useCalendarData();
-
-  const navigate = useNavigate({ from: "/calendar" });
-  const search = Route.useSearch();
-
-  const view = search.view;
-  const currentDate = search.date ? new Date(search.date) : new Date();
+  } = useCalendarData({
+    scheduledTimeFrom: dateRange.from,
+    scheduledTimeTo: dateRange.to,
+  });
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
