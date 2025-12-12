@@ -195,7 +195,6 @@ function CalendarPage() {
               size="sm"
               variant={view === "day" ? "default" : "outline"}
               onClick={() => setView("day")}
-              className="md:hidden"
             >
               Day
             </Button>
