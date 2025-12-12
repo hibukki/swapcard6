@@ -137,3 +137,82 @@ export function formatTimeRange(
   });
   return `${start} - ${end}`;
 }
+
+/**
+ * Format a date for navigation/header display.
+ * Shows contextual dates with disambiguation:
+ * - "Today", "Tomorrow", "Yesterday"
+ * - "Monday (Jan 15)" for weekdays within ±6 days
+ * - "Jan 15" for dates beyond that
+ *
+ * @param date - The date to format
+ * @param locale - Locale for formatting (default: "en-US")
+ * @returns Formatted string
+ */
+export function formatDateForNav(
+  date: Date,
+  locale: string | string[] = "en-US"
+): string {
+  const now = new Date();
+  const daysDiff = getDaysDiff(now, date);
+
+  if (daysDiff === 0) {
+    return "Today";
+  } else if (daysDiff === 1) {
+    return "Tomorrow";
+  } else if (daysDiff === -1) {
+    return "Yesterday";
+  } else if (daysDiff >= -6 && daysDiff <= 6) {
+    const weekday = date.toLocaleDateString(locale, { weekday: "long" });
+    const shortDate = date.toLocaleDateString(locale, {
+      month: "short",
+      day: "numeric",
+    });
+    return `${weekday} (${shortDate})`;
+  } else {
+    return date.toLocaleDateString(locale, {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+    });
+  }
+}
+
+/**
+ * Get a local date string in YYYY-MM-DD format.
+ * Uses local timezone to avoid UTC conversion issues.
+ */
+export function toLocalDateString(date: Date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Parse a YYYY-MM-DD string into year, month, day components.
+ */
+export function parseDateString(dateStr: string): {
+  year: number;
+  month: number;
+  day: number;
+} {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return { year, month, day };
+}
+
+/**
+ * Create a local Date from a YYYY-MM-DD string.
+ * Avoids UTC conversion issues by using Date constructor with components.
+ */
+export function fromDateString(dateStr: string): Date {
+  const { year, month, day } = parseDateString(dateStr);
+  return new Date(year, month - 1, day);
+}
+
+/**
+ * Add or subtract days from a date string.
+ * Returns a new YYYY-MM-DD string.
+ */
+export function addDaysToDateString(dateStr: string, days: number): string {
+  const { year, month, day } = parseDateString(dateStr);
+  const date = new Date(year, month - 1, day + days);
+  return toLocalDateString(date);
+}

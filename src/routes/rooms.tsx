@@ -17,6 +17,12 @@ import {
 } from "@/components/ui/dialog";
 import { MeetingCard } from "@/components/MeetingCard";
 import { EmptyState } from "@/components/patterns/EmptyState";
+import {
+  toLocalDateString,
+  fromDateString,
+  addDaysToDateString,
+  formatDateForNav,
+} from "@/lib/date-format";
 
 const searchParamsSchema = z.object({
   date: z.string().optional(),
@@ -41,28 +47,12 @@ export const Route = createFileRoute("/rooms")({
   component: RoomsPage,
 });
 
-function getLocalDateString(date: Date = new Date()): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
-function parseDateString(dateStr: string): { year: number; month: number; day: number } {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  return { year, month, day };
-}
-
-function addDays(dateStr: string, days: number): string {
-  const { year, month, day } = parseDateString(dateStr);
-  const date = new Date(year, month - 1, day + days);
-  return getLocalDateString(date);
-}
-
 function RoomsPage() {
   const navigate = useNavigate({ from: "/rooms" });
   const search = Route.useSearch();
 
-  const currentDateStr = search.date || getLocalDateString();
-  const { year, month, day } = parseDateString(currentDateStr);
-  const currentDate = new Date(year, month - 1, day);
+  const currentDateStr = search.date || toLocalDateString();
+  const currentDate = fromDateString(currentDateStr);
 
   const { data: meetings } = useSuspenseQuery(publicMeetingsQuery);
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
@@ -98,14 +88,7 @@ function RoomsPage() {
 
   const hours = Array.from({ length: 17 }, (_, i) => i + 6);
 
-  const formatDate = (d: Date) => {
-    return d.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
+  const dateDisplay = formatDateForNav(currentDate);
 
   const goToDate = (dateStr: string) => {
     void navigate({
@@ -114,15 +97,15 @@ function RoomsPage() {
   };
 
   const goToPreviousDay = () => {
-    goToDate(addDays(currentDateStr, -1));
+    goToDate(addDaysToDateString(currentDateStr, -1));
   };
 
   const goToNextDay = () => {
-    goToDate(addDays(currentDateStr, 1));
+    goToDate(addDaysToDateString(currentDateStr, 1));
   };
 
   const goToToday = () => {
-    goToDate(getLocalDateString());
+    goToDate(toLocalDateString());
   };
 
   const getMeetingsForLocationAndHour = (location: string, hour: number) => {
@@ -189,7 +172,7 @@ function RoomsPage() {
           <Button variant="outline" size="icon" onClick={goToNextDay}>
             <ChevronRight className="w-4 h-4" />
           </Button>
-          <span className="font-semibold ml-2">{formatDate(currentDate)}</span>
+          <span className="font-semibold ml-2">{dateDisplay}</span>
         </div>
       </div>
 
