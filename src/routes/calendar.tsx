@@ -9,6 +9,7 @@ import { MonthView } from "@/components/calendar/MonthView";
 import { DayView } from "@/components/calendar/DayView";
 import { useCalendarData, preloadCalendarData } from "@/hooks/useCalendarData";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { handleMutationError } from "@/lib/error-handling";
 import type { CalendarMeetingView } from "@/types/calendar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -93,6 +94,22 @@ function CalendarPage() {
 
   const [selectedMeeting, setSelectedMeeting] = useState<CalendarMeetingView | null>(null);
   const [isEditingAvailability, setIsEditingAvailability] = useState(false);
+
+  const handleCreateBusy = async (time: number, duration: number) => {
+    try {
+      await createBusy(time, duration);
+    } catch (error) {
+      handleMutationError(error, "Failed to mark time as busy");
+    }
+  };
+
+  const handleDeleteBusy = async (id: Parameters<typeof deleteBusy>[0]) => {
+    try {
+      await deleteBusy(id);
+    } catch (error) {
+      handleMutationError(error, "Failed to remove busy time");
+    }
+  };
 
   const setView = (newView: "day" | "week" | "month") => updateSearch({ view: newView });
   const setCurrentDate = (date: Date) => updateSearch({ date: date.toISOString().split('T')[0] });
@@ -221,8 +238,8 @@ function CalendarPage() {
           participantUserIds={participantUserIds}
           onMeetingClick={setSelectedMeeting}
           isEditingAvailability={isEditingAvailability}
-          onCreateBusy={(time, duration) => void createBusy(time, duration)}
-          onDeleteBusy={(id) => void deleteBusy(id)}
+          onCreateBusy={(time, duration) => void handleCreateBusy(time, duration)}
+          onDeleteBusy={(id) => void handleDeleteBusy(id)}
         />
       ) : view === "week" ? (
         <WeekView
@@ -232,8 +249,8 @@ function CalendarPage() {
           participantUserIds={participantUserIds}
           onMeetingClick={setSelectedMeeting}
           isEditingAvailability={isEditingAvailability}
-          onCreateBusy={(time, duration) => void createBusy(time, duration)}
-          onDeleteBusy={(id) => void deleteBusy(id)}
+          onCreateBusy={(time, duration) => void handleCreateBusy(time, duration)}
+          onDeleteBusy={(id) => void handleDeleteBusy(id)}
         />
       ) : (
         <MonthView

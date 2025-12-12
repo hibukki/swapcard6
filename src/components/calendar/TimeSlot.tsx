@@ -5,6 +5,9 @@ import type {
   CalendarParticipantsMap,
 } from "@/types/calendar";
 import { CalendarEvent } from "./CalendarEvent";
+import { formatHour } from "./calendarUtils";
+
+type SlotHeight = "60px" | "80px" | "100px";
 
 interface TimeSlotProps {
   slotStart: Date;
@@ -16,7 +19,7 @@ interface TimeSlotProps {
   onCreateBusy: (scheduledTime: number, durationMinutes: number) => void;
   onDeleteBusy: (meetingId: Id<"meetings">) => void;
   hour: number;
-  minHeight?: string;
+  minHeight?: SlotHeight;
 }
 
 export function TimeSlot({
@@ -54,23 +57,43 @@ export function TimeSlot({
     }
   };
 
+  const handleKeyDown = (isBottomHalf: boolean) => (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleHalfHourClick(isBottomHalf);
+    }
+  };
+
+  const getSlotLabel = (isBottomHalf: boolean) => {
+    const minutes = isBottomHalf ? "30" : "00";
+    return `Mark ${formatHour(hour).replace(" ", "")}:${minutes} as busy`;
+  };
+
   return (
     <div className={`border-b border-l border-border relative`} style={{ minHeight }}>
       <div
+        role={isEditingAvailability ? "button" : undefined}
+        tabIndex={isEditingAvailability ? 0 : undefined}
+        aria-label={isEditingAvailability ? getSlotLabel(false) : undefined}
         className={`absolute inset-x-0 top-0 h-1/2 ${
           isEditingAvailability
-            ? "cursor-pointer hover:bg-destructive/10 transition-colors"
+            ? "cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10 focus:outline-none transition-colors"
             : ""
         }`}
         onClick={() => handleHalfHourClick(false)}
+        onKeyDown={isEditingAvailability ? handleKeyDown(false) : undefined}
       />
       <div
+        role={isEditingAvailability ? "button" : undefined}
+        tabIndex={isEditingAvailability ? 0 : undefined}
+        aria-label={isEditingAvailability ? getSlotLabel(true) : undefined}
         className={`absolute inset-x-0 bottom-0 h-1/2 border-t border-border/40 ${
           isEditingAvailability
-            ? "cursor-pointer hover:bg-destructive/10 transition-colors"
+            ? "cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10 focus:outline-none transition-colors"
             : ""
         }`}
         onClick={() => handleHalfHourClick(true)}
+        onKeyDown={isEditingAvailability ? handleKeyDown(true) : undefined}
       />
       {slotMeetings.map((calendarMeeting) => {
         const meetingStart = new Date(calendarMeeting.meeting.scheduledTime);
