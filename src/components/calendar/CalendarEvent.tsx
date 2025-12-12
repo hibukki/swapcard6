@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import Tippy from "@tippyjs/react";
-import type { Id } from "../../../convex/_generated/dataModel";
 import {
   type CalendarMeetingView,
   type CalendarUser,
@@ -77,7 +76,7 @@ export function CalendarEvent({
       ) : (
         <Link
           to="/meeting/$meetingId"
-          params={{ meetingId: meeting._id as Id<"meetings"> }}
+          params={{ meetingId: meeting._id }}
           className={`font-semibold ${styles.text} truncate block hover:underline ${styles.strikethrough ? "line-through" : ""}`}
           onClick={(e) => e.stopPropagation()}
         >
