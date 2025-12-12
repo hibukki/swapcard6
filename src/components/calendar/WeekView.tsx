@@ -1,4 +1,5 @@
-import React from "react";
+import { Fragment } from "react";
+import type { Id } from "../../../convex/_generated/dataModel";
 import {
   type CalendarMeetingView,
   type CalendarUser,
@@ -14,7 +15,7 @@ export interface WeekViewProps {
   onMeetingClick: (meeting: CalendarMeetingView) => void;
   isEditingAvailability: boolean;
   onCreateBusy: (scheduledTime: number, durationMinutes: number) => void;
-  onDeleteBusy: (meetingId: string) => void;
+  onDeleteBusy: (meetingId: Id<"meetings">) => void;
 }
 
 export function WeekView({
@@ -66,7 +67,7 @@ export function WeekView({
         })}
 
         {hours.map((hour) => (
-          <React.Fragment key={`row-${hour}`}>
+          <Fragment key={`row-${hour}`}>
             <div
               key={`time-${hour}`}
               className="bg-background border-b border-border p-2 text-xs text-right text-muted-foreground sticky left-0"
@@ -180,7 +181,7 @@ export function WeekView({
                 </div>
               );
             })}
-          </React.Fragment>
+          </Fragment>
         ))}
       </div>
     </div>
