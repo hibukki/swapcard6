@@ -28,7 +28,7 @@ const myParticipationsQuery = convexQuery(
   {}
 );
 
-export const Route = createFileRoute("/grid")({
+export const Route = createFileRoute("/rooms")({
   validateSearch: searchParamsSchema,
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session) {
@@ -38,10 +38,10 @@ export const Route = createFileRoute("/grid")({
       ]);
     }
   },
-  component: GridPage,
+  component: RoomsPage,
 });
 
-function GridPage() {
+function RoomsPage() {
   const { date } = Route.useSearch();
   const navigate = useNavigate();
 
@@ -93,7 +93,7 @@ function GridPage() {
 
   const goToDate = (d: Date) => {
     void navigate({
-      to: "/grid",
+      to: "/rooms",
       search: { date: d.toISOString().split("T")[0] },
     });
   };
@@ -111,7 +111,7 @@ function GridPage() {
   };
 
   const goToToday = () => {
-    void navigate({ to: "/grid", search: {} });
+    void navigate({ to: "/rooms", search: {} });
   };
 
   const getMeetingsForLocationAndHour = (location: string, hour: number) => {
@@ -145,7 +145,7 @@ function GridPage() {
   if (meetingSpots === undefined) {
     return (
       <div className="space-y-4">
-        <h1>Grid View</h1>
+        <h1>Rooms</h1>
         <div className="p-8 text-center text-muted-foreground">Loading...</div>
       </div>
     );
@@ -154,10 +154,10 @@ function GridPage() {
   if (meetingSpots.length === 0) {
     return (
       <div className="space-y-4">
-        <h1>Grid View</h1>
+        <h1>Rooms</h1>
         <EmptyState
           title="No locations configured"
-          description="Add meeting spots in Config to use the grid view"
+          description="Add meeting spots in Config to use the rooms view"
         />
       </div>
     );

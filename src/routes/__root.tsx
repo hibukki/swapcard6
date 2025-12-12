@@ -43,7 +43,7 @@ export const Route = createRootRouteWithContext<{
 const navLinks = [
   { to: "/attendees", label: "Attendees" },
   { to: "/public-meetings", label: "Public Meetings" },
-  { to: "/grid", label: "Grid" },
+  { to: "/rooms", label: "Rooms" },
   { to: "/calendar", label: "Calendar" },
   { to: "/agenda", label: "Agenda" },
   { to: "/chats", label: "Chat" },
