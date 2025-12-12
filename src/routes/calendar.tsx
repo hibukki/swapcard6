@@ -6,6 +6,7 @@ import { CalendarSubscription } from "../components/CalendarSubscription";
 import { MeetingCard as MeetingCardComponent } from "../components/MeetingCard";
 import { WeekView } from "@/components/calendar/WeekView";
 import { MonthView } from "@/components/calendar/MonthView";
+import { DayView } from "@/components/calendar/DayView";
 import { useCalendarData, preloadCalendarData } from "@/hooks/useCalendarData";
 import type { CalendarMeetingView } from "@/types/calendar";
 import { Button } from "@/components/ui/button";
@@ -15,9 +16,22 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const calendarSearchSchema = z.object({
-  view: z.enum(["week", "month"]).optional().default("week"),
+  view: z.enum(["day", "week", "month"]).optional(),
   date: z.string().optional(),
 });
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return isMobile;
+}
 
 export const Route = createFileRoute("/calendar")({
   validateSearch: calendarSearchSchema,
@@ -43,8 +57,10 @@ function CalendarPage() {
 
   const navigate = useNavigate({ from: "/calendar" });
   const search = Route.useSearch();
+  const isMobile = useIsMobile();
 
-  const view = search.view;
+  const defaultView = isMobile ? "day" : "week";
+  const view = search.view ?? defaultView;
   const currentDate = search.date ? new Date(search.date) : new Date();
 
   React.useEffect(() => {
@@ -61,7 +77,7 @@ function CalendarPage() {
         if (savedView || savedDate) {
           void navigate({
             search: {
-              view: (savedView as "week" | "month") || "week",
+              view: (savedView as "day" | "week" | "month") || undefined,
               date: savedDate || undefined,
             },
             replace: true,
@@ -90,12 +106,14 @@ function CalendarPage() {
   const [selectedMeeting, setSelectedMeeting] = useState<CalendarMeetingView | null>(null);
   const [isEditingAvailability, setIsEditingAvailability] = useState(false);
 
-  const setView = (newView: "week" | "month") => updateSearch({ view: newView });
+  const setView = (newView: "day" | "week" | "month") => updateSearch({ view: newView });
   const setCurrentDate = (date: Date) => updateSearch({ date: date.toISOString().split('T')[0] });
 
   const navigatePrevious = () => {
     const newDate = new Date(currentDate);
-    if (view === "week") {
+    if (view === "day") {
+      newDate.setDate(newDate.getDate() - 1);
+    } else if (view === "week") {
       newDate.setDate(newDate.getDate() - 7);
     } else {
       newDate.setMonth(newDate.getMonth() - 1);
@@ -105,7 +123,9 @@ function CalendarPage() {
 
   const navigateNext = () => {
     const newDate = new Date(currentDate);
-    if (view === "week") {
+    if (view === "day") {
+      newDate.setDate(newDate.getDate() + 1);
+    } else if (view === "week") {
       newDate.setDate(newDate.getDate() + 7);
     } else {
       newDate.setMonth(newDate.getMonth() + 1);
@@ -140,15 +160,21 @@ function CalendarPage() {
             <ChevronRight className="w-4 h-4" />
           </Button>
           <h2 className="text-xl font-semibold ml-2">
-            {currentDate.toLocaleDateString("en-US", {
-              month: "long",
-              year: "numeric",
-            })}
+            {view === "day"
+              ? currentDate.toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })
+              : currentDate.toLocaleDateString("en-US", {
+                  month: "long",
+                  year: "numeric",
+                })}
           </h2>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {view === "week" && (
+          {(view === "day" || view === "week") && (
             <Button
               size="sm"
               variant={isEditingAvailability ? "default" : "outline"}
@@ -160,6 +186,14 @@ function CalendarPage() {
             </Button>
           )}
           <div className="flex gap-1">
+            <Button
+              size="sm"
+              variant={view === "day" ? "default" : "outline"}
+              onClick={() => setView("day")}
+              className="md:hidden"
+            >
+              Day
+            </Button>
             <Button
               size="sm"
               variant={view === "week" ? "default" : "outline"}
@@ -191,7 +225,18 @@ function CalendarPage() {
       </details>
 
       {/* Calendar Grid */}
-      {view === "week" ? (
+      {view === "day" ? (
+        <DayView
+          meetings={meetings}
+          currentDate={currentDate}
+          usersMap={usersMap}
+          participantUserIds={participantUserIds}
+          onMeetingClick={setSelectedMeeting}
+          isEditingAvailability={isEditingAvailability}
+          onCreateBusy={(time, duration) => void createBusy(time, duration)}
+          onDeleteBusy={(id) => void deleteBusy(id)}
+        />
+      ) : view === "week" ? (
         <WeekView
           meetings={meetings}
           currentDate={currentDate}
