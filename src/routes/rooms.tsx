@@ -41,12 +41,28 @@ export const Route = createFileRoute("/rooms")({
   component: RoomsPage,
 });
 
-function RoomsPage() {
-  const { date } = Route.useSearch();
-  const navigate = useNavigate();
+function getLocalDateString(date: Date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
 
-  const currentDate = date ? new Date(date) : new Date();
-  currentDate.setHours(0, 0, 0, 0);
+function parseDateString(dateStr: string): { year: number; month: number; day: number } {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return { year, month, day };
+}
+
+function addDays(dateStr: string, days: number): string {
+  const { year, month, day } = parseDateString(dateStr);
+  const date = new Date(year, month - 1, day + days);
+  return getLocalDateString(date);
+}
+
+function RoomsPage() {
+  const navigate = useNavigate({ from: "/rooms" });
+  const search = Route.useSearch();
+
+  const currentDateStr = search.date || getLocalDateString();
+  const { year, month, day } = parseDateString(currentDateStr);
+  const currentDate = new Date(year, month - 1, day);
 
   const { data: meetings } = useSuspenseQuery(publicMeetingsQuery);
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
@@ -91,27 +107,22 @@ function RoomsPage() {
     });
   };
 
-  const goToDate = (d: Date) => {
+  const goToDate = (dateStr: string) => {
     void navigate({
-      to: "/rooms",
-      search: { date: d.toISOString().split("T")[0] },
+      search: (prev) => ({ ...prev, date: dateStr }),
     });
   };
 
   const goToPreviousDay = () => {
-    const prev = new Date(currentDate);
-    prev.setDate(prev.getDate() - 1);
-    goToDate(prev);
+    goToDate(addDays(currentDateStr, -1));
   };
 
   const goToNextDay = () => {
-    const next = new Date(currentDate);
-    next.setDate(next.getDate() + 1);
-    goToDate(next);
+    goToDate(addDays(currentDateStr, 1));
   };
 
   const goToToday = () => {
-    void navigate({ to: "/rooms", search: {} });
+    goToDate(getLocalDateString());
   };
 
   const getMeetingsForLocationAndHour = (location: string, hour: number) => {
