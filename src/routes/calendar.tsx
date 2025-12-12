@@ -8,6 +8,7 @@ import { WeekView } from "@/components/calendar/WeekView";
 import { MonthView } from "@/components/calendar/MonthView";
 import { DayView } from "@/components/calendar/DayView";
 import { useCalendarData, preloadCalendarData } from "@/hooks/useCalendarData";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import type { CalendarMeetingView } from "@/types/calendar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -19,19 +20,6 @@ const calendarSearchSchema = z.object({
   view: z.enum(["day", "week", "month"]).optional(),
   date: z.string().optional(),
 });
-
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-
-  React.useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  return isMobile;
-}
 
 export const Route = createFileRoute("/calendar")({
   validateSearch: calendarSearchSchema,
