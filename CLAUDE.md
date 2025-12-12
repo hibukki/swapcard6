@@ -131,34 +131,6 @@ pnpm run deploy:preview
 - For mutations, continue using Convex's `useMutation` directly
 - **When adding auth to a query** (`ctx.auth.getUserIdentity()`), update its loader: `if ((window as any).Clerk?.session) await queryClient.ensureQueryData(authQuery)` - otherwise the app crashes on page refresh
 
-## TanStack Form + Zod v4
-
-- No adapter needed - TanStack Form natively supports Standard Schema libraries like Zod v4
-- Form-level validation:
-  ```tsx
-  const schema = z.object({ name: z.string().min(1) });
-  const form = useForm({
-    defaultValues: { name: "" },
-    validators: { onChange: schema },
-  });
-  ```
-- Field errors are StandardSchemaV1Issue[] with .message property:
-  ```tsx
-  {
-    !field.state.meta.isValid && (
-      <em>{field.state.meta.errors.map((e) => e.message).join(", ")}</em>
-    );
-  }
-  ```
-- Number inputs use valueAsNumber:
-  ```tsx
-  onChange={(e) => field.handleChange(e.target.valueAsNumber)}
-  ```
-- Field validation can override form validation - design hierarchy carefully
-- Submit handler: `onSubmit: async ({ value }) => { await mutate(value); form.reset(); }`
-- Disable during submit: `<button disabled={!form.state.canSubmit || form.state.isSubmitting}>`
-- Async validation: use `onChangeAsync` for server-side checks
-
 ## Other Guidelines
 
 - When stuck: consider official docs (docs.convex.dev, tanstack.com, ui.shadcn.com)
