@@ -2,10 +2,8 @@ import {
   type CalendarMeetingView,
   type CalendarUser,
   type CalendarParticipantsMap,
-  categoryStyles,
-  getEventTooltip,
-  getEventDisplayTitle,
 } from "@/types/calendar";
+import { CalendarEvent } from "./CalendarEvent";
 
 export interface MonthViewProps {
   meetings: CalendarMeetingView[];
@@ -91,40 +89,16 @@ export function MonthView({
                 {day}
               </div>
               <div className="space-y-1">
-                {dayMeetings.slice(0, 3).map((calendarMeeting) => {
-                  const styles = categoryStyles[calendarMeeting.display.category];
-                  const displayTitle = getEventDisplayTitle(
-                    calendarMeeting,
-                    usersMap,
-                    participantUserIds
-                  );
-                  const tooltip = getEventTooltip(
-                    calendarMeeting,
-                    usersMap.get(calendarMeeting.meeting.creatorId)?.name
-                  );
-
-                  return (
-                    <div
-                      key={calendarMeeting.meeting._id}
-                      className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity border-l-4 ${styles.border} ${styles.borderOnly ? "bg-background" : styles.bg} ${styles.text} ${styles.strikethrough ? "line-through" : ""}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onMeetingClick(calendarMeeting);
-                      }}
-                      title={tooltip}
-                    >
-                      {styles.warningIcon && "⚠️ "}
-                      {new Date(calendarMeeting.meeting.scheduledTime).toLocaleTimeString(
-                        "en-US",
-                        {
-                          hour: "numeric",
-                          minute: "2-digit",
-                        }
-                      )}{" "}
-                      {displayTitle}
-                    </div>
-                  );
-                })}
+                {dayMeetings.slice(0, 3).map((calendarMeeting) => (
+                  <CalendarEvent
+                    key={calendarMeeting.meeting._id}
+                    calendarMeeting={calendarMeeting}
+                    usersMap={usersMap}
+                    participantUserIds={participantUserIds}
+                    onClick={() => onMeetingClick(calendarMeeting)}
+                    variant="compact"
+                  />
+                ))}
                 {dayMeetings.length > 3 && (
                   <div className="text-xs text-muted-foreground">
                     +{dayMeetings.length - 3} more

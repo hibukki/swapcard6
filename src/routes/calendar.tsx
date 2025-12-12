@@ -6,12 +6,9 @@ import { CalendarSubscription } from "../components/CalendarSubscription";
 import { MeetingCard as MeetingCardComponent } from "../components/MeetingCard";
 import { WeekView } from "@/components/calendar/WeekView";
 import { MonthView } from "@/components/calendar/MonthView";
-import {
-  useCalendarData,
-  myParticipationsQuery,
-  publicMeetingsQuery,
-} from "@/hooks/useCalendarData";
+import { useCalendarData, preloadCalendarData } from "@/hooks/useCalendarData";
 import type { CalendarMeetingView } from "@/types/calendar";
+import type { Id } from "../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,10 +24,7 @@ export const Route = createFileRoute("/calendar")({
   validateSearch: calendarSearchSchema,
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session) {
-      await Promise.all([
-        queryClient.ensureQueryData(myParticipationsQuery),
-        queryClient.ensureQueryData(publicMeetingsQuery),
-      ]);
+      await preloadCalendarData(queryClient);
     }
   },
   component: CalendarPage,
@@ -207,7 +201,7 @@ function CalendarPage() {
           onMeetingClick={setSelectedMeeting}
           isEditingAvailability={isEditingAvailability}
           onCreateBusy={(time, duration) => void createBusy(time, duration)}
-          onDeleteBusy={(id) => void deleteBusy(id)}
+          onDeleteBusy={(id) => void deleteBusy(id as Id<"meetings">)}
         />
       ) : (
         <MonthView

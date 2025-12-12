@@ -1,4 +1,5 @@
 import { convexQuery } from "@convex-dev/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMutation, useQuery } from "convex/react";
 import { useMemo } from "react";
@@ -14,8 +15,15 @@ import {
   toCalendarParticipantsMap,
 } from "@/types/calendar";
 
-export const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
-export const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
+const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
+const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
+
+export async function preloadCalendarData(queryClient: QueryClient): Promise<void> {
+  await Promise.all([
+    queryClient.ensureQueryData(myParticipationsQuery),
+    queryClient.ensureQueryData(publicMeetingsQuery),
+  ]);
+}
 
 export interface UseCalendarDataResult {
   meetings: CalendarMeetingView[];
@@ -24,7 +32,7 @@ export interface UseCalendarDataResult {
   showPublicEvents: boolean;
   toggleShowPublic: () => void;
   createBusy: (scheduledTime: number, durationMinutes: number) => Promise<void>;
-  deleteBusy: (meetingId: string) => Promise<void>;
+  deleteBusy: (meetingId: Id<"meetings">) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -141,8 +149,8 @@ export function useCalendarData(): UseCalendarDataResult {
     });
   };
 
-  const deleteBusy = async (meetingId: string) => {
-    await removeMeetingMutation({ meetingId: meetingId as Id<"meetings"> });
+  const deleteBusy = async (meetingId: Id<"meetings">) => {
+    await removeMeetingMutation({ meetingId });
   };
 
   return {
@@ -153,6 +161,6 @@ export function useCalendarData(): UseCalendarDataResult {
     toggleShowPublic,
     createBusy,
     deleteBusy,
-    isLoading: !allMeetings || !allUsers,
+    isLoading: !allMeetings || !allUsers || currentUser === undefined,
   };
 }

@@ -17,6 +17,7 @@ export interface CalendarEventProps {
   onClick: () => void;
   dimmed?: boolean;
   isEditingAvailability?: boolean;
+  variant?: "default" | "compact";
 }
 
 export function CalendarEvent({
@@ -26,6 +27,7 @@ export function CalendarEvent({
   onClick,
   dimmed = false,
   isEditingAvailability = false,
+  variant = "default",
 }: CalendarEventProps) {
   const { meeting, display } = calendarMeeting;
   const startTime = new Date(meeting.scheduledTime);
@@ -40,10 +42,30 @@ export function CalendarEvent({
   );
 
   const isEditableBusy = isBusy && isEditingAvailability;
+  const isCompact = variant === "compact";
 
-  const cardContent = (
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+
+  const baseClasses = `border-l-4 ${styles.border} p-1 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity ${styles.borderOnly ? "bg-background" : styles.bg} ${dimmed ? "opacity-40" : ""}`;
+
+  const cardContent = isCompact ? (
     <div
-      className={`border-l-4 ${styles.border} p-1 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity h-full overflow-hidden ${styles.borderOnly ? "bg-background" : styles.bg} ${dimmed ? "opacity-40" : ""}`}
+      className={`${baseClasses} truncate`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      title={isEditableBusy ? undefined : tooltip}
+    >
+      <span className={`${styles.text} ${styles.strikethrough ? "line-through" : ""}`}>
+        {styles.warningIcon && "⚠️ "}
+        {formatTime(startTime)} {displayTitle}
+      </span>
+    </div>
+  ) : (
+    <div
+      className={`${baseClasses} h-full overflow-hidden`}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
@@ -66,15 +88,7 @@ export function CalendarEvent({
         </Link>
       )}
       <div className="text-muted-foreground">
-        {startTime.toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-        })}{" "}
-        -{" "}
-        {endTime.toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-        })}
+        {formatTime(startTime)} - {formatTime(endTime)}
       </div>
     </div>
   );
