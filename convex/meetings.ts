@@ -20,6 +20,33 @@ const scheduledTimeRangeArgs = {
   scheduledTimeTo: v.optional(v.number()),
 };
 
+type ScheduledTimeRange = {
+  scheduledTimeFrom?: number;
+  scheduledTimeTo?: number;
+};
+
+// Helper to apply scheduledTime range filtering to an index query builder.
+// Uses 'any' for the builder type because Convex's IndexRangeBuilder types
+// are complex and change at each chaining step, making generic abstraction impractical.
+function withScheduledTimeRange<T>(
+  builder: T,
+  { scheduledTimeFrom, scheduledTimeTo }: ScheduledTimeRange
+): T {
+  type Builder = {
+    gte: (field: string, value: number) => Builder;
+    lte: (field: string, value: number) => Builder;
+  };
+  const b = builder as unknown as Builder;
+  if (scheduledTimeFrom !== undefined && scheduledTimeTo !== undefined) {
+    return b.gte("scheduledTime", scheduledTimeFrom).lte("scheduledTime", scheduledTimeTo) as unknown as T;
+  } else if (scheduledTimeFrom !== undefined) {
+    return b.gte("scheduledTime", scheduledTimeFrom) as unknown as T;
+  } else if (scheduledTimeTo !== undefined) {
+    return b.lte("scheduledTime", scheduledTimeTo) as unknown as T;
+  }
+  return builder;
+}
+
 export const create = mutation({
   args: {
     title: meetingFields.title,
@@ -62,17 +89,9 @@ export const get = query({
 export const list = query({
   args: scheduledTimeRangeArgs,
   handler: async (ctx, args) => {
-    const { scheduledTimeFrom, scheduledTimeTo } = args;
-    const query = ctx.db.query("meetings").withIndex("by_time", (q) => {
-      if (scheduledTimeFrom !== undefined && scheduledTimeTo !== undefined) {
-        return q.gte("scheduledTime", scheduledTimeFrom).lte("scheduledTime", scheduledTimeTo);
-      } else if (scheduledTimeFrom !== undefined) {
-        return q.gte("scheduledTime", scheduledTimeFrom);
-      } else if (scheduledTimeTo !== undefined) {
-        return q.lte("scheduledTime", scheduledTimeTo);
-      }
-      return q;
-    });
+    const query = ctx.db.query("meetings").withIndex("by_time", (q) =>
+      withScheduledTimeRange(q, args)
+    );
     return await query.collect();
   },
 });
@@ -80,18 +99,9 @@ export const list = query({
 export const listPublic = query({
   args: scheduledTimeRangeArgs,
   handler: async (ctx, args) => {
-    const { scheduledTimeFrom, scheduledTimeTo } = args;
-    const query = ctx.db.query("meetings").withIndex("by_public", (q) => {
-      const base = q.eq("isPublic", true);
-      if (scheduledTimeFrom !== undefined && scheduledTimeTo !== undefined) {
-        return base.gte("scheduledTime", scheduledTimeFrom).lte("scheduledTime", scheduledTimeTo);
-      } else if (scheduledTimeFrom !== undefined) {
-        return base.gte("scheduledTime", scheduledTimeFrom);
-      } else if (scheduledTimeTo !== undefined) {
-        return base.lte("scheduledTime", scheduledTimeTo);
-      }
-      return base;
-    });
+    const query = ctx.db.query("meetings").withIndex("by_public", (q) =>
+      withScheduledTimeRange(q.eq("isPublic", true), args)
+    );
     return await query.collect();
   },
 });

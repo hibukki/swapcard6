@@ -2,7 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMutation, useQuery } from "convex/react";
-import { useMemo, useEffect, useRef } from "react";
+import { useMemo, useEffect, useRef, useCallback } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import {
@@ -16,13 +16,9 @@ import {
 } from "@/types/calendar";
 
 const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
-const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
 
 export async function preloadCalendarData(queryClient: QueryClient): Promise<void> {
-  await Promise.all([
-    queryClient.ensureQueryData(myParticipationsQuery),
-    queryClient.ensureQueryData(publicMeetingsQuery),
-  ]);
+  await queryClient.ensureQueryData(myParticipationsQuery);
 }
 
 export interface UseCalendarDataOptions {
@@ -46,19 +42,19 @@ export function useCalendarData(options: UseCalendarDataOptions = {}): UseCalend
   const mountTime = useRef(performance.now());
   const timingsLogged = useRef<Set<string>>(new Set());
 
-  const logTiming = (name: string, hasData: boolean) => {
+  const logTiming = useCallback((name: string, hasData: boolean) => {
     if (hasData && !timingsLogged.current.has(name)) {
       timingsLogged.current.add(name);
       const elapsed = (performance.now() - mountTime.current).toFixed(0);
       console.log(`[Calendar] ${name}: ${elapsed}ms`);
     }
-  };
+  }, []);
 
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
-  const { data: publicMeetingsData } = useSuspenseQuery(publicMeetingsQuery);
   const timeRangeArgs = scheduledTimeFrom !== undefined || scheduledTimeTo !== undefined
     ? { scheduledTimeFrom, scheduledTimeTo }
     : {};
+  const publicMeetingsData = useQuery(api.meetings.listPublic, timeRangeArgs);
   const allMeetings = useQuery(api.meetings.list, timeRangeArgs);
   const allUsers = useQuery(api.users.listUsers, {});
   const currentUser = useQuery(api.users.getCurrentUser, {});
@@ -68,23 +64,23 @@ export function useCalendarData(options: UseCalendarDataOptions = {}): UseCalend
 
   useEffect(() => {
     logTiming("myParticipations", myParticipations !== undefined);
-  }, [myParticipations]);
+  }, [myParticipations, logTiming]);
 
   useEffect(() => {
     logTiming("publicMeetingsData", publicMeetingsData !== undefined);
-  }, [publicMeetingsData]);
+  }, [publicMeetingsData, logTiming]);
 
   useEffect(() => {
     logTiming("allMeetings", allMeetings !== undefined);
-  }, [allMeetings]);
+  }, [allMeetings, logTiming]);
 
   useEffect(() => {
     logTiming("allUsers", allUsers !== undefined);
-  }, [allUsers]);
+  }, [allUsers, logTiming]);
 
   useEffect(() => {
     logTiming("currentUser", currentUser !== undefined);
-  }, [currentUser]);
+  }, [currentUser, logTiming]);
 
   const showPublicEvents = currentUser?.showPublicEvents ?? true;
 
@@ -108,17 +104,17 @@ export function useCalendarData(options: UseCalendarDataOptions = {}): UseCalend
 
   useEffect(() => {
     logTiming("participantSummaries", participantSummaries !== undefined);
-  }, [participantSummaries]);
+  }, [participantSummaries, logTiming]);
 
   useEffect(() => {
     logTiming("participantUserIds", participantUserIdsRaw !== undefined);
-  }, [participantUserIdsRaw]);
+  }, [participantUserIdsRaw, logTiming]);
 
-  const isLoading = !allMeetings || !allUsers || currentUser === undefined;
+  const isLoading = !allMeetings || !allUsers || !publicMeetingsData || currentUser === undefined;
 
   useEffect(() => {
     logTiming("isLoading=false (ready)", !isLoading);
-  }, [isLoading]);
+  }, [isLoading, logTiming]);
 
   const meetingsMap = useMemo(() => {
     if (!allMeetings) return new Map();
@@ -164,6 +160,7 @@ export function useCalendarData(options: UseCalendarDataOptions = {}): UseCalend
   }, [myParticipations, meetingsMap, participantSummaries]);
 
   const publicMeetings = useMemo((): CalendarMeetingView[] => {
+    if (!publicMeetingsData) return [];
     return publicMeetingsData
       .filter((meeting) => !myMeetingIds.has(meeting._id))
       .map((meeting): CalendarMeetingView => ({
