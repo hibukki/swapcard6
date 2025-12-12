@@ -63,6 +63,24 @@ export const markAsRead = mutation({
   },
 });
 
+export const markAsUnread = mutation({
+  args: { notificationId: v.id("notifications") },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUserOrCrash(ctx);
+
+    const notification = await ctx.db.get(args.notificationId);
+    if (!notification) {
+      throw new ConvexError("Notification not found");
+    }
+
+    if (notification.userId !== user._id) {
+      throw new ConvexError("Not your notification");
+    }
+
+    await ctx.db.patch(args.notificationId, { isRead: false });
+  },
+});
+
 export const markAllAsRead = mutation({
   args: {},
   handler: async (ctx) => {

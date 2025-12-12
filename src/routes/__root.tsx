@@ -32,6 +32,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -109,7 +110,8 @@ function RootComponent() {
                     ))}
                   </nav>
 
-                  <div>
+                  <div className="flex items-center gap-2">
+                    <NotificationsBell />
                     <UserButton />
                   </div>
                 </header>

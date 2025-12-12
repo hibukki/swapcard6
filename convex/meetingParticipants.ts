@@ -9,6 +9,7 @@ import {
 import { getMeetingOrCrash, getViewableMeetingOrCrash } from "./meetingUtils";
 import { getMeetingParticipation } from "./meetingParticipantsUtils";
 import { meetingFields } from "./schema";
+import { createNotification } from "./notifications";
 
 // Queries
 
@@ -108,6 +109,14 @@ export const sendRequest = mutation({
       status: "pending",
     });
 
+    await createNotification(ctx, {
+      userId: args.recipientId,
+      type: "meeting_request",
+      title: `${requester.name} invited you to "${args.title}"`,
+      relatedMeetingId: meetingId,
+      relatedUserId: requester._id,
+    });
+
     return { meetingId, participationId };
   },
 });
@@ -119,7 +128,7 @@ export const respond = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrCrash(ctx);
-    await getMeetingOrCrash(ctx, args.meetingId);
+    const meeting = await getMeetingOrCrash(ctx, args.meetingId);
 
     const participation = await getMeetingParticipation(
       ctx,
@@ -137,6 +146,14 @@ export const respond = mutation({
 
     await ctx.db.patch(participation._id, {
       status: args.accept ? "accepted" : "declined",
+    });
+
+    await createNotification(ctx, {
+      userId: meeting.creatorId,
+      type: args.accept ? "meeting_accepted" : "meeting_declined",
+      title: `${user.name} ${args.accept ? "accepted" : "declined"} "${meeting.title}"`,
+      relatedMeetingId: args.meetingId,
+      relatedUserId: user._id,
     });
   },
 });
@@ -243,11 +260,21 @@ export const invite = mutation({
 
     await getUserByIdOrCrash(ctx, args.userId);
 
-    return await ctx.db.insert("meetingParticipants", {
+    const participationId = await ctx.db.insert("meetingParticipants", {
       meetingId: args.meetingId,
       userId: args.userId,
       status: "pending",
     });
+
+    await createNotification(ctx, {
+      userId: args.userId,
+      type: "meeting_request",
+      title: `${currentUser.name} invited you to "${meeting.title}"`,
+      relatedMeetingId: args.meetingId,
+      relatedUserId: currentUser._id,
+    });
+
+    return participationId;
   },
 });
 
