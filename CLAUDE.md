@@ -90,56 +90,12 @@ pnpm run deploy:preview
 - Use `ctx.db.replace` to fully replace an existing document.
 - Use `ctx.db.patch` to shallow merge updates into an existing document.
 
-### File uploads
-
-- generate upload URL in mutation (`ctx.storage.generateUploadUrl()`)
-- POST from client
-- store ID (take `v.id("_storage")`)
-- serve with `ctx.storage.getUrl(fileId)` in queries
-
-### Other Convex Features (refer to docs and install as necessary)
-
-- Text search: docs.convex.dev/search/text-search
-- Crons: docs.convex.dev/scheduling/cron-jobs
-- Durable long-running code flows with retries and delays: convex.dev/components/workflow
-- AI agent framework with persistent conversations and tools: convex.dev/components/agent. See https://github.com/get-convex/agent/blob/main/examples/chat-streaming/README.md for a chat example.
-- Prioritize tasks with separate customizable queues: convex.dev/components/workpool
-- Sync engine for ProseMirror-based editors: convex.dev/components/collaborative-text-editor-sync
-- Send and receive SMS with queryable status: convex.dev/components/twilio-sms
-- Add subscriptions and billing integration: convex.dev/components/polar
-- Type-safe application-layer rate limits with sharding: convex.dev/components/rate-limiter
-- Framework for long-running data migrations: convex.dev/components/migrations
-- Distributed counter for high-throughput operations: convex.dev/components/sharded-counter
-- Cache action results to improve performance: convex.dev/components/action-cache
-- Data aggregation and denormalization operations: convex.dev/components/aggregate
-- Register and manage cron jobs at runtime: convex.dev/components/crons
-
-## TanStack Router
-
-- Avoid `const search = useSearch()` - use `select` option instead
-- Route params update quirks - preserve location when updating
-- Search params as filters: validate with zod schema in route definition
-- Navigate programmatically: `const navigate = useNavigate()` then `navigate({ to: '/path' })`
-- Type-safe links: always use `<Link to="/path">` not `<a href>`
-- Nested routes require parent to have `<Outlet />`, use `.index.tsx` files to show content at parent paths
-
-## TanStack Query + Convex Integration
-
-- Use `convexQuery()` from `@convex-dev/react-query` to create query options: `const queryOptions = convexQuery(api.module.function, { status: "active" })`
-- Preload in route loaders: `loader: async ({ context: { queryClient } }) => await queryClient.ensureQueryData(queryOptions)`
-- Use `useSuspenseQuery` in components: `const { data } = useSuspenseQuery(queryOptions)`
-- For mutations, continue using Convex's `useMutation` directly
-- **When adding auth to a query** (`ctx.auth.getUserIdentity()`), update its loader: `if ((window as any).Clerk?.session) await queryClient.ensureQueryData(authQuery)` - otherwise the app crashes on page refresh
-
 ## Other Guidelines
 
-- When stuck: consider official docs (docs.convex.dev, tanstack.com, ui.shadcn.com)
-- Verify responsive design at multiple breakpoints
-- Import icons from `lucide-react`
-- When making identical changes to multiple occurrences, use Edit with `replace_all: true` instead of MultiEdit. Avoid MultiEdit whenever possible, it is unreliable.
+- When stuck: consider official docs (docs.convex.dev, tanstack.com, ui.shadcn.com). Also, CLAUDE_EXTRA.md contains docs for common use cases of libraries in this project.
 - Never leave floating promisses, use void when needed
 - Comments shouldn't be used if the code can be self-documenting.
 
 ## Ending messages
 
-Please end every message with an one or more emoji, whatever you feel like. Same for PR descriptions.
+Please end every message with a cat emoji, or one or more emojis of your choice (if you have a preference for that message). Same for PR descriptions.
