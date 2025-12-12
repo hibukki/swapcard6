@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { z } from "zod";
 import { CalendarSubscription } from "../components/CalendarSubscription";
 import { MeetingCard as MeetingCardComponent } from "../components/MeetingCard";
+import { DayView } from "@/components/calendar/DayView";
 import { WeekView } from "@/components/calendar/WeekView";
 import { MonthView } from "@/components/calendar/MonthView";
 import { useCalendarData, preloadCalendarData } from "@/hooks/useCalendarData";
@@ -15,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const calendarSearchSchema = z.object({
-  view: z.enum(["week", "month"]).optional().default("week"),
+  view: z.enum(["day", "week", "month"]).optional().default("week"),
   date: z.string().optional(),
 });
 
@@ -61,7 +62,7 @@ function CalendarPage() {
         if (savedView || savedDate) {
           void navigate({
             search: {
-              view: (savedView as "week" | "month") || "week",
+              view: (savedView as "day" | "week" | "month") || "week",
               date: savedDate || undefined,
             },
             replace: true,
@@ -90,12 +91,14 @@ function CalendarPage() {
   const [selectedMeeting, setSelectedMeeting] = useState<CalendarMeetingView | null>(null);
   const [isEditingAvailability, setIsEditingAvailability] = useState(false);
 
-  const setView = (newView: "week" | "month") => updateSearch({ view: newView });
+  const setView = (newView: "day" | "week" | "month") => updateSearch({ view: newView });
   const setCurrentDate = (date: Date) => updateSearch({ date: date.toISOString().split('T')[0] });
 
   const navigatePrevious = () => {
     const newDate = new Date(currentDate);
-    if (view === "week") {
+    if (view === "day") {
+      newDate.setDate(newDate.getDate() - 1);
+    } else if (view === "week") {
       newDate.setDate(newDate.getDate() - 7);
     } else {
       newDate.setMonth(newDate.getMonth() - 1);
@@ -105,7 +108,9 @@ function CalendarPage() {
 
   const navigateNext = () => {
     const newDate = new Date(currentDate);
-    if (view === "week") {
+    if (view === "day") {
+      newDate.setDate(newDate.getDate() + 1);
+    } else if (view === "week") {
       newDate.setDate(newDate.getDate() + 7);
     } else {
       newDate.setMonth(newDate.getMonth() + 1);
@@ -148,7 +153,7 @@ function CalendarPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {view === "week" && (
+          {(view === "day" || view === "week") && (
             <Button
               size="sm"
               variant={isEditingAvailability ? "default" : "outline"}
@@ -162,8 +167,17 @@ function CalendarPage() {
           <div className="flex gap-1">
             <Button
               size="sm"
+              variant={view === "day" ? "default" : "outline"}
+              onClick={() => setView("day")}
+              disabled={isEditingAvailability}
+            >
+              Day
+            </Button>
+            <Button
+              size="sm"
               variant={view === "week" ? "default" : "outline"}
               onClick={() => setView("week")}
+              disabled={isEditingAvailability}
             >
               Week
             </Button>
@@ -191,7 +205,19 @@ function CalendarPage() {
       </details>
 
       {/* Calendar Grid */}
-      {view === "week" ? (
+      {view === "day" && (
+        <DayView
+          meetings={meetings}
+          currentDate={currentDate}
+          usersMap={usersMap}
+          participantUserIds={participantUserIds}
+          onMeetingClick={setSelectedMeeting}
+          isEditingAvailability={isEditingAvailability}
+          onCreateBusy={(time, duration) => void createBusy(time, duration)}
+          onDeleteBusy={(id) => void deleteBusy(id)}
+        />
+      )}
+      {view === "week" && (
         <WeekView
           meetings={meetings}
           currentDate={currentDate}
@@ -202,7 +228,8 @@ function CalendarPage() {
           onCreateBusy={(time, duration) => void createBusy(time, duration)}
           onDeleteBusy={(id) => void deleteBusy(id)}
         />
-      ) : (
+      )}
+      {view === "month" && (
         <MonthView
           meetings={meetings}
           currentDate={currentDate}
