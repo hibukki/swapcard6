@@ -1,8 +1,23 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query, internalMutation, MutationCtx } from "./_generated/server";
+import { mutation, query, internalMutation, MutationCtx, QueryCtx } from "./_generated/server";
 import { getCurrentUserOrCrash, getCurrentUserOrNull } from "./users";
-import { Id } from "./_generated/dataModel";
+import { Doc, Id } from "./_generated/dataModel";
 import { notificationTypeValidator, NotificationType } from "./schema";
+
+async function getOwnNotificationOrCrash(
+  ctx: MutationCtx | QueryCtx,
+  notificationId: Id<"notifications">
+): Promise<Doc<"notifications">> {
+  const user = await getCurrentUserOrCrash(ctx);
+  const notification = await ctx.db.get(notificationId);
+  if (!notification) {
+    throw new ConvexError("Notification not found");
+  }
+  if (notification.userId !== user._id) {
+    throw new ConvexError("Not your notification");
+  }
+  return notification;
+}
 
 export const list = query({
   args: { unreadOnly: v.optional(v.boolean()) },
@@ -28,6 +43,20 @@ export const list = query({
   },
 });
 
+export const getUser = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId);
+  },
+});
+
+export const getMeeting = query({
+  args: { meetingId: v.id("meetings") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.meetingId);
+  },
+});
+
 export const countUnread = query({
   args: {},
   handler: async (ctx) => {
@@ -48,17 +77,7 @@ export const countUnread = query({
 export const markAsRead = mutation({
   args: { notificationId: v.id("notifications") },
   handler: async (ctx, args) => {
-    const user = await getCurrentUserOrCrash(ctx);
-
-    const notification = await ctx.db.get(args.notificationId);
-    if (!notification) {
-      throw new ConvexError("Notification not found");
-    }
-
-    if (notification.userId !== user._id) {
-      throw new ConvexError("Not your notification");
-    }
-
+    await getOwnNotificationOrCrash(ctx, args.notificationId);
     await ctx.db.patch(args.notificationId, { isRead: true });
   },
 });
@@ -66,17 +85,7 @@ export const markAsRead = mutation({
 export const markAsUnread = mutation({
   args: { notificationId: v.id("notifications") },
   handler: async (ctx, args) => {
-    const user = await getCurrentUserOrCrash(ctx);
-
-    const notification = await ctx.db.get(args.notificationId);
-    if (!notification) {
-      throw new ConvexError("Notification not found");
-    }
-
-    if (notification.userId !== user._id) {
-      throw new ConvexError("Not your notification");
-    }
-
+    await getOwnNotificationOrCrash(ctx, args.notificationId);
     await ctx.db.patch(args.notificationId, { isRead: false });
   },
 });
@@ -104,17 +113,7 @@ export const markAllAsRead = mutation({
 export const remove = mutation({
   args: { notificationId: v.id("notifications") },
   handler: async (ctx, args) => {
-    const user = await getCurrentUserOrCrash(ctx);
-
-    const notification = await ctx.db.get(args.notificationId);
-    if (!notification) {
-      throw new ConvexError("Notification not found");
-    }
-
-    if (notification.userId !== user._id) {
-      throw new ConvexError("Not your notification");
-    }
-
+    await getOwnNotificationOrCrash(ctx, args.notificationId);
     await ctx.db.delete(args.notificationId);
   },
 });

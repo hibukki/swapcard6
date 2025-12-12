@@ -3,13 +3,11 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
 import { Bell, CheckCircle, Circle, Trash2 } from "lucide-react";
-import { useMemo } from "react";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import { api } from "../../convex/_generated/api";
-import type { Doc, Id } from "../../convex/_generated/dataModel";
+import type { Doc } from "../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/patterns/EmptyState";
 import { UserName } from "@/components/patterns/UserName";
 import { MeetingName } from "@/components/patterns/MeetingName";
@@ -28,29 +26,9 @@ export const Route = createFileRoute("/notifications")({
 
 function NotificationsPage() {
   const { data: notifications } = useSuspenseQuery(notificationsQuery);
-  const allUsers = useQuery(api.users.listUsers, {});
-  const allMeetings = useQuery(api.meetings.list, {});
   const markAllAsRead = useMutation(api.notifications.markAllAsRead);
 
-  const usersMap = useMemo(() => {
-    if (!allUsers) return new Map<Id<"users">, Doc<"users">>();
-    return new Map(allUsers.map((u) => [u._id, u]));
-  }, [allUsers]);
-
-  const meetingsMap = useMemo(() => {
-    if (!allMeetings) return new Map<Id<"meetings">, Doc<"meetings">>();
-    return new Map(allMeetings.map((m) => [m._id, m]));
-  }, [allMeetings]);
-
   const unreadCount = notifications.filter((n) => !n.isRead).length;
-
-  if (!allUsers || !allMeetings) {
-    return (
-      <div className="flex justify-center p-8">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
 
   const handleMarkAllAsRead = async () => {
     try {
@@ -92,8 +70,6 @@ function NotificationsPage() {
               <NotificationRow
                 key={notification._id}
                 notification={notification}
-                usersMap={usersMap}
-                meetingsMap={meetingsMap}
               />
             ))}
           </div>
@@ -105,23 +81,21 @@ function NotificationsPage() {
 
 function NotificationRow({
   notification,
-  usersMap,
-  meetingsMap,
 }: {
   notification: Doc<"notifications">;
-  usersMap: Map<Id<"users">, Doc<"users">>;
-  meetingsMap: Map<Id<"meetings">, Doc<"meetings">>;
 }) {
   const markAsRead = useMutation(api.notifications.markAsRead);
   const markAsUnread = useMutation(api.notifications.markAsUnread);
   const remove = useMutation(api.notifications.remove);
 
-  const relatedUser = notification.relatedUserId
-    ? usersMap.get(notification.relatedUserId)
-    : undefined;
-  const relatedMeeting = notification.relatedMeetingId
-    ? meetingsMap.get(notification.relatedMeetingId)
-    : undefined;
+  const relatedUser = useQuery(
+    api.notifications.getUser,
+    notification.relatedUserId ? { userId: notification.relatedUserId } : "skip"
+  );
+  const relatedMeeting = useQuery(
+    api.notifications.getMeeting,
+    notification.relatedMeetingId ? { meetingId: notification.relatedMeetingId } : "skip"
+  );
 
   const handleToggleRead = async () => {
     try {
@@ -166,8 +140,8 @@ function NotificationRow({
       <div className="flex-1 min-w-0">
         <NotificationContent
           notification={notification}
-          relatedUser={relatedUser}
-          relatedMeeting={relatedMeeting}
+          relatedUser={relatedUser ?? undefined}
+          relatedMeeting={relatedMeeting ?? undefined}
         />
         <div className="text-xs text-muted-foreground mt-0.5">
           {formatRelativeTime(notification._creationTime)}
@@ -200,12 +174,7 @@ function NotificationContent({
       return (
         <span>
           {relatedUser ? <UserName user={relatedUser} /> : "Someone"} invited
-          you to{" "}
-          {relatedMeeting ? (
-            <MeetingName meeting={relatedMeeting} />
-          ) : (
-            "a meeting"
-          )}
+          you to <MeetingName meeting={relatedMeeting} />
         </span>
       );
 
@@ -213,11 +182,7 @@ function NotificationContent({
       return (
         <span>
           {relatedUser ? <UserName user={relatedUser} /> : "Someone"} accepted{" "}
-          {relatedMeeting ? (
-            <MeetingName meeting={relatedMeeting} />
-          ) : (
-            "your meeting invitation"
-          )}
+          <MeetingName meeting={relatedMeeting} />
         </span>
       );
 
@@ -225,36 +190,21 @@ function NotificationContent({
       return (
         <span>
           {relatedUser ? <UserName user={relatedUser} /> : "Someone"} declined{" "}
-          {relatedMeeting ? (
-            <MeetingName meeting={relatedMeeting} />
-          ) : (
-            "your meeting invitation"
-          )}
+          <MeetingName meeting={relatedMeeting} />
         </span>
       );
 
     case "meeting_cancelled":
       return (
         <span>
-          {relatedMeeting ? (
-            <MeetingName meeting={relatedMeeting} />
-          ) : (
-            "A meeting"
-          )}{" "}
-          was cancelled
+          <MeetingName meeting={relatedMeeting} /> was cancelled
         </span>
       );
 
     case "meeting_reminder":
       return (
         <span>
-          Reminder:{" "}
-          {relatedMeeting ? (
-            <MeetingName meeting={relatedMeeting} />
-          ) : (
-            "Your meeting"
-          )}{" "}
-          is coming up
+          Reminder: <MeetingName meeting={relatedMeeting} /> is coming up
         </span>
       );
 

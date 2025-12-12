@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { ShortDate } from "./ShortDate";
 
 interface MeetingNameProps {
-  meeting: Doc<"meetings">;
+  meeting: Doc<"meetings"> | undefined;
   className?: string;
 }
 
@@ -30,6 +30,10 @@ function MeetingPreviewCard({ meeting }: { meeting: Doc<"meetings"> }) {
 }
 
 export function MeetingName({ meeting, className }: MeetingNameProps) {
+  if (!meeting) {
+    return <span className={cn("font-semibold", className)}>a meeting</span>;
+  }
+
   return (
     <Tippy
       content={<MeetingPreviewCard meeting={meeting} />}
