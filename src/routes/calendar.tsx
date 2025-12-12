@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const calendarSearchSchema = z.object({
-  view: z.enum(["day", "week", "month"]).optional().default("week"),
+  view: z.enum(["day", "week", "month"]).optional(),
   date: z.string().optional(),
 });
 
@@ -45,7 +45,13 @@ function CalendarPage() {
   const navigate = useNavigate({ from: "/calendar" });
   const search = Route.useSearch();
 
-  const view = search.view;
+  const getDefaultView = () => {
+    if (typeof window === "undefined") return "week";
+    const isMobile = window.innerWidth < 768;
+    return isMobile ? "day" : "week";
+  };
+
+  const view = search.view ?? getDefaultView();
   const currentDate = search.date ? new Date(search.date) : new Date();
 
   React.useEffect(() => {
@@ -62,7 +68,7 @@ function CalendarPage() {
         if (savedView || savedDate) {
           void navigate({
             search: {
-              view: (savedView as "day" | "week" | "month") || "week",
+              view: (savedView as "day" | "week" | "month") || getDefaultView(),
               date: savedDate || undefined,
             },
             replace: true,
