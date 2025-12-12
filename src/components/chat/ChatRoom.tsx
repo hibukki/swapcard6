@@ -4,7 +4,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "../../../convex/_generated/api";
 import type { Id, Doc } from "../../../convex/_generated/dataModel";
-import { Send, Reply, X } from "lucide-react";
+import { Send, Reply, X, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
@@ -44,10 +44,42 @@ export function ChatRoom({
   );
   const [sendError, setSendError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const participantsMap = new Map(participants.map((p) => [p._id, p]));
+
+  const checkIfAtBottom = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return true;
+    const threshold = 50;
+    return (
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      threshold
+    );
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const handleScroll = () => {
+      setIsAtBottom(checkIfAtBottom());
+    };
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (isAtBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+    }
+  }, [messages, isAtBottom]);
 
   useEffect(() => {
     if (autoFocus) {
@@ -103,7 +135,11 @@ export function ChatRoom({
   return (
     <div className={`flex flex-col ${maxHeight}`}>
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-1 p-2">
+      <div className="relative flex-1 overflow-hidden">
+        <div
+          ref={messagesContainerRef}
+          className="absolute inset-0 overflow-y-auto space-y-1 p-2"
+        >
         {messages.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             No messages yet. Start the conversation!
@@ -173,7 +209,19 @@ export function ChatRoom({
             );
           })
         )}
-        <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} />
+        </div>
+        {!isAtBottom && (
+          <Button
+            variant="secondary"
+            size="icon-sm"
+            onClick={scrollToBottom}
+            className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full shadow-lg"
+            aria-label="Scroll to bottom"
+          >
+            <ArrowDown className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       {/* Reply indicator */}
