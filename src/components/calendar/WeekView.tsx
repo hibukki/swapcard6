@@ -4,6 +4,7 @@ import {
   type CalendarMeetingView,
   type CalendarUser,
   type CalendarParticipantsMap,
+  isToday,
 } from "@/types/calendar";
 import { CalendarEvent } from "./CalendarEvent";
 
@@ -46,19 +47,19 @@ export function WeekView({
         <div className="sticky top-0 bg-muted border-b border-border p-2 text-center text-sm font-semibold z-10"></div>
 
         {weekDays.map((date, i) => {
-          const isToday = date.toDateString() === new Date().toDateString();
+          const isTodayDate = isToday(date);
           return (
             <div
               key={i}
               className={`sticky top-0 bg-muted border-b border-l border-border p-2 text-center text-sm z-10 ${
-                isToday ? "text-primary font-bold" : ""
+                isTodayDate ? "text-primary font-bold" : ""
               }`}
             >
               <div>
                 {date.toLocaleDateString("en-US", { weekday: "short" })}
               </div>
               <div
-                className={`text-2xl ${isToday ? "bg-primary text-primary-foreground rounded-full w-8 h-8 mx-auto flex items-center justify-center" : ""}`}
+                className={`text-2xl ${isTodayDate ? "bg-primary text-primary-foreground rounded-full w-8 h-8 mx-auto flex items-center justify-center" : ""}`}
               >
                 {date.getDate()}
               </div>

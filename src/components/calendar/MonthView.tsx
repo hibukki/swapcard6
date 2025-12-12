@@ -2,6 +2,7 @@ import {
   type CalendarMeetingView,
   type CalendarUser,
   type CalendarParticipantsMap,
+  isToday,
 } from "@/types/calendar";
 import { CalendarEvent } from "./CalendarEvent";
 
@@ -71,7 +72,7 @@ export function MonthView({
             currentDate.getMonth(),
             day
           );
-          const isToday = date.toDateString() === new Date().toDateString();
+          const isTodayDate = isToday(date);
 
           const dayMeetings = meetings.filter((calendarMeeting) => {
             const meetingDate = new Date(calendarMeeting.meeting.scheduledTime);
@@ -84,7 +85,7 @@ export function MonthView({
               className="border-r border-b border-border p-2 min-h-[100px] hover:bg-muted/50 transition-colors"
             >
               <div
-                className={`text-sm mb-1 ${isToday ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center font-bold" : ""}`}
+                className={`text-sm mb-1 ${isTodayDate ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center font-bold" : ""}`}
               >
                 {day}
               </div>

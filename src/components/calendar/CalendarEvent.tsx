@@ -8,6 +8,7 @@ import {
   categoryStyles,
   getEventTooltip,
   getEventDisplayTitle,
+  formatTime,
 } from "@/types/calendar";
 
 export interface CalendarEventProps {
@@ -43,9 +44,6 @@ export function CalendarEvent({
 
   const isEditableBusy = isBusy && isEditingAvailability;
   const isCompact = variant === "compact";
-
-  const formatTime = (date: Date) =>
-    date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
   const baseClasses = `border-l-4 ${styles.border} p-1 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity ${styles.borderOnly ? "bg-background" : styles.bg} ${dimmed ? "opacity-40" : ""}`;
 

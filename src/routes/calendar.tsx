@@ -218,7 +218,7 @@ function CalendarPage() {
           <Checkbox
             id="show-public"
             checked={showPublicEvents}
-            onCheckedChange={toggleShowPublic}
+            onCheckedChange={() => void toggleShowPublic()}
           />
           <Label htmlFor="show-public" className="cursor-pointer">
             Show all public events

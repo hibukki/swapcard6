@@ -30,7 +30,7 @@ export interface UseCalendarDataResult {
   usersMap: Map<string, CalendarUser>;
   participantUserIds: CalendarParticipantsMap;
   showPublicEvents: boolean;
-  toggleShowPublic: () => void;
+  toggleShowPublic: () => Promise<void>;
   createBusy: (scheduledTime: number, durationMinutes: number) => Promise<void>;
   deleteBusy: (meetingId: Id<"meetings">) => Promise<void>;
   isLoading: boolean;
@@ -132,8 +132,8 @@ export function useCalendarData(): UseCalendarDataResult {
     return myMeetings;
   }, [showPublicEvents, myMeetings, publicMeetings]);
 
-  const toggleShowPublic = () => {
-    void setShowPublicEventsMutation({ showPublicEvents: !showPublicEvents });
+  const toggleShowPublic = async () => {
+    await setShowPublicEventsMutation({ showPublicEvents: !showPublicEvents });
   };
 
   const createBusy = async (scheduledTime: number, durationMinutes: number) => {

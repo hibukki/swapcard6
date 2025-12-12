@@ -8,9 +8,6 @@ export interface CalendarUser {
   name: string;
 }
 
-/**
- * Map of meeting ID to list of other participant user IDs (plain strings)
- */
 export type CalendarParticipantsMap = Record<string, string[]>;
 
 /**
@@ -278,4 +275,12 @@ export function toCalendarParticipantsMap(
     result[meetingId] = userIds;
   }
   return result;
+}
+
+export function isToday(date: Date): boolean {
+  return date.toDateString() === new Date().toDateString();
+}
+
+export function formatTime(date: Date): string {
+  return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
