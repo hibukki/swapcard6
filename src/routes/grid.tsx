@@ -3,7 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { z } from "zod";
 import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
@@ -142,9 +142,16 @@ function GridPage() {
     setCreateModalDefaults(null);
   };
 
-  const spots = meetingSpots ?? [];
+  if (meetingSpots === undefined) {
+    return (
+      <div className="space-y-4">
+        <h1>Grid View</h1>
+        <div className="p-8 text-center text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
-  if (spots.length === 0) {
+  if (meetingSpots.length === 0) {
     return (
       <div className="space-y-4">
         <h1>Grid View</h1>
@@ -155,6 +162,8 @@ function GridPage() {
       </div>
     );
   }
+
+  const spots = meetingSpots;
 
   return (
     <div className="space-y-4">
@@ -191,9 +200,8 @@ function GridPage() {
           ))}
 
           {hours.map((hour) => (
-            <>
+            <Fragment key={hour}>
               <div
-                key={`time-${hour}`}
                 className="bg-background border-b border-r border-border p-2 text-xs text-right text-muted-foreground sticky left-0 z-10"
               >
                 {hour === 0 || hour === 12 ? "12" : hour > 12 ? hour - 12 : hour}
@@ -258,7 +266,7 @@ function GridPage() {
                   </div>
                 );
               })}
-            </>
+            </Fragment>
           ))}
         </div>
       </div>
