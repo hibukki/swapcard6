@@ -94,6 +94,17 @@ export const update = mutation({
       throw new ConvexError("Only the creator can update this meeting");
     }
 
+    if (args.duration !== undefined && args.duration <= 0) {
+      throw new ConvexError("Duration must be greater than 0");
+    }
+
+    if (
+      args.scheduledTime !== undefined &&
+      (Number.isNaN(args.scheduledTime) || args.scheduledTime <= 0)
+    ) {
+      throw new ConvexError("Invalid scheduled time");
+    }
+
     const { meetingId, ...updates } = args;
     await ctx.db.patch(meetingId, updates);
     return await getMeetingById(ctx, meetingId);

@@ -294,7 +294,7 @@ function MeetingDetailModal({
           showParticipants
           showActions
           showMeetingLink
-          onActionComplete={onClose}
+          onMeetingCanceled={onClose}
         />
         <div className="px-6 pb-6">
           <Button className="w-full" variant="outline" onClick={onClose}>

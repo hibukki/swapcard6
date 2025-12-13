@@ -293,6 +293,7 @@ function RoomsPage() {
               userStatus={statusByMeetingId.get(selectedMeeting._id)}
               variant="full"
               showMeetingLink
+              onMeetingCanceled={() => setSelectedMeeting(null)}
             />
           )}
         </DialogContent>

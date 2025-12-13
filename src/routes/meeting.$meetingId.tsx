@@ -1,6 +1,6 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ArrowLeft } from "lucide-react";
 import { api } from "../../convex/_generated/api";
@@ -22,6 +22,7 @@ export const Route = createFileRoute("/meeting/$meetingId")({
 
 function MeetingPage() {
   const { meetingId } = Route.useParams();
+  const navigate = useNavigate();
 
   const { data: meeting } = useSuspenseQuery(
     convexQuery(api.meetings.get, { meetingId: meetingId as Id<"meetings"> })
@@ -65,6 +66,7 @@ function MeetingPage() {
         variant="full"
         showParticipants
         showActions
+        onMeetingCanceled={() => void navigate({ to: "/calendar" })}
       />
     </div>
   );

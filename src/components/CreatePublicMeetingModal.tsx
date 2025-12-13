@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { useState, useEffect } from "react";
 import { api } from "../../convex/_generated/api";
+import { formatDateTimeLocal } from "@/lib/date-format";
 import { LocationPicker } from "./LocationPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,15 +33,6 @@ export function CreatePublicMeetingModal({
   const create = useMutation(api.meetings.create);
   const conferences = useQuery(api.conferences.list);
   const conference = conferences?.[0];
-
-  const formatDateTimeLocal = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
 
   const [formData, setFormData] = useState({
     title: "",

@@ -16,6 +16,7 @@ import { UserName } from "@/components/patterns/UserName";
 import { ShortDate, ShortTimeRange } from "@/components/patterns/ShortDate";
 import { cn } from "@/lib/utils";
 import { handleMutationError } from "@/lib/error-handling";
+import { formatDateTimeLocal } from "@/lib/date-format";
 
 type ParticipantStatus =
   | "creator"
@@ -31,16 +32,11 @@ interface MeetingCardProps {
   showParticipants?: boolean;
   showActions?: boolean;
   showMeetingLink?: boolean;
-  onActionComplete?: () => void;
-}
-
-function formatDateTimeLocal(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  onJoinComplete?: () => void;
+  onLeaveComplete?: () => void;
+  onResponseComplete?: () => void;
+  onMeetingCanceled?: () => void;
+  onEditComplete?: () => void;
 }
 
 export function MeetingCard({
@@ -50,7 +46,11 @@ export function MeetingCard({
   showParticipants = false,
   showActions = true,
   showMeetingLink = false,
-  onActionComplete,
+  onJoinComplete,
+  onLeaveComplete,
+  onResponseComplete,
+  onMeetingCanceled,
+  onEditComplete,
 }: MeetingCardProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -90,7 +90,7 @@ export function MeetingCard({
     setIsLoading(true);
     try {
       await join({ meetingId: meeting._id });
-      onActionComplete?.();
+      onJoinComplete?.();
     } catch (error) {
       handleMutationError(error, "Failed to join meeting");
     } finally {
@@ -102,7 +102,7 @@ export function MeetingCard({
     setIsLoading(true);
     try {
       await leave({ meetingId: meeting._id });
-      onActionComplete?.();
+      onLeaveComplete?.();
     } catch (error) {
       handleMutationError(error, "Failed to leave meeting");
     } finally {
@@ -114,7 +114,7 @@ export function MeetingCard({
     setIsLoading(true);
     try {
       await respond({ meetingId: meeting._id, accept });
-      onActionComplete?.();
+      onResponseComplete?.();
     } catch (error) {
       handleMutationError(error, "Failed to respond");
     } finally {
@@ -126,7 +126,7 @@ export function MeetingCard({
     setIsLoading(true);
     try {
       await remove({ meetingId: meeting._id });
-      onActionComplete?.();
+      onMeetingCanceled?.();
     } catch (error) {
       handleMutationError(error, "Failed to cancel meeting");
     } finally {
@@ -162,7 +162,7 @@ export function MeetingCard({
         location: editForm.location || undefined,
       });
       setIsEditing(false);
-      onActionComplete?.();
+      onEditComplete?.();
     } catch (error) {
       handleMutationError(error, "Failed to update meeting");
     } finally {
@@ -295,6 +295,7 @@ export function MeetingCard({
                     }
                   }}
                   min="1"
+                  max="1440"
                   className="text-sm w-20"
                 />
                 <span className="text-sm text-muted-foreground">min</span>
@@ -413,7 +414,7 @@ export function MeetingCard({
                 <Button
                   size={isCompact ? "sm" : "default"}
                   onClick={() => void handleSaveEdit()}
-                  disabled={isLoading || !editForm.title.trim()}
+                  disabled={isLoading || !editForm.title.trim() || !editForm.scheduledTime || !(editForm.duration > 0)}
                 >
                   {isLoading ? "Saving..." : "Save"}
                 </Button>
