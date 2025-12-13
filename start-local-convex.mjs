@@ -71,7 +71,7 @@ childProcess.stderr.on("data", (data) => {
 
 childProcess.on("exit", (code) => {
   if (setupTimeout) clearTimeout(setupTimeout);
-  process.exit(code);
+  process.exit(code ?? 1);
 });
 
 // Start timeout
