@@ -17,7 +17,6 @@ import { Route as ConfigRouteImport } from './routes/config'
 import { Route as ChatsRouteImport } from './routes/chats'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AttendeesRouteImport } from './routes/attendees'
-import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserUserIdRouteImport } from './routes/user.$userId'
 import { Route as MeetingMeetingIdRouteImport } from './routes/meeting.$meetingId'
@@ -63,11 +62,6 @@ const AttendeesRoute = AttendeesRouteImport.update({
   path: '/attendees',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AgendaRoute = AgendaRouteImport.update({
-  id: '/agenda',
-  path: '/agenda',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -91,7 +85,6 @@ const ChatChatRoomIdRoute = ChatChatRoomIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/agenda': typeof AgendaRoute
   '/attendees': typeof AttendeesRoute
   '/calendar': typeof CalendarRoute
   '/chats': typeof ChatsRoute
@@ -106,7 +99,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/agenda': typeof AgendaRoute
   '/attendees': typeof AttendeesRoute
   '/calendar': typeof CalendarRoute
   '/chats': typeof ChatsRoute
@@ -122,7 +114,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/agenda': typeof AgendaRoute
   '/attendees': typeof AttendeesRoute
   '/calendar': typeof CalendarRoute
   '/chats': typeof ChatsRoute
@@ -139,7 +130,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/agenda'
     | '/attendees'
     | '/calendar'
     | '/chats'
@@ -154,7 +144,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/agenda'
     | '/attendees'
     | '/calendar'
     | '/chats'
@@ -169,7 +158,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/agenda'
     | '/attendees'
     | '/calendar'
     | '/chats'
@@ -185,7 +173,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AgendaRoute: typeof AgendaRoute
   AttendeesRoute: typeof AttendeesRoute
   CalendarRoute: typeof CalendarRoute
   ChatsRoute: typeof ChatsRoute
@@ -257,13 +244,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AttendeesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/agenda': {
-      id: '/agenda'
-      path: '/agenda'
-      fullPath: '/agenda'
-      preLoaderRoute: typeof AgendaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -297,7 +277,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AgendaRoute: AgendaRoute,
   AttendeesRoute: AttendeesRoute,
   CalendarRoute: CalendarRoute,
   ChatsRoute: ChatsRoute,

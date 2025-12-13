@@ -229,13 +229,6 @@ test.describe("E2E User Flow", () => {
     await screenshot(page, "profile-with-recommendations");
 
     // Browse other pages
-    await page.goto("/agenda", { waitUntil: "networkidle" });
-    await expect(page.getByText(/Incoming Requests/)).toBeVisible();
-    await expect(page.getByText(/Sent Requests/)).toBeVisible();
-    await expect(page.getByText(/Scheduled Meetings/)).toBeVisible();
-    await expect(page.getByText("Incoming Requests (2)")).toBeVisible();
-    await screenshot(page, "agenda");
-
     await page.goto("/public-meetings", { waitUntil: "networkidle" });
     await expect(page.getByText(/Upcoming Meetings/)).toBeVisible();
     await expect(

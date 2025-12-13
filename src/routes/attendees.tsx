@@ -6,7 +6,6 @@ import {
   MessageCircle,
   MessageSquare,
   Search,
-  UserPlus,
   X,
   ChevronLeft,
   ChevronRight,
@@ -198,23 +197,26 @@ function AttendeesPage() {
                 )}
 
                 <div className="mt-4 flex gap-2">
-                  <Button variant="ghost" size="icon-sm" asChild title="Message">
-                    <Link
-                      to="/user/$userId"
-                      params={{ userId: user._id }}
-                      search={{ chat: "focus" }}
+                  <Tippy content="Message">
+                    <Button variant="ghost" size="icon-sm" asChild>
+                      <Link
+                        to="/user/$userId"
+                        params={{ userId: user._id }}
+                        search={{ chat: "focus" }}
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                      </Link>
+                    </Button>
+                  </Tippy>
+                  <Tippy content="Request meeting">
+                    <Button
+                      size="sm"
+                      className="cursor-pointer"
+                      onClick={() => setSelectedUser(user._id)}
                     >
-                      <MessageCircle className="w-4 h-4" />
-                    </Link>
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setSelectedUser(user._id)}
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    Request Meeting
-                  </Button>
+                      📅
+                    </Button>
+                  </Tippy>
                 </div>
               </CardContent>
             </Card>

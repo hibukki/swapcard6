@@ -46,7 +46,6 @@ const navLinks = [
   { to: "/public-meetings", label: "Public Meetings" },
   { to: "/rooms", label: "Rooms" },
   { to: "/calendar", label: "Calendar" },
-  { to: "/agenda", label: "Agenda" },
   { to: "/chats", label: "Chat" },
   { to: "/profile", label: "Profile" },
 ] as const;
