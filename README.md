@@ -42,6 +42,14 @@ pnpm run lint
 pnpm run test:e2e
 ```
 
+## Deployment
+
+```bash
+pnpm run deploy           # Deploy both backend and frontend
+pnpm run deploy:backend   # Deploy Convex to production
+pnpm run deploy:frontend  # Build and deploy to Netlify
+```
+
 ## License
 
 MIT
