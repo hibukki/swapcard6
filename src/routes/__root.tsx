@@ -182,19 +182,21 @@ function UnauthenticatedView() {
   const { isSignedIn } = useClerkAuth();
   const { signOut } = useClerk();
 
-  // If Clerk thinks user is signed in but Convex doesn't recognize it,
-  // sign out to reset the state (prevents "already signed in" modal errors)
-  useEffect(() => {
-    if (isSignedIn) {
-      void signOut();
-    }
-  }, [isSignedIn, signOut]);
-
-  // Show loading while signing out stale session
+  // Clerk thinks user is signed in but Convex doesn't recognize the session.
+  // This can happen with stale sessions from different environments.
+  // Show a button to let user reset, rather than auto-signing out
+  // (which could interrupt valid sessions still being validated).
   if (isSignedIn) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-muted-foreground">Signing out stale session...</div>
+        <div className="text-center space-y-4">
+          <div className="text-muted-foreground">
+            Session sync issue detected
+          </div>
+          <Button onClick={() => void signOut()}>
+            Sign out and retry
+          </Button>
+        </div>
       </div>
     );
   }
