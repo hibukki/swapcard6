@@ -41,7 +41,7 @@ export function NewChatDialog({ conferenceId }: NewChatDialogProps) {
       setSelectedUsers([]);
 
       void navigate({
-        to: "/conference/$conferenceId/chat/$chatRoomId",
+        to: "/conference/$conferenceId/chats/$chatRoomId",
         params: { conferenceId, chatRoomId },
       });
     } catch (error) {

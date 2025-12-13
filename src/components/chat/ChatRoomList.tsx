@@ -65,7 +65,7 @@ export function ChatRoomList({
         return (
           <Link
             key={room._id}
-            to="/conference/$conferenceId/chat/$chatRoomId"
+            to="/conference/$conferenceId/chats/$chatRoomId"
             params={{ conferenceId, chatRoomId: room._id }}
             className={cn(
               "flex items-center gap-3 p-3 hover:bg-accent transition-colors",

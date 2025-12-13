@@ -16,11 +16,12 @@ import { Route as ConferenceConferenceIdPublicMeetingsRouteImport } from './rout
 import { Route as ConferenceConferenceIdProfileRouteImport } from './routes/conference/$conferenceId/profile'
 import { Route as ConferenceConferenceIdNotificationsRouteImport } from './routes/conference/$conferenceId/notifications'
 import { Route as ConferenceConferenceIdConfigRouteImport } from './routes/conference/$conferenceId/config'
-import { Route as ConferenceConferenceIdChatsRouteImport } from './routes/conference/$conferenceId/chats'
 import { Route as ConferenceConferenceIdCalendarRouteImport } from './routes/conference/$conferenceId/calendar'
 import { Route as ConferenceConferenceIdAttendeesRouteImport } from './routes/conference/$conferenceId/attendees'
+import { Route as ConferenceConferenceIdChatsRouteRouteImport } from './routes/conference/$conferenceId/chats/route'
+import { Route as ConferenceConferenceIdChatsIndexRouteImport } from './routes/conference/$conferenceId/chats/index'
 import { Route as ConferenceConferenceIdMeetingMeetingIdRouteImport } from './routes/conference/$conferenceId/meeting.$meetingId'
-import { Route as ConferenceConferenceIdChatChatRoomIdRouteImport } from './routes/conference/$conferenceId/chat.$chatRoomId'
+import { Route as ConferenceConferenceIdChatsChatRoomIdRouteImport } from './routes/conference/$conferenceId/chats/$chatRoomId'
 import { Route as ConferenceConferenceIdAttendeeUserIdRouteImport } from './routes/conference/$conferenceId/attendee.$userId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -64,12 +65,6 @@ const ConferenceConferenceIdConfigRoute =
     path: '/config',
     getParentRoute: () => ConferenceConferenceIdRouteRoute,
   } as any)
-const ConferenceConferenceIdChatsRoute =
-  ConferenceConferenceIdChatsRouteImport.update({
-    id: '/chats',
-    path: '/chats',
-    getParentRoute: () => ConferenceConferenceIdRouteRoute,
-  } as any)
 const ConferenceConferenceIdCalendarRoute =
   ConferenceConferenceIdCalendarRouteImport.update({
     id: '/calendar',
@@ -82,17 +77,29 @@ const ConferenceConferenceIdAttendeesRoute =
     path: '/attendees',
     getParentRoute: () => ConferenceConferenceIdRouteRoute,
   } as any)
+const ConferenceConferenceIdChatsRouteRoute =
+  ConferenceConferenceIdChatsRouteRouteImport.update({
+    id: '/chats',
+    path: '/chats',
+    getParentRoute: () => ConferenceConferenceIdRouteRoute,
+  } as any)
+const ConferenceConferenceIdChatsIndexRoute =
+  ConferenceConferenceIdChatsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ConferenceConferenceIdChatsRouteRoute,
+  } as any)
 const ConferenceConferenceIdMeetingMeetingIdRoute =
   ConferenceConferenceIdMeetingMeetingIdRouteImport.update({
     id: '/meeting/$meetingId',
     path: '/meeting/$meetingId',
     getParentRoute: () => ConferenceConferenceIdRouteRoute,
   } as any)
-const ConferenceConferenceIdChatChatRoomIdRoute =
-  ConferenceConferenceIdChatChatRoomIdRouteImport.update({
-    id: '/chat/$chatRoomId',
-    path: '/chat/$chatRoomId',
-    getParentRoute: () => ConferenceConferenceIdRouteRoute,
+const ConferenceConferenceIdChatsChatRoomIdRoute =
+  ConferenceConferenceIdChatsChatRoomIdRouteImport.update({
+    id: '/$chatRoomId',
+    path: '/$chatRoomId',
+    getParentRoute: () => ConferenceConferenceIdChatsRouteRoute,
   } as any)
 const ConferenceConferenceIdAttendeeUserIdRoute =
   ConferenceConferenceIdAttendeeUserIdRouteImport.update({
@@ -104,95 +111,99 @@ const ConferenceConferenceIdAttendeeUserIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/conference/$conferenceId': typeof ConferenceConferenceIdRouteRouteWithChildren
+  '/conference/$conferenceId/chats': typeof ConferenceConferenceIdChatsRouteRouteWithChildren
   '/conference/$conferenceId/attendees': typeof ConferenceConferenceIdAttendeesRoute
   '/conference/$conferenceId/calendar': typeof ConferenceConferenceIdCalendarRoute
-  '/conference/$conferenceId/chats': typeof ConferenceConferenceIdChatsRoute
   '/conference/$conferenceId/config': typeof ConferenceConferenceIdConfigRoute
   '/conference/$conferenceId/notifications': typeof ConferenceConferenceIdNotificationsRoute
   '/conference/$conferenceId/profile': typeof ConferenceConferenceIdProfileRoute
   '/conference/$conferenceId/public-meetings': typeof ConferenceConferenceIdPublicMeetingsRoute
   '/conference/$conferenceId/rooms': typeof ConferenceConferenceIdRoomsRoute
   '/conference/$conferenceId/attendee/$userId': typeof ConferenceConferenceIdAttendeeUserIdRoute
-  '/conference/$conferenceId/chat/$chatRoomId': typeof ConferenceConferenceIdChatChatRoomIdRoute
+  '/conference/$conferenceId/chats/$chatRoomId': typeof ConferenceConferenceIdChatsChatRoomIdRoute
   '/conference/$conferenceId/meeting/$meetingId': typeof ConferenceConferenceIdMeetingMeetingIdRoute
+  '/conference/$conferenceId/chats/': typeof ConferenceConferenceIdChatsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/conference/$conferenceId': typeof ConferenceConferenceIdRouteRouteWithChildren
   '/conference/$conferenceId/attendees': typeof ConferenceConferenceIdAttendeesRoute
   '/conference/$conferenceId/calendar': typeof ConferenceConferenceIdCalendarRoute
-  '/conference/$conferenceId/chats': typeof ConferenceConferenceIdChatsRoute
   '/conference/$conferenceId/config': typeof ConferenceConferenceIdConfigRoute
   '/conference/$conferenceId/notifications': typeof ConferenceConferenceIdNotificationsRoute
   '/conference/$conferenceId/profile': typeof ConferenceConferenceIdProfileRoute
   '/conference/$conferenceId/public-meetings': typeof ConferenceConferenceIdPublicMeetingsRoute
   '/conference/$conferenceId/rooms': typeof ConferenceConferenceIdRoomsRoute
   '/conference/$conferenceId/attendee/$userId': typeof ConferenceConferenceIdAttendeeUserIdRoute
-  '/conference/$conferenceId/chat/$chatRoomId': typeof ConferenceConferenceIdChatChatRoomIdRoute
+  '/conference/$conferenceId/chats/$chatRoomId': typeof ConferenceConferenceIdChatsChatRoomIdRoute
   '/conference/$conferenceId/meeting/$meetingId': typeof ConferenceConferenceIdMeetingMeetingIdRoute
+  '/conference/$conferenceId/chats': typeof ConferenceConferenceIdChatsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/conference/$conferenceId': typeof ConferenceConferenceIdRouteRouteWithChildren
+  '/conference/$conferenceId/chats': typeof ConferenceConferenceIdChatsRouteRouteWithChildren
   '/conference/$conferenceId/attendees': typeof ConferenceConferenceIdAttendeesRoute
   '/conference/$conferenceId/calendar': typeof ConferenceConferenceIdCalendarRoute
-  '/conference/$conferenceId/chats': typeof ConferenceConferenceIdChatsRoute
   '/conference/$conferenceId/config': typeof ConferenceConferenceIdConfigRoute
   '/conference/$conferenceId/notifications': typeof ConferenceConferenceIdNotificationsRoute
   '/conference/$conferenceId/profile': typeof ConferenceConferenceIdProfileRoute
   '/conference/$conferenceId/public-meetings': typeof ConferenceConferenceIdPublicMeetingsRoute
   '/conference/$conferenceId/rooms': typeof ConferenceConferenceIdRoomsRoute
   '/conference/$conferenceId/attendee/$userId': typeof ConferenceConferenceIdAttendeeUserIdRoute
-  '/conference/$conferenceId/chat/$chatRoomId': typeof ConferenceConferenceIdChatChatRoomIdRoute
+  '/conference/$conferenceId/chats/$chatRoomId': typeof ConferenceConferenceIdChatsChatRoomIdRoute
   '/conference/$conferenceId/meeting/$meetingId': typeof ConferenceConferenceIdMeetingMeetingIdRoute
+  '/conference/$conferenceId/chats/': typeof ConferenceConferenceIdChatsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/conference/$conferenceId'
+    | '/conference/$conferenceId/chats'
     | '/conference/$conferenceId/attendees'
     | '/conference/$conferenceId/calendar'
-    | '/conference/$conferenceId/chats'
     | '/conference/$conferenceId/config'
     | '/conference/$conferenceId/notifications'
     | '/conference/$conferenceId/profile'
     | '/conference/$conferenceId/public-meetings'
     | '/conference/$conferenceId/rooms'
     | '/conference/$conferenceId/attendee/$userId'
-    | '/conference/$conferenceId/chat/$chatRoomId'
+    | '/conference/$conferenceId/chats/$chatRoomId'
     | '/conference/$conferenceId/meeting/$meetingId'
+    | '/conference/$conferenceId/chats/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/conference/$conferenceId'
     | '/conference/$conferenceId/attendees'
     | '/conference/$conferenceId/calendar'
-    | '/conference/$conferenceId/chats'
     | '/conference/$conferenceId/config'
     | '/conference/$conferenceId/notifications'
     | '/conference/$conferenceId/profile'
     | '/conference/$conferenceId/public-meetings'
     | '/conference/$conferenceId/rooms'
     | '/conference/$conferenceId/attendee/$userId'
-    | '/conference/$conferenceId/chat/$chatRoomId'
+    | '/conference/$conferenceId/chats/$chatRoomId'
     | '/conference/$conferenceId/meeting/$meetingId'
+    | '/conference/$conferenceId/chats'
   id:
     | '__root__'
     | '/'
     | '/conference/$conferenceId'
+    | '/conference/$conferenceId/chats'
     | '/conference/$conferenceId/attendees'
     | '/conference/$conferenceId/calendar'
-    | '/conference/$conferenceId/chats'
     | '/conference/$conferenceId/config'
     | '/conference/$conferenceId/notifications'
     | '/conference/$conferenceId/profile'
     | '/conference/$conferenceId/public-meetings'
     | '/conference/$conferenceId/rooms'
     | '/conference/$conferenceId/attendee/$userId'
-    | '/conference/$conferenceId/chat/$chatRoomId'
+    | '/conference/$conferenceId/chats/$chatRoomId'
     | '/conference/$conferenceId/meeting/$meetingId'
+    | '/conference/$conferenceId/chats/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -251,13 +262,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConferenceConferenceIdConfigRouteImport
       parentRoute: typeof ConferenceConferenceIdRouteRoute
     }
-    '/conference/$conferenceId/chats': {
-      id: '/conference/$conferenceId/chats'
-      path: '/chats'
-      fullPath: '/conference/$conferenceId/chats'
-      preLoaderRoute: typeof ConferenceConferenceIdChatsRouteImport
-      parentRoute: typeof ConferenceConferenceIdRouteRoute
-    }
     '/conference/$conferenceId/calendar': {
       id: '/conference/$conferenceId/calendar'
       path: '/calendar'
@@ -272,6 +276,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConferenceConferenceIdAttendeesRouteImport
       parentRoute: typeof ConferenceConferenceIdRouteRoute
     }
+    '/conference/$conferenceId/chats': {
+      id: '/conference/$conferenceId/chats'
+      path: '/chats'
+      fullPath: '/conference/$conferenceId/chats'
+      preLoaderRoute: typeof ConferenceConferenceIdChatsRouteRouteImport
+      parentRoute: typeof ConferenceConferenceIdRouteRoute
+    }
+    '/conference/$conferenceId/chats/': {
+      id: '/conference/$conferenceId/chats/'
+      path: '/'
+      fullPath: '/conference/$conferenceId/chats/'
+      preLoaderRoute: typeof ConferenceConferenceIdChatsIndexRouteImport
+      parentRoute: typeof ConferenceConferenceIdChatsRouteRoute
+    }
     '/conference/$conferenceId/meeting/$meetingId': {
       id: '/conference/$conferenceId/meeting/$meetingId'
       path: '/meeting/$meetingId'
@@ -279,12 +297,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConferenceConferenceIdMeetingMeetingIdRouteImport
       parentRoute: typeof ConferenceConferenceIdRouteRoute
     }
-    '/conference/$conferenceId/chat/$chatRoomId': {
-      id: '/conference/$conferenceId/chat/$chatRoomId'
-      path: '/chat/$chatRoomId'
-      fullPath: '/conference/$conferenceId/chat/$chatRoomId'
-      preLoaderRoute: typeof ConferenceConferenceIdChatChatRoomIdRouteImport
-      parentRoute: typeof ConferenceConferenceIdRouteRoute
+    '/conference/$conferenceId/chats/$chatRoomId': {
+      id: '/conference/$conferenceId/chats/$chatRoomId'
+      path: '/$chatRoomId'
+      fullPath: '/conference/$conferenceId/chats/$chatRoomId'
+      preLoaderRoute: typeof ConferenceConferenceIdChatsChatRoomIdRouteImport
+      parentRoute: typeof ConferenceConferenceIdChatsRouteRoute
     }
     '/conference/$conferenceId/attendee/$userId': {
       id: '/conference/$conferenceId/attendee/$userId'
@@ -296,25 +314,43 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ConferenceConferenceIdChatsRouteRouteChildren {
+  ConferenceConferenceIdChatsChatRoomIdRoute: typeof ConferenceConferenceIdChatsChatRoomIdRoute
+  ConferenceConferenceIdChatsIndexRoute: typeof ConferenceConferenceIdChatsIndexRoute
+}
+
+const ConferenceConferenceIdChatsRouteRouteChildren: ConferenceConferenceIdChatsRouteRouteChildren =
+  {
+    ConferenceConferenceIdChatsChatRoomIdRoute:
+      ConferenceConferenceIdChatsChatRoomIdRoute,
+    ConferenceConferenceIdChatsIndexRoute:
+      ConferenceConferenceIdChatsIndexRoute,
+  }
+
+const ConferenceConferenceIdChatsRouteRouteWithChildren =
+  ConferenceConferenceIdChatsRouteRoute._addFileChildren(
+    ConferenceConferenceIdChatsRouteRouteChildren,
+  )
+
 interface ConferenceConferenceIdRouteRouteChildren {
+  ConferenceConferenceIdChatsRouteRoute: typeof ConferenceConferenceIdChatsRouteRouteWithChildren
   ConferenceConferenceIdAttendeesRoute: typeof ConferenceConferenceIdAttendeesRoute
   ConferenceConferenceIdCalendarRoute: typeof ConferenceConferenceIdCalendarRoute
-  ConferenceConferenceIdChatsRoute: typeof ConferenceConferenceIdChatsRoute
   ConferenceConferenceIdConfigRoute: typeof ConferenceConferenceIdConfigRoute
   ConferenceConferenceIdNotificationsRoute: typeof ConferenceConferenceIdNotificationsRoute
   ConferenceConferenceIdProfileRoute: typeof ConferenceConferenceIdProfileRoute
   ConferenceConferenceIdPublicMeetingsRoute: typeof ConferenceConferenceIdPublicMeetingsRoute
   ConferenceConferenceIdRoomsRoute: typeof ConferenceConferenceIdRoomsRoute
   ConferenceConferenceIdAttendeeUserIdRoute: typeof ConferenceConferenceIdAttendeeUserIdRoute
-  ConferenceConferenceIdChatChatRoomIdRoute: typeof ConferenceConferenceIdChatChatRoomIdRoute
   ConferenceConferenceIdMeetingMeetingIdRoute: typeof ConferenceConferenceIdMeetingMeetingIdRoute
 }
 
 const ConferenceConferenceIdRouteRouteChildren: ConferenceConferenceIdRouteRouteChildren =
   {
+    ConferenceConferenceIdChatsRouteRoute:
+      ConferenceConferenceIdChatsRouteRouteWithChildren,
     ConferenceConferenceIdAttendeesRoute: ConferenceConferenceIdAttendeesRoute,
     ConferenceConferenceIdCalendarRoute: ConferenceConferenceIdCalendarRoute,
-    ConferenceConferenceIdChatsRoute: ConferenceConferenceIdChatsRoute,
     ConferenceConferenceIdConfigRoute: ConferenceConferenceIdConfigRoute,
     ConferenceConferenceIdNotificationsRoute:
       ConferenceConferenceIdNotificationsRoute,
@@ -324,8 +360,6 @@ const ConferenceConferenceIdRouteRouteChildren: ConferenceConferenceIdRouteRoute
     ConferenceConferenceIdRoomsRoute: ConferenceConferenceIdRoomsRoute,
     ConferenceConferenceIdAttendeeUserIdRoute:
       ConferenceConferenceIdAttendeeUserIdRoute,
-    ConferenceConferenceIdChatChatRoomIdRoute:
-      ConferenceConferenceIdChatChatRoomIdRoute,
     ConferenceConferenceIdMeetingMeetingIdRoute:
       ConferenceConferenceIdMeetingMeetingIdRoute,
   }

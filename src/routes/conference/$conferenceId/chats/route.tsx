@@ -1,8 +1,8 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { api } from "../../../../convex/_generated/api";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import { createFileRoute, Outlet, useMatchRoute } from "@tanstack/react-router";
+import { api } from "../../../../../convex/_generated/api";
+import type { Doc, Id } from "../../../../../convex/_generated/dataModel";
 import { ChatRoomList } from "@/components/chat/ChatRoomList";
 import { NewChatDialog } from "@/components/chat/NewChatDialog";
 import { useMemo } from "react";
@@ -20,13 +20,33 @@ export const Route = createFileRoute("/conference/$conferenceId/chats")({
       ]);
     }
   },
-  component: ChatsPage,
+  component: ChatsLayout,
 });
 
-function ChatsPage() {
+interface ChatRoomWithDetails {
+  room: Doc<"chatRooms">;
+  participantIds: Id<"users">[];
+}
+
+// Export context for child routes
+export interface ChatsContext {
+  rooms: ChatRoomWithDetails[];
+  usersMap: Map<Id<"users">, Doc<"users">>;
+  currentUser: Doc<"users">;
+}
+
+function ChatsLayout() {
   const { conferenceId } = Route.useParams();
+  const matchRoute = useMatchRoute();
   const { data: rooms } = useSuspenseQuery(chatRoomsQuery);
   const { data: currentUser } = useSuspenseQuery(currentUserQuery);
+
+  // Check if we're viewing a specific chat
+  const chatMatch = matchRoute({
+    to: "/conference/$conferenceId/chats/$chatRoomId",
+    fuzzy: false,
+  }) as { chatRoomId?: string } | false;
+  const selectedChatRoomId = chatMatch ? chatMatch.chatRoomId as Id<"chatRooms"> : undefined;
 
   const allParticipantIds = useMemo(() => {
     const ids = new Set<Id<"users">>();
@@ -43,7 +63,7 @@ function ChatsPage() {
   );
 
   const usersMap = useMemo(() => {
-    const map = new Map<Id<"users">, (typeof participants)[number]>();
+    const map = new Map<Id<"users">, Doc<"users">>();
     for (const user of participants) {
       map.set(user._id, user);
     }
@@ -62,21 +82,27 @@ function ChatsPage() {
         <NewChatDialog conferenceId={conferenceId} />
       </div>
 
-      {/* Mobile: full-width list */}
+      {/* Mobile: show list or chat based on route */}
       <div className="lg:hidden">
-        <Card>
-          <CardContent className="p-0">
-            <ChatRoomList
-              rooms={rooms}
-              users={usersMap}
-              currentUserId={currentUser._id}
-              conferenceId={conferenceId}
-            />
-          </CardContent>
-        </Card>
+        {selectedChatRoomId ? (
+          // Show chat content on mobile when a chat is selected
+          <Outlet />
+        ) : (
+          // Show chat list on mobile when no chat selected
+          <Card>
+            <CardContent className="p-0">
+              <ChatRoomList
+                rooms={rooms}
+                users={usersMap}
+                currentUserId={currentUser._id}
+                conferenceId={conferenceId}
+              />
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Desktop: split view with empty state on right */}
+      {/* Desktop: split view */}
       <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4 lg:h-[calc(100vh-12rem)]">
         {/* Left panel: chat list */}
         <Card className="overflow-hidden">
@@ -85,16 +111,15 @@ function ChatsPage() {
               rooms={rooms}
               users={usersMap}
               currentUserId={currentUser._id}
+              selectedRoomId={selectedChatRoomId}
               conferenceId={conferenceId}
             />
           </CardContent>
         </Card>
 
-        {/* Right panel: empty state */}
-        <Card className="lg:col-span-2 flex flex-col">
-          <CardContent className="flex flex-col items-center justify-center text-muted-foreground gap-2 flex-1">
-            <div>Select a conversation</div>
-          </CardContent>
+        {/* Right panel: chat content or empty state */}
+        <Card className="lg:col-span-2 flex flex-col overflow-hidden">
+          <Outlet />
         </Card>
       </div>
     </div>
