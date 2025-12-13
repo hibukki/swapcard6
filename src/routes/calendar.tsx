@@ -200,17 +200,6 @@ function CalendarPage() {
         </div>
       </div>
 
-      {/* Calendar Subscription */}
-      <details className="mb-4">
-        <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-          <ChevronDown className="w-4 h-4" />
-          Sync to external calendar
-        </summary>
-        <div className="mt-3 p-4 bg-muted rounded-lg">
-          <CalendarSubscription />
-        </div>
-      </details>
-
       {/* Calendar Grid */}
       {view === "day" && (
         <DayView
@@ -259,6 +248,17 @@ function CalendarPage() {
           </Label>
         </div>
       </div>
+
+      {/* Calendar Subscription */}
+      <details className="mt-4">
+        <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+          <ChevronDown className="w-4 h-4" />
+          Sync to external calendar
+        </summary>
+        <div className="mt-3 p-4 bg-muted rounded-lg">
+          <CalendarSubscription />
+        </div>
+      </details>
 
       {/* Meeting Detail Modal */}
       <MeetingDetailModal
