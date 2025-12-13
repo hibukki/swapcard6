@@ -4,6 +4,7 @@ import {
   SignUpButton,
   UserButton,
   useAuth as useClerkAuth,
+  useClerk,
   useUser,
 } from "@clerk/clerk-react";
 import type { QueryClient } from "@tanstack/react-query";
@@ -17,6 +18,7 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import {
   Authenticated,
+  AuthLoading,
   ConvexReactClient,
   Unauthenticated,
   useMutation,
@@ -77,6 +79,11 @@ function RootComponent() {
       <ConvexProviderWithClerk client={convex} useAuth={useClerkAuth}>
         <QueryClientProvider client={queryClient}>
           <div className="min-h-screen flex flex-col">
+            <AuthLoading>
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-muted-foreground">Loading...</div>
+              </div>
+            </AuthLoading>
             <Authenticated>
               <EnsureUser />
               <AuthenticatedLayout />
@@ -172,6 +179,25 @@ function AuthenticatedLayout() {
 function UnauthenticatedView() {
   const healthCheck = useQuery(api.health.check);
   const isConnected = healthCheck?.status === "ok";
+  const { isSignedIn } = useClerkAuth();
+  const { signOut } = useClerk();
+
+  // If Clerk thinks user is signed in but Convex doesn't recognize it,
+  // sign out to reset the state (prevents "already signed in" modal errors)
+  useEffect(() => {
+    if (isSignedIn) {
+      void signOut();
+    }
+  }, [isSignedIn, signOut]);
+
+  // Show loading while signing out stale session
+  if (isSignedIn) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-muted-foreground">Signing out stale session...</div>
+      </div>
+    );
+  }
 
   return (
     <>

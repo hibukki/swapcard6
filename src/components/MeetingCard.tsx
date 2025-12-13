@@ -384,7 +384,7 @@ export function MeetingCard({
                     ? (userId) =>
                         void navigate({
                           to: "/conference/$conferenceId/attendee/$userId",
-                          params: { conferenceId: meeting.conferenceId!, userId },
+                          params: { conferenceId: meeting.conferenceId, userId },
                         })
                     : undefined
                 }
