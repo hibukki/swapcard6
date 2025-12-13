@@ -102,4 +102,4 @@ Run the review agent. It often gives good feedback, you can ignore comments that
 
 ## Ending messages
 
-Please end every message with a cat emoji, or one or more emojis of your choice (if you have a preference for that message). Same for PR descriptions.
+Please end every message with a cat emoji, or one or more emojis of your choice (if you have a preference for that message). Same for PR descriptions. For each time you used the reviewer for the recent update, you can add another positive emoji, like a strawberry.
