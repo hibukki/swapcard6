@@ -206,6 +206,22 @@ export const seedData = internalMutation({
       }
     }
 
+    // Add meeting spots to Seed Conference if they don't exist
+    const existingSpots = await ctx.db
+      .query("conferenceMeetingSpots")
+      .withIndex("by_conference", (q) => q.eq("conferenceId", seedConferenceId))
+      .collect();
+
+    if (existingSpots.length === 0) {
+      const spotNames = ["Lobby Lounge", "Cafe Corner", "Garden Terrace", "Innovation Hub"];
+      for (const name of spotNames) {
+        await ctx.db.insert("conferenceMeetingSpots", {
+          conferenceId: seedConferenceId,
+          name,
+        });
+      }
+    }
+
     // Create public meetings if they don't exist (check by title to avoid duplicates)
     const publicMeetingTemplates = [
       {
@@ -475,6 +491,84 @@ export const seedData = internalMutation({
       }
     }
 
+    // === CHAT CONVERSATIONS BETWEEN SEED USERS ===
+    // Create sample chat conversations to populate the chat feature
+    const chatConversations = [
+      {
+        user1Idx: 0, // Alice
+        user2Idx: 1, // Bob
+        messages: [
+          { sender: 0, content: "Hey Bob! I've been thinking about how we could better align product and engineering priorities." },
+          { sender: 1, content: "Hi Alice! That's a great topic. What did you have in mind?" },
+          { sender: 0, content: "I was thinking we could do a weekly sync to discuss upcoming features and technical constraints early." },
+          { sender: 1, content: "Love that idea! Early alignment would save us a lot of rework. How about Tuesdays?" },
+        ],
+      },
+      {
+        user1Idx: 1, // Bob
+        user2Idx: 2, // Carol
+        messages: [
+          { sender: 1, content: "Carol, do you have any insights on how to market our new developer tools?" },
+          { sender: 2, content: "Absolutely! Developer marketing is my specialty. What's the main value prop?" },
+          { sender: 1, content: "We've built an API that reduces integration time by 70%. Developers love it but we need more awareness." },
+        ],
+      },
+      {
+        user1Idx: 2, // Carol
+        user2Idx: 3, // David
+        messages: [
+          { sender: 2, content: "David, I'd love your feedback on some marketing materials I'm working on." },
+          { sender: 3, content: "Happy to help! Send them over and I'll give you my honest design perspective." },
+          { sender: 2, content: "Perfect! I'll share the Figma link. Looking for feedback on visual hierarchy and brand consistency." },
+        ],
+      },
+    ];
+
+    for (const conv of chatConversations) {
+      const user1Id = seedUserIds[conv.user1Idx];
+      const user2Id = seedUserIds[conv.user2Idx];
+      if (!user1Id || !user2Id) continue;
+
+      // Check if chat room already exists between these users
+      const user1ChatRooms = await ctx.db
+        .query("chatRoomUsers")
+        .withIndex("by_user", (q) => q.eq("userId", user1Id))
+        .collect();
+
+      let existingChatRoomId = null;
+      for (const cru of user1ChatRooms) {
+        const otherUsers = await ctx.db
+          .query("chatRoomUsers")
+          .withIndex("by_chatRoom", (q) => q.eq("chatRoomId", cru.chatRoomId))
+          .collect();
+        if (otherUsers.some((u) => u.userId === user2Id)) {
+          existingChatRoomId = cru.chatRoomId;
+          break;
+        }
+      }
+
+      if (!existingChatRoomId) {
+        const chatRoomId = await ctx.db.insert("chatRooms", {
+          lastMessageAt: now - oneHour,
+        });
+
+        await ctx.db.insert("chatRoomUsers", { chatRoomId, userId: user1Id });
+        await ctx.db.insert("chatRoomUsers", { chatRoomId, userId: user2Id });
+
+        for (const msg of conv.messages) {
+          const senderId = msg.sender === conv.user1Idx ? user1Id : user2Id;
+          await ctx.db.insert("chatRoomMessages", {
+            chatRoomId,
+            senderId,
+            content: msg.content,
+          });
+        }
+
+        // Update lastMessageAt after inserting messages
+        await ctx.db.patch(chatRoomId, { lastMessageAt: now });
+      }
+    }
+
     const totalMeetings = await ctx.db.query("meetings").collect();
     const totalParticipations = await ctx.db.query("meetingParticipants").collect();
 
@@ -556,156 +650,34 @@ async function seedDataWithCurrentUserHandler(
       }
     }
 
-    // === CONFERENCES ===
-    // Create TechConnect 2025 conference
-    let techConnectId: Id<"conferences"> | null = null;
-    const existingTechConnect = await ctx.db
+    // === USE SEED CONFERENCE ===
+    // Get the "Seed Conference" created by base seedData
+    const seedConference = await ctx.db
       .query("conferences")
-      .withIndex("by_name", (q) => q.eq("name", "TechConnect 2025"))
+      .withIndex("by_name", (q) => q.eq("name", "Seed Conference"))
       .first();
 
-    if (!existingTechConnect) {
-      techConnectId = await ctx.db.insert("conferences", {
-        name: "TechConnect 2025",
-        description: "The premier technology conference bringing together innovators, developers, and industry leaders for 3 days of learning and networking.",
-        startDate: now + 7 * oneDay,
-        endDate: now + 10 * oneDay,
-        timezone: "America/Los_Angeles",
-        location: "San Francisco Convention Center",
-        websiteUrl: "https://techconnect2025.example.com",
-        createdBy: currentUser._id,
-      });
-    } else {
-      techConnectId = existingTechConnect._id;
+    if (!seedConference) {
+      throw new Error("Seed Conference not found - ensure base seedData runs first");
     }
 
-    // Create meeting spots for TechConnect
-    if (techConnectId) {
-      const existingSpots = await ctx.db
-        .query("conferenceMeetingSpots")
-        .withIndex("by_conference", (q) => q.eq("conferenceId", techConnectId))
-        .collect();
-
-      if (existingSpots.length === 0) {
-        const sampleSpots = ["Lobby Lounge", "Cafe Corner", "Garden Terrace", "Innovation Hub"];
-
-        for (const name of sampleSpots) {
-          await ctx.db.insert("conferenceMeetingSpots", {
-            conferenceId: techConnectId,
-            name,
-          });
-        }
-      }
-    }
-
-    // Create AI Summit conference
-    let aiSummitId: Id<"conferences"> | null = null;
-    const existingAiSummit = await ctx.db
-      .query("conferences")
-      .withIndex("by_name", (q) => q.eq("name", "AI Summit 2025"))
-      .first();
-
-    if (!existingAiSummit) {
-      aiSummitId = await ctx.db.insert("conferences", {
-        name: "AI Summit 2025",
-        description: "A one-day intensive summit focused on the latest advances in artificial intelligence and machine learning.",
-        startDate: now + 14 * oneDay,
-        endDate: now + 14 * oneDay + 10 * oneHour,
-        timezone: "America/New_York",
-        location: "Virtual / Online",
-        websiteUrl: "https://aisummit2025.example.com",
-        createdBy: seedUserIds[0] || currentUser._id,
-      });
-    } else {
-      aiSummitId = existingAiSummit._id;
-    }
+    const conferenceId = seedConference._id;
 
     // === CONFERENCE ATTENDEES ===
-    // Add current user to both conferences as attendee
-    if (techConnectId) {
-      const existingAttendance = await ctx.db
-        .query("conferenceAttendees")
-        .withIndex("by_conference_and_user", (q) =>
-          q.eq("conferenceId", techConnectId).eq("userId", currentUser._id)
-        )
-        .first();
+    // Add current user to the conference
+    const existingAttendance = await ctx.db
+      .query("conferenceAttendees")
+      .withIndex("by_conference_and_user", (q) =>
+        q.eq("conferenceId", conferenceId).eq("userId", currentUser._id)
+      )
+      .first();
 
-      if (!existingAttendance) {
-        await ctx.db.insert("conferenceAttendees", {
-          conferenceId: techConnectId,
-          userId: currentUser._id,
-          role: "attendee",
-        });
-      }
-
-      // Add seed users to TechConnect with varied roles
-      if (seedUserIds[0]) {
-        const existing = await ctx.db.query("conferenceAttendees")
-          .withIndex("by_conference_and_user", (q) => q.eq("conferenceId", techConnectId).eq("userId", seedUserIds[0]))
-          .first();
-        if (!existing) {
-          await ctx.db.insert("conferenceAttendees", { conferenceId: techConnectId, userId: seedUserIds[0], role: "organizer" });
-        }
-      }
-      if (seedUserIds[1]) {
-        const existing = await ctx.db.query("conferenceAttendees")
-          .withIndex("by_conference_and_user", (q) => q.eq("conferenceId", techConnectId).eq("userId", seedUserIds[1]))
-          .first();
-        if (!existing) {
-          await ctx.db.insert("conferenceAttendees", { conferenceId: techConnectId, userId: seedUserIds[1], role: "speaker" });
-        }
-      }
-      if (seedUserIds[2]) {
-        const existing = await ctx.db.query("conferenceAttendees")
-          .withIndex("by_conference_and_user", (q) => q.eq("conferenceId", techConnectId).eq("userId", seedUserIds[2]))
-          .first();
-        if (!existing) {
-          await ctx.db.insert("conferenceAttendees", { conferenceId: techConnectId, userId: seedUserIds[2], role: "speaker" });
-        }
-      }
-      if (seedUserIds[3]) {
-        const existing = await ctx.db.query("conferenceAttendees")
-          .withIndex("by_conference_and_user", (q) => q.eq("conferenceId", techConnectId).eq("userId", seedUserIds[3]))
-          .first();
-        if (!existing) {
-          await ctx.db.insert("conferenceAttendees", { conferenceId: techConnectId, userId: seedUserIds[3], role: "attendee" });
-        }
-      }
-    }
-
-    if (aiSummitId) {
-      const existingAttendance = await ctx.db
-        .query("conferenceAttendees")
-        .withIndex("by_conference_and_user", (q) =>
-          q.eq("conferenceId", aiSummitId).eq("userId", currentUser._id)
-        )
-        .first();
-
-      if (!existingAttendance) {
-        await ctx.db.insert("conferenceAttendees", {
-          conferenceId: aiSummitId,
-          userId: currentUser._id,
-          role: "attendee",
-        });
-      }
-
-      // Add some seed users to AI Summit
-      if (seedUserIds[4]) {
-        const existing = await ctx.db.query("conferenceAttendees")
-          .withIndex("by_conference_and_user", (q) => q.eq("conferenceId", aiSummitId).eq("userId", seedUserIds[4]))
-          .first();
-        if (!existing) {
-          await ctx.db.insert("conferenceAttendees", { conferenceId: aiSummitId, userId: seedUserIds[4], role: "organizer" });
-        }
-      }
-      if (seedUserIds[1]) {
-        const existing = await ctx.db.query("conferenceAttendees")
-          .withIndex("by_conference_and_user", (q) => q.eq("conferenceId", aiSummitId).eq("userId", seedUserIds[1]))
-          .first();
-        if (!existing) {
-          await ctx.db.insert("conferenceAttendees", { conferenceId: aiSummitId, userId: seedUserIds[1], role: "speaker" });
-        }
-      }
+    if (!existingAttendance) {
+      await ctx.db.insert("conferenceAttendees", {
+        conferenceId,
+        userId: currentUser._id,
+        role: "attendee",
+      });
     }
 
     // === MEETINGS INVOLVING CURRENT USER ===
@@ -715,7 +687,7 @@ async function seedDataWithCurrentUserHandler(
     let marketingCollabMeetingId: Id<"meetings"> | undefined;
 
     // 1. Confirmed meeting - current user created and Bob accepted
-    if (seedUserIds[1] && techConnectId) {
+    if (seedUserIds[1]) {
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: currentUser._id,
         title: "Product Roadmap Discussion",
@@ -724,7 +696,7 @@ async function seedDataWithCurrentUserHandler(
         duration: 45,
         location: "Zoom",
         isPublic: false,
-        conferenceId: techConnectId,
+        conferenceId,
       });
 
       await ctx.db.insert("meetingParticipants", {
@@ -742,7 +714,7 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 2. Confirmed meeting - Alice created and current user accepted
-    if (seedUserIds[0] && techConnectId) {
+    if (seedUserIds[0]) {
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: seedUserIds[0],
         title: "User Research Findings Review",
@@ -751,7 +723,7 @@ async function seedDataWithCurrentUserHandler(
         duration: 60,
         location: "Conference Room B",
         isPublic: false,
-        conferenceId: techConnectId,
+        conferenceId,
       });
 
       await ctx.db.insert("meetingParticipants", {
@@ -768,7 +740,7 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 3. Pending incoming request - Bob wants to meet current user
-    if (seedUserIds[1] && techConnectId) {
+    if (seedUserIds[1]) {
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: seedUserIds[1],
         title: "Technical Architecture Review",
@@ -777,7 +749,7 @@ async function seedDataWithCurrentUserHandler(
         duration: 60,
         location: "Virtual - Google Meet",
         isPublic: false,
-        conferenceId: techConnectId,
+        conferenceId,
       });
 
       await ctx.db.insert("meetingParticipants", {
@@ -795,7 +767,7 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 4. Pending incoming request - Carol wants to meet current user
-    if (seedUserIds[2] && techConnectId) {
+    if (seedUserIds[2]) {
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: seedUserIds[2],
         title: "Marketing Collaboration",
@@ -804,7 +776,7 @@ async function seedDataWithCurrentUserHandler(
         duration: 30,
         location: "Cafe Lounge",
         isPublic: false,
-        conferenceId: techConnectId,
+        conferenceId,
       });
 
       await ctx.db.insert("meetingParticipants", {
@@ -822,7 +794,7 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 5. Pending outgoing request - current user wants to meet David
-    if (seedUserIds[3] && techConnectId) {
+    if (seedUserIds[3]) {
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: currentUser._id,
         title: "Design Feedback Session",
@@ -831,7 +803,7 @@ async function seedDataWithCurrentUserHandler(
         duration: 45,
         location: "Design Studio",
         isPublic: false,
-        conferenceId: techConnectId,
+        conferenceId,
       });
 
       await ctx.db.insert("meetingParticipants", {
@@ -848,7 +820,7 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 6. Declined meeting - Emma declined current user's request
-    if (seedUserIds[4] && techConnectId) {
+    if (seedUserIds[4]) {
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: currentUser._id,
         title: "Data Analysis Review",
@@ -857,7 +829,7 @@ async function seedDataWithCurrentUserHandler(
         duration: 30,
         location: "Data Lab",
         isPublic: false,
-        conferenceId: techConnectId,
+        conferenceId,
       });
 
       await ctx.db.insert("meetingParticipants", {

@@ -1,16 +1,16 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
-import { ChatRoomList } from "../components/chat/ChatRoomList";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
+import { ChatRoomList } from "@/components/chat/ChatRoomList";
 import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const chatRoomsQuery = convexQuery(api.chatRooms.list, {});
 const currentUserQuery = convexQuery(api.users.getCurrentUser, {});
 
-export const Route = createFileRoute("/chats")({
+export const Route = createFileRoute("/conference/$conferenceId/chats")({
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session) {
       await Promise.all([
@@ -23,6 +23,7 @@ export const Route = createFileRoute("/chats")({
 });
 
 function ChatsPage() {
+  const { conferenceId } = Route.useParams();
   const { data: rooms } = useSuspenseQuery(chatRoomsQuery);
   const { data: currentUser } = useSuspenseQuery(currentUserQuery);
 
@@ -62,6 +63,7 @@ function ChatsPage() {
               rooms={rooms}
               users={usersMap}
               currentUserId={currentUser._id}
+              conferenceId={conferenceId}
             />
           </CardContent>
         </Card>
@@ -76,6 +78,7 @@ function ChatsPage() {
               rooms={rooms}
               users={usersMap}
               currentUserId={currentUser._id}
+              conferenceId={conferenceId}
             />
           </CardContent>
         </Card>

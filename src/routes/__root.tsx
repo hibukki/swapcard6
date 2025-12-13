@@ -57,15 +57,13 @@ function useNavLinks() {
       { to: "/conference/$conferenceId/public-meetings" as const, params: { conferenceId }, label: "Public Meetings" },
       { to: "/conference/$conferenceId/rooms" as const, params: { conferenceId }, label: "Rooms" },
       { to: "/conference/$conferenceId/calendar" as const, params: { conferenceId }, label: "Calendar" },
-      { to: "/chats" as const, params: undefined, label: "Chat" },
-      { to: "/profile" as const, params: undefined, label: "Profile" },
+      { to: "/conference/$conferenceId/chats" as const, params: { conferenceId }, label: "Chat" },
+      { to: "/conference/$conferenceId/profile" as const, params: { conferenceId }, label: "Profile" },
     ];
   }
 
-  return [
-    { to: "/chats" as const, params: undefined, label: "Chat" },
-    { to: "/profile" as const, params: undefined, label: "Profile" },
-  ];
+  // Outside conference context - no nav links (will show conference picker)
+  return [];
 }
 
 function RootComponent() {

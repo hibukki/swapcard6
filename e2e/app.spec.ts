@@ -175,11 +175,7 @@ test.describe("E2E User Flow", () => {
 
     await signIn(page);
 
-    // New user should be redirected to profile with welcome message
-    await expect(page.getByText("Welcome!")).toBeVisible({ timeout: AUTH_TIMEOUT });
-    await screenshot(page, "profile-new-user");
-
-    // Seed data now that the user is created - this creates other sample users to match against
+    // Seed data now that the user is created - this creates conferences and sample users
     await convex.mutation(api.testingFunctions.seedWithFixedTimestamp, {
       baseTimestamp: SEED_BASE_TIMESTAMP,
       userName: TEST_USER_NAME,
@@ -187,6 +183,22 @@ test.describe("E2E User Flow", () => {
     });
     // Wait for scheduled seed data to complete
     await page.waitForTimeout(2000);
+
+    // Refresh to see seeded conferences
+    await page.goto("/");
+
+    // New user should see conference picker after sign in
+    await expect(page.getByText("Select a Conference")).toBeVisible({
+      timeout: AUTH_TIMEOUT,
+    });
+    await screenshot(page, "conference-picker");
+
+    // Click on a conference - will redirect to profile for onboarding
+    await page.getByText("EA Global").click();
+
+    // New user should be redirected to profile with welcome message
+    await expect(page.getByText("Welcome!")).toBeVisible({ timeout: AUTH_TIMEOUT });
+    await screenshot(page, "profile-new-user");
 
     // Fill in profile fields and see live preview update
     await page.getByLabel("Company / Organization").fill("Effective Ventures");
@@ -207,15 +219,7 @@ test.describe("E2E User Flow", () => {
     // Save the profile
     await page.getByRole("button", { name: "Save & Find Connections" }).click();
 
-    // Should redirect to home (conference picker) after save
-    await expect(page.getByText("Select a Conference")).toBeVisible({
-      timeout: AUTH_TIMEOUT,
-    });
-    await screenshot(page, "conference-picker");
-
-    // Click on the first conference to enter it
-    await page.getByText("EA Global").click();
-
+    // Should redirect to attendees page after save (already in conference context)
     // Should see attendees page
     await expect(page.getByText("Alice Johnson").first()).toBeVisible({
       timeout: AUTH_TIMEOUT,
@@ -224,19 +228,15 @@ test.describe("E2E User Flow", () => {
     await page.evaluate(() => window.scrollTo(0, 0));
     await screenshot(page, "attendees");
 
-    // Verify profile is now filled by going back to profile page
-    await page.goto("/profile", { waitUntil: "networkidle" });
+    // Verify profile is now filled by going back to profile page (using nav link)
+    await page.getByRole("link", { name: "Profile" }).click();
     await expect(page.getByLabel("Company / Organization")).toHaveValue(
       "Effective Ventures",
     );
     await screenshot(page, "profile-filled");
 
-    // Go back to conference to access conference-scoped routes
-    await page.goto("/");
-    await expect(page.getByText("Select a Conference")).toBeVisible({
-      timeout: AUTH_TIMEOUT,
-    });
-    await page.getByText("EA Global").click();
+    // Go back to attendees to continue testing
+    await page.getByRole("link", { name: "Attendees" }).click();
     await expect(page.getByText("Alice Johnson").first()).toBeVisible({
       timeout: AUTH_TIMEOUT,
     });
@@ -386,8 +386,8 @@ test.describe("E2E User Flow", () => {
 
     await screenshot(page, "chat-embed-attendee-profile");
 
-    // Navigate to chats page
-    await page.goto("/chats", { waitUntil: "networkidle" });
+    // Navigate to chats page (using nav link since we're in conference context)
+    await page.getByRole("link", { name: "Chat" }).click();
     // There are two ChatRoomLists (mobile hidden, desktop visible) - get visible one
     const aliceChatLink = page
       .getByRole("link", { name: "Alice Johnson" })

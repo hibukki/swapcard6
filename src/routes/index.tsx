@@ -1,26 +1,20 @@
 import { SignInButton } from "@clerk/clerk-react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { Users, Calendar, MapPin, ArrowRight } from "lucide-react";
-import { useEffect } from "react";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/patterns/EmptyState";
 
-const currentUserQuery = convexQuery(api.users.getCurrentUser, {});
 const conferencesQuery = convexQuery(api.conferences.list, {});
 
 export const Route = createFileRoute("/")({
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session) {
-      await Promise.all([
-        queryClient.ensureQueryData(currentUserQuery),
-        queryClient.ensureQueryData(conferencesQuery),
-      ]);
+      await queryClient.ensureQueryData(conferencesQuery);
     }
   },
   component: HomePage,
@@ -52,26 +46,7 @@ function HomePage() {
 }
 
 function AuthenticatedHome() {
-  const { data: user } = useSuspenseQuery(currentUserQuery);
   const { data: conferences } = useSuspenseQuery(conferencesQuery);
-  const navigate = useNavigate();
-
-  const needsOnboarding = !user?.bio && !user?.role && !user?.canHelpWith;
-
-  useEffect(() => {
-    if (needsOnboarding) {
-      void navigate({ to: "/profile" });
-    }
-  }, [needsOnboarding, navigate]);
-
-  if (needsOnboarding) {
-    return (
-      <div>
-        <Spinner size="lg" />
-        <p className="mt-4 text-muted-foreground">Redirecting to profile setup...</p>
-      </div>
-    );
-  }
 
   if (!conferences || conferences.length === 0) {
     return (

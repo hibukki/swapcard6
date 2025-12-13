@@ -14,6 +14,7 @@ interface ChatRoomListProps {
   users: Map<Id<"users">, Doc<"users">>;
   currentUserId: Id<"users">;
   selectedRoomId?: Id<"chatRooms">;
+  conferenceId: string;
 }
 
 function getOtherParticipants(
@@ -32,6 +33,7 @@ export function ChatRoomList({
   users,
   currentUserId,
   selectedRoomId,
+  conferenceId,
 }: ChatRoomListProps) {
   if (rooms.length === 0) {
     return (
@@ -63,8 +65,8 @@ export function ChatRoomList({
         return (
           <Link
             key={room._id}
-            to="/chat/$chatRoomId"
-            params={{ chatRoomId: room._id }}
+            to="/conference/$conferenceId/chat/$chatRoomId"
+            params={{ conferenceId, chatRoomId: room._id }}
             className={cn(
               "flex items-center gap-3 p-3 hover:bg-accent transition-colors",
               isSelected && "bg-accent"

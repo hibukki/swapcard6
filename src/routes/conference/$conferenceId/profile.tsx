@@ -5,10 +5,10 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { useState, useMemo } from "react";
 import { z } from "zod";
-import { api } from "../../convex/_generated/api";
-import { CalendarSubscription } from "../components/CalendarSubscription";
-import { UserProfileCard } from "../components/UserProfileCard";
-import type { Doc } from "../../convex/_generated/dataModel";
+import { api } from "../../../../convex/_generated/api";
+import { CalendarSubscription } from "@/components/CalendarSubscription";
+import { UserProfileCard } from "@/components/UserProfileCard";
+import type { Doc } from "../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,7 +18,7 @@ import { InfoBox } from "@/components/patterns/InfoBox";
 
 const currentUserQuery = convexQuery(api.users.getCurrentUser, {});
 
-export const Route = createFileRoute("/profile")({
+export const Route = createFileRoute("/conference/$conferenceId/profile")({
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session)
       await queryClient.ensureQueryData(currentUserQuery);
@@ -35,7 +35,6 @@ const profileSchema = z.object({
   needsHelpWith: z.string().max(500),
 });
 
-// Suggestions for the "can help with" field based on common EA conference topics
 const CAN_HELP_SUGGESTIONS = [
   "Career advice in tech/non-profit",
   "Grant writing and fundraising",
@@ -45,7 +44,6 @@ const CAN_HELP_SUGGESTIONS = [
   "Operations and project management",
 ];
 
-// Suggestions for the "needs help with" field
 const NEEDS_HELP_SUGGESTIONS = [
   "Finding high-impact career paths",
   "Understanding cause prioritization",
@@ -56,6 +54,7 @@ const NEEDS_HELP_SUGGESTIONS = [
 ];
 
 function ProfilePage() {
+  const { conferenceId } = Route.useParams();
   const { data: user } = useSuspenseQuery(currentUserQuery);
   const updateProfile = useMutation(api.users.updateProfile);
   const navigate = useNavigate();
@@ -92,14 +91,16 @@ function ProfilePage() {
           needsHelpWith: value.needsHelpWith || undefined,
         });
 
-        void navigate({ to: "/" });
+        void navigate({
+          to: "/conference/$conferenceId/attendees",
+          params: { conferenceId },
+        });
       } finally {
         setIsSubmitting(false);
       }
     },
   });
 
-  // Build a preview user object from form values
   const previewUser = useMemo((): Doc<"users"> => {
     const formValues = form.state.values;
     const interests = formValues.interests
@@ -126,7 +127,7 @@ function ProfilePage() {
     <div>
       {isNewUser && (
         <InfoBox variant="info" className="mb-6">
-          👋 Welcome! Let&apos;s set up your profile so other attendees can find
+          Welcome! Let&apos;s set up your profile so other attendees can find
           you.
         </InfoBox>
       )}
@@ -282,7 +283,10 @@ function ProfilePage() {
                     type="button"
                     variant="ghost"
                     onClick={() => {
-                      void navigate({ to: "/" });
+                      void navigate({
+                        to: "/conference/$conferenceId/attendees",
+                        params: { conferenceId },
+                      });
                     }}
                   >
                     Cancel

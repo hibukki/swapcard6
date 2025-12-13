@@ -58,6 +58,12 @@ export const clearAllData = testingMutation({
       await ctx.db.delete(n._id);
     }
 
+    // Delete conferenceMeetingSpots
+    const meetingSpots = await ctx.db.query("conferenceMeetingSpots").collect();
+    for (const spot of meetingSpots) {
+      await ctx.db.delete(spot._id);
+    }
+
     // Delete conferenceAttendees
     const conferenceAttendees = await ctx.db.query("conferenceAttendees").collect();
     for (const ca of conferenceAttendees) {
@@ -382,6 +388,56 @@ export const seedWithFixedTimestamp = testingMutation({
       await ctx.db.insert("meetingParticipants", { meetingId, userId: user._id, status: "pending" });
     }
 
+    // Create sample chat conversation between Alice and the test user
+    if (seedUserIds[0]) {
+      const aliceId = seedUserIds[0];
+
+      // Check if chat room already exists between these users
+      const existingChatRoomUsers = await ctx.db
+        .query("chatRoomUsers")
+        .withIndex("by_user", (q) => q.eq("userId", user._id))
+        .collect();
+
+      let existingChatRoomId = null;
+      for (const cru of existingChatRoomUsers) {
+        const otherUsers = await ctx.db
+          .query("chatRoomUsers")
+          .withIndex("by_chatRoom", (q) => q.eq("chatRoomId", cru.chatRoomId))
+          .collect();
+        if (otherUsers.some((u) => u.userId === aliceId)) {
+          existingChatRoomId = cru.chatRoomId;
+          break;
+        }
+      }
+
+      if (!existingChatRoomId) {
+        // Create chat room
+        const chatRoomId = await ctx.db.insert("chatRooms", {
+          lastMessageAt: baseTimestamp - 2 * oneHour,
+        });
+
+        // Add both users to the chat room
+        await ctx.db.insert("chatRoomUsers", { chatRoomId, userId: user._id });
+        await ctx.db.insert("chatRoomUsers", { chatRoomId, userId: aliceId });
+
+        // Add sample messages (Alice initiating conversation)
+        await ctx.db.insert("chatRoomMessages", {
+          chatRoomId,
+          senderId: aliceId,
+          content: "Hi! I saw your profile and noticed we have overlapping interests in AI Safety. Would love to connect!",
+        });
+
+        await ctx.db.insert("chatRoomMessages", {
+          chatRoomId,
+          senderId: aliceId,
+          content: "Are you attending the AI & Machine Learning Workshop tomorrow?",
+        });
+
+        // Update lastMessageAt after inserting messages
+        await ctx.db.patch(chatRoomId, { lastMessageAt: baseTimestamp });
+      }
+    }
+
     return { success: true, testRunId };
   },
 });
@@ -443,7 +499,15 @@ export const cleanupTestRun = testingMutation({
     const conferences = await ctx.db.query("conferences").collect();
     for (const c of conferences) {
       if (testUserIds.has(c.createdBy)) {
-        // Delete conference attendees first
+        // Delete conference meeting spots first
+        const spots = await ctx.db
+          .query("conferenceMeetingSpots")
+          .withIndex("by_conference", (q) => q.eq("conferenceId", c._id))
+          .collect();
+        for (const s of spots) {
+          await ctx.db.delete(s._id);
+        }
+        // Delete conference attendees
         const attendees = await ctx.db
           .query("conferenceAttendees")
           .withIndex("by_conference", (q) => q.eq("conferenceId", c._id))

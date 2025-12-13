@@ -1,10 +1,10 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
-import { ChatRoom } from "../components/chat/ChatRoom";
-import { ChatRoomList } from "../components/chat/ChatRoomList";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
+import { ChatRoom } from "@/components/chat/ChatRoom";
+import { ChatRoomList } from "@/components/chat/ChatRoomList";
 import { ArrowLeft } from "lucide-react";
 import { Suspense, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 const currentUserQuery = convexQuery(api.users.getCurrentUser, {});
 const chatRoomsQuery = convexQuery(api.chatRooms.list, {});
 
-export const Route = createFileRoute("/chat/$chatRoomId")({
+export const Route = createFileRoute("/conference/$conferenceId/chat/$chatRoomId")({
   loader: async ({ context: { queryClient }, params }) => {
     const chatRoomId = params.chatRoomId as Id<"chatRooms">;
     if ((window as any).Clerk?.session) {
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/chat/$chatRoomId")({
 });
 
 function ChatRoomPage() {
-  const { chatRoomId } = Route.useParams();
+  const { chatRoomId, conferenceId } = Route.useParams();
   const navigate = useNavigate();
   const { data: currentUser } = useSuspenseQuery(currentUserQuery);
   const { data: rooms } = useSuspenseQuery(chatRoomsQuery);
@@ -56,9 +56,13 @@ function ChatRoomPage() {
   useEffect(() => {
     if (roomQuery.error) {
       console.error("Failed to load chat room:", roomQuery.error);
-      void navigate({ to: "/chats", replace: true });
+      void navigate({
+        to: "/conference/$conferenceId/chats",
+        params: { conferenceId },
+        replace: true,
+      });
     }
-  }, [roomQuery.error, navigate]);
+  }, [roomQuery.error, navigate, conferenceId]);
 
   const allParticipantIds = useMemo(() => {
     const ids = new Set<Id<"users">>();
@@ -106,7 +110,7 @@ function ChatRoomPage() {
       <div className="flex items-center gap-2 p-3 border-b">
         {/* Back button - mobile only */}
         <Button variant="ghost" size="icon-sm" asChild className="lg:hidden">
-          <Link to="/chats">
+          <Link to="/conference/$conferenceId/chats" params={{ conferenceId }}>
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </Button>
@@ -143,6 +147,7 @@ function ChatRoomPage() {
               users={usersMap}
               currentUserId={currentUser._id}
               selectedRoomId={chatRoomId as Id<"chatRooms">}
+              conferenceId={conferenceId}
             />
           </CardContent>
         </Card>
