@@ -166,16 +166,33 @@ function NotificationRow({
         notification.isRead ? "bg-background" : "bg-muted/50"
       )}
     >
-      <div className="flex-1 min-w-0 text-sm">
+      {/* Unread indicator dot */}
+      <div className="w-2 shrink-0">
+        {!notification.isRead && (
+          <div className="w-2 h-2 rounded-full bg-primary" />
+        )}
+      </div>
+
+      <div
+        className={cn(
+          "flex-1 min-w-0 text-sm",
+          notification.isRead && "text-muted-foreground"
+        )}
+      >
         {user ? <UserName user={user} /> : <span>Someone</span>}
-        <span className="text-muted-foreground"> {verb} </span>
+        <span className={cn(!notification.isRead && "text-muted-foreground")}>
+          {" "}{verb}{" "}
+        </span>
         {meeting ? (
-          <MeetingName meeting={meeting} />
+          <MeetingName meeting={meeting} className={notification.isRead ? "text-muted-foreground" : undefined} />
         ) : (
           <Link
             to="/meeting/$meetingId"
             params={{ meetingId: notification.meetingId }}
-            className="font-semibold text-primary hover:underline underline-offset-4"
+            className={cn(
+              "font-semibold hover:underline underline-offset-4",
+              notification.isRead ? "text-muted-foreground" : "text-primary"
+            )}
           >
             a meeting
           </Link>
