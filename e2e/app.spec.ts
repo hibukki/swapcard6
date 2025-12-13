@@ -253,6 +253,13 @@ test.describe("E2E User Flow", () => {
     await expect(page.getByRole("button", { name: "Today" })).toBeVisible();
     await screenshot(page, "calendar");
 
+    // Visit Rooms page
+    await page.getByRole("link", { name: "Rooms" }).click();
+    await expect(page.getByRole("button", { name: "Today" })).toBeVisible();
+    // Verify meeting spots are shown (seeded data includes these)
+    await expect(page.getByText("Lobby Lounge")).toBeVisible();
+    await screenshot(page, "rooms");
+
     // Test meeting detail page - use specific meeting for determinism
     await page.getByRole("link", { name: "Public Meetings" }).click();
     await expect(
@@ -285,8 +292,16 @@ test.describe("E2E User Flow", () => {
     await page.getByRole("button", { name: "Request a Meeting" }).click();
     await expect(page.getByText("Request Meeting with Alice Johnson")).toBeVisible();
 
-    // Close the modal before signing out
-    await page.getByRole("button", { name: "Cancel" }).click();
+    // Complete the meeting request - select a time slot and send
+    await page.getByRole("button", { name: "8:00 AM" }).click();
+    await page.getByRole("button", { name: "Send Request" }).click();
+    // Modal should close after sending
+    await expect(page.getByText("Request Meeting with Alice Johnson")).not.toBeVisible();
+
+    // Visit Notifications page
+    await page.goto("/notifications");
+    await expect(page.getByRole("heading", { name: "Notifications" })).toBeVisible();
+    await screenshot(page, "notifications");
 
     await signOut(page);
   });

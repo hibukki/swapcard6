@@ -29,7 +29,6 @@ const searchParamsSchema = z.object({
   date: z.string().optional(),
 });
 
-const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
 const myParticipationsQuery = convexQuery(
   api.meetingParticipants.listMeetingsForCurrentUser,
   {}
@@ -37,8 +36,11 @@ const myParticipationsQuery = convexQuery(
 
 export const Route = createFileRoute("/conference/$conferenceId/rooms")({
   validateSearch: searchParamsSchema,
-  loader: async ({ context: { queryClient } }) => {
+  loader: async ({ context: { queryClient }, params }) => {
     if ((window as any).Clerk?.session) {
+      const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {
+        conferenceId: params.conferenceId as Id<"conferences">,
+      });
       await Promise.all([
         queryClient.ensureQueryData(publicMeetingsQuery),
         queryClient.ensureQueryData(myParticipationsQuery),
@@ -56,6 +58,9 @@ function RoomsPage() {
   const currentDateStr = search.date || toLocalDateString();
   const currentDate = fromDateString(currentDateStr);
 
+  const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {
+    conferenceId: conferenceId as Id<"conferences">,
+  });
   const { data: meetings } = useSuspenseQuery(publicMeetingsQuery);
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
 
