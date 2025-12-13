@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { ChatRoomList } from "@/components/chat/ChatRoomList";
+import { NewChatDialog } from "@/components/chat/NewChatDialog";
 import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -55,6 +56,12 @@ function ChatsPage() {
 
   return (
     <div className="not-prose">
+      {/* Header with New Chat button */}
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">Chats</h1>
+        <NewChatDialog conferenceId={conferenceId} />
+      </div>
+
       {/* Mobile: full-width list */}
       <div className="lg:hidden">
         <Card>
