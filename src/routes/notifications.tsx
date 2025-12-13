@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
 import { Mail, MailOpen } from "lucide-react";
 import Tippy from "@tippyjs/react";
@@ -155,6 +155,14 @@ function NotificationRow({
         <span className="text-muted-foreground"> {verb} </span>
         {meeting ? (
           <MeetingName meeting={meeting} />
+        ) : notification.relatedMeetingId ? (
+          <Link
+            to="/meeting/$meetingId"
+            params={{ meetingId: notification.relatedMeetingId }}
+            className="font-semibold text-primary hover:underline underline-offset-4"
+          >
+            a meeting
+          </Link>
         ) : (
           <span className="text-muted-foreground">a meeting</span>
         )}
