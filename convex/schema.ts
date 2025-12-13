@@ -49,16 +49,12 @@ export const notificationTypeValidator = v.union(
   v.literal("meeting_accepted"),
   v.literal("meeting_declined"),
   v.literal("meeting_cancelled"),
-  v.literal("meeting_reminder"),
-  v.literal("conference_announcement"),
 );
 export type NotificationType =
   | "meeting_request"
   | "meeting_accepted"
   | "meeting_declined"
-  | "meeting_cancelled"
-  | "meeting_reminder"
-  | "conference_announcement";
+  | "meeting_cancelled";
 
 export const llmRateLimitWindowValidator = v.union(
   v.literal("minute"),

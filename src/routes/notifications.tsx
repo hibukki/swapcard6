@@ -30,10 +30,6 @@ function getNotificationVerb(type: NotificationType): string {
       return "declined";
     case "meeting_cancelled":
       return "cancelled";
-    case "meeting_reminder":
-      return "reminder for";
-    case "conference_announcement":
-      return "announcement about";
   }
 }
 

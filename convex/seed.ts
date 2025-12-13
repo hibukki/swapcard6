@@ -760,26 +760,6 @@ async function seedDataWithCurrentUserHandler(
       });
     }
 
-    // Conference announcement
-    if (techConnectId) {
-      await ctx.db.insert("notifications", {
-        userId: currentUser._id,
-        type: "conference_announcement",
-        relatedConferenceId: techConnectId,
-        isRead: false,
-      });
-    }
-
-    // Meeting reminder (Product Roadmap)
-    if (productRoadmapMeetingId) {
-      await ctx.db.insert("notifications", {
-        userId: currentUser._id,
-        type: "meeting_reminder",
-        relatedMeetingId: productRoadmapMeetingId,
-        isRead: true,
-      });
-    }
-
     // Another meeting request (from Carol - Marketing Collaboration)
     if (seedUserIds[2] && marketingCollabMeetingId) {
       await ctx.db.insert("notifications", {
