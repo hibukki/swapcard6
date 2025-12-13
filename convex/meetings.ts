@@ -57,9 +57,14 @@ export const get = query({
 });
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db.query("meetings").withIndex("by_time").collect();
+  args: {
+    conferenceId: v.id("conferences"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("meetings")
+      .withIndex("by_conference", (q) => q.eq("conferenceId", args.conferenceId))
+      .collect();
   },
 });
 
@@ -118,7 +123,10 @@ export const update = mutation({
 });
 
 export const listSharedWith = query({
-  args: { userId: v.id("users") },
+  args: {
+    userId: v.id("users"),
+    conferenceId: v.id("conferences"),
+  },
   handler: async (ctx, args) => {
     const currentUser = await getCurrentUserOrCrash(ctx);
 
@@ -154,7 +162,8 @@ export const listSharedWith = query({
       sharedMeetingIds.map((id) => ctx.db.get(id))
     );
 
-    return meetings.filter((m) => m !== null);
+    // Filter to only meetings in this conference
+    return meetings.filter((m) => m !== null && m.conferenceId === args.conferenceId);
   },
 });
 

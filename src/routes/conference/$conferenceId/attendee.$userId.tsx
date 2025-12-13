@@ -43,6 +43,7 @@ function AttendeePage() {
 
   const sharedMeetings = useQuery(api.meetings.listSharedWith, {
     userId: userId as Id<"users">,
+    conferenceId: conferenceId as Id<"conferences">,
   });
 
   if (!user) {

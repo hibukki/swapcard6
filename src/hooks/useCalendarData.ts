@@ -43,7 +43,7 @@ export function useCalendarData(): UseCalendarDataResult {
 
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
   const { data: publicMeetingsData } = useSuspenseQuery(publicMeetingsQuery);
-  const allMeetings = useQuery(api.meetings.list, {});
+  const allMeetings = useQuery(api.meetings.list, { conferenceId: conference._id });
   const allUsers = useQuery(api.users.listUsers, {});
   const currentUser = useQuery(api.users.getCurrentUser, {});
   const setShowPublicEventsMutation = useMutation(api.users.setShowPublicEvents);
