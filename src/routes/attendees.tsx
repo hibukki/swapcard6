@@ -316,9 +316,12 @@ function MeetingRequestModal({
 
   // Initialize selected date to conference start (or today if within range)
   useEffect(() => {
-    if (conference && !selectedDate) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+    if (selectedDate) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (conference) {
       const confStart = new Date(conference.startDate);
       confStart.setHours(0, 0, 0, 0);
       const confEnd = new Date(conference.endDate);
@@ -331,8 +334,11 @@ function MeetingRequestModal({
       } else {
         setSelectedDate(confStart);
       }
+    } else if (conferences !== undefined) {
+      // No conference exists, fall back to today
+      setSelectedDate(today);
     }
-  }, [conference, selectedDate]);
+  }, [conference, conferences, selectedDate]);
 
   // Fetch busy slots for both users
   const dayStart = selectedDate
