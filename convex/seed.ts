@@ -13,6 +13,24 @@ export const clearAllData = internalMutation({
       await ctx.db.delete(n._id);
     }
 
+    // Delete chat messages
+    const chatMessages = await ctx.db.query("chatRoomMessages").collect();
+    for (const m of chatMessages) {
+      await ctx.db.delete(m._id);
+    }
+
+    // Delete chat room users
+    const chatRoomUsers = await ctx.db.query("chatRoomUsers").collect();
+    for (const cru of chatRoomUsers) {
+      await ctx.db.delete(cru._id);
+    }
+
+    // Delete chat rooms
+    const chatRooms = await ctx.db.query("chatRooms").collect();
+    for (const cr of chatRooms) {
+      await ctx.db.delete(cr._id);
+    }
+
     // Delete conferenceMeetingSpots
     const meetingSpots = await ctx.db.query("conferenceMeetingSpots").collect();
     for (const spot of meetingSpots) {
@@ -43,10 +61,10 @@ export const clearAllData = internalMutation({
       await ctx.db.delete(m._id);
     }
 
-    // Delete all users (except those with real Clerk IDs)
+    // Delete seed users only (keep real users with Clerk IDs)
     const users = await ctx.db.query("users").collect();
     for (const u of users) {
-      if (u.clerkId.startsWith("seed_user_")) {
+      if (u.clerkId.startsWith("seed_user_") || u.clerkId.startsWith("test_")) {
         await ctx.db.delete(u._id);
       }
     }
