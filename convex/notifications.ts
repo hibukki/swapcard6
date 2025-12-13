@@ -106,8 +106,6 @@ export async function createNotification(
   args: {
     userId: Id<"users">;
     type: NotificationType;
-    title: string;
-    body?: string;
     relatedMeetingId?: Id<"meetings">;
     relatedConferenceId?: Id<"conferences">;
     relatedUserId?: Id<"users">;
@@ -116,8 +114,6 @@ export async function createNotification(
   return await ctx.db.insert("notifications", {
     userId: args.userId,
     type: args.type,
-    title: args.title,
-    body: args.body,
     relatedMeetingId: args.relatedMeetingId,
     relatedConferenceId: args.relatedConferenceId,
     relatedUserId: args.relatedUserId,
@@ -129,8 +125,6 @@ export const createInternal = internalMutation({
   args: {
     userId: v.id("users"),
     type: notificationTypeValidator,
-    title: v.string(),
-    body: v.optional(v.string()),
     relatedMeetingId: v.optional(v.id("meetings")),
     relatedConferenceId: v.optional(v.id("conferences")),
     relatedUserId: v.optional(v.id("users")),
@@ -140,5 +134,23 @@ export const createInternal = internalMutation({
       ...args,
       isRead: false,
     });
+  },
+});
+
+export const markAsUnread = mutation({
+  args: { notificationId: v.id("notifications") },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUserOrCrash(ctx);
+
+    const notification = await ctx.db.get(args.notificationId);
+    if (!notification) {
+      throw new ConvexError("Notification not found");
+    }
+
+    if (notification.userId !== user._id) {
+      throw new ConvexError("Not your notification");
+    }
+
+    await ctx.db.patch(args.notificationId, { isRead: false });
   },
 });

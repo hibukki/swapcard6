@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import { getCurrentUserOrCrash } from "./users";
 import { getMeetingById, getMeetingOrCrash } from "./meetingUtils";
 import { meetingFields } from "./schema";
+import { createNotification } from "./notifications";
 
 const optionalMeetingFields = {
   title: v.optional(meetingFields.title),
@@ -168,7 +169,16 @@ export const remove = mutation({
       .withIndex("by_meeting", (q) => q.eq("meetingId", args.meetingId))
       .collect();
 
+    // Notify all participants (except creator) before deletion
     for (const p of participants) {
+      if (p.userId !== user._id) {
+        await createNotification(ctx, {
+          userId: p.userId,
+          type: "meeting_cancelled",
+          relatedMeetingId: args.meetingId,
+          relatedUserId: user._id,
+        });
+      }
       await ctx.db.delete(p._id);
     }
 

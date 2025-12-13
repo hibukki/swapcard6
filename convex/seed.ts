@@ -736,8 +736,6 @@ async function seedDataWithCurrentUserHandler(
       await ctx.db.insert("notifications", {
         userId: currentUser._id,
         type: "meeting_request",
-        title: "New meeting request",
-        body: "Bob Smith wants to meet with you to discuss Technical Architecture Review",
         relatedUserId: seedUserIds[1],
         isRead: false,
       });
@@ -748,8 +746,6 @@ async function seedDataWithCurrentUserHandler(
       await ctx.db.insert("notifications", {
         userId: currentUser._id,
         type: "meeting_accepted",
-        title: "Meeting request accepted",
-        body: "Alice Johnson accepted your meeting request",
         relatedUserId: seedUserIds[0],
         isRead: false,
       });
@@ -760,8 +756,6 @@ async function seedDataWithCurrentUserHandler(
       await ctx.db.insert("notifications", {
         userId: currentUser._id,
         type: "conference_announcement",
-        title: "TechConnect 2025 schedule released",
-        body: "The full conference schedule is now available. Check out the sessions and start planning your agenda!",
         relatedConferenceId: techConnectId,
         isRead: false,
       });
@@ -771,8 +765,6 @@ async function seedDataWithCurrentUserHandler(
     await ctx.db.insert("notifications", {
       userId: currentUser._id,
       type: "meeting_reminder",
-      title: "Upcoming meeting reminder",
-      body: "Your meeting 'Product Roadmap Discussion' starts in 1 hour",
       isRead: true,
     });
 
@@ -781,8 +773,6 @@ async function seedDataWithCurrentUserHandler(
       await ctx.db.insert("notifications", {
         userId: currentUser._id,
         type: "meeting_request",
-        title: "New meeting request",
-        body: "Carol Davis wants to meet with you to discuss Marketing Collaboration",
         relatedUserId: seedUserIds[2],
         isRead: false,
       });

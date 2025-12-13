@@ -134,8 +134,6 @@ export default defineSchema({
   notifications: defineTable({
     userId: v.id("users"),
     type: notificationTypeValidator,
-    title: v.string(),
-    body: v.optional(v.string()),
     relatedMeetingId: v.optional(v.id("meetings")),
     relatedConferenceId: v.optional(v.id("conferences")),
     relatedUserId: v.optional(v.id("users")),

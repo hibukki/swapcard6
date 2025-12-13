@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RoomsRouteImport } from './routes/rooms'
 import { Route as PublicMeetingsRouteImport } from './routes/public-meetings'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ConfigRouteImport } from './routes/config'
 import { Route as ChatsRouteImport } from './routes/chats'
 import { Route as CalendarRouteImport } from './routes/calendar'
@@ -35,6 +36,11 @@ const PublicMeetingsRoute = PublicMeetingsRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfigRoute = ConfigRouteImport.update({
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/chats': typeof ChatsRoute
   '/config': typeof ConfigRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
   '/public-meetings': typeof PublicMeetingsRoute
   '/rooms': typeof RoomsRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/chats': typeof ChatsRoute
   '/config': typeof ConfigRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
   '/public-meetings': typeof PublicMeetingsRoute
   '/rooms': typeof RoomsRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/chats': typeof ChatsRoute
   '/config': typeof ConfigRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
   '/public-meetings': typeof PublicMeetingsRoute
   '/rooms': typeof RoomsRoute
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/chats'
     | '/config'
+    | '/notifications'
     | '/profile'
     | '/public-meetings'
     | '/rooms'
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/chats'
     | '/config'
+    | '/notifications'
     | '/profile'
     | '/public-meetings'
     | '/rooms'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/chats'
     | '/config'
+    | '/notifications'
     | '/profile'
     | '/public-meetings'
     | '/rooms'
@@ -178,6 +190,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   ChatsRoute: typeof ChatsRoute
   ConfigRoute: typeof ConfigRoute
+  NotificationsRoute: typeof NotificationsRoute
   ProfileRoute: typeof ProfileRoute
   PublicMeetingsRoute: typeof PublicMeetingsRoute
   RoomsRoute: typeof RoomsRoute
@@ -207,6 +220,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/config': {
@@ -282,6 +302,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   ChatsRoute: ChatsRoute,
   ConfigRoute: ConfigRoute,
+  NotificationsRoute: NotificationsRoute,
   ProfileRoute: ProfileRoute,
   PublicMeetingsRoute: PublicMeetingsRoute,
   RoomsRoute: RoomsRoute,

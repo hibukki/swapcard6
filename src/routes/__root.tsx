@@ -23,6 +23,7 @@ import {
 } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Menu } from "lucide-react";
+import { NotificationBadge } from "@/components/NotificationBadge";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -109,7 +110,8 @@ function RootComponent() {
                     ))}
                   </nav>
 
-                  <div>
+                  <div className="flex items-center gap-2">
+                    <NotificationBadge />
                     <UserButton />
                   </div>
                 </header>
