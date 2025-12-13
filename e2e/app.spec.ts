@@ -265,7 +265,7 @@ test.describe("E2E User Flow", () => {
       .getByRole("link", { name: "Opening Keynote: Future of Tech" })
       .click();
     await expect(
-      page.getByRole("link", { name: "Back to Agenda" }),
+      page.getByRole("link", { name: "Back to Calendar" }),
     ).toBeVisible();
     await expect(page.getByText(/Participants/)).toBeVisible();
     await screenshot(page, "meeting-detail");

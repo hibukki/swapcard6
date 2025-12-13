@@ -43,8 +43,8 @@ export function MeetingName({ meeting, className }: MeetingNameProps) {
       appendTo={() => document.body}
     >
       <Link
-        to="/meeting/$meetingId"
-        params={{ meetingId: meeting._id }}
+        to="/conference/$conferenceId/meeting/$meetingId"
+        params={{ conferenceId: meeting.conferenceId, meetingId: meeting._id }}
         className={cn(
           "font-semibold text-primary hover:underline underline-offset-4",
           className

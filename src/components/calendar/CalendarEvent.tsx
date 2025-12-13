@@ -75,8 +75,8 @@ export function CalendarEvent({
         </div>
       ) : (
         <Link
-          to="/meeting/$meetingId"
-          params={{ meetingId: meeting._id }}
+          to="/conference/$conferenceId/meeting/$meetingId"
+          params={{ conferenceId: meeting.conferenceId, meetingId: meeting._id }}
           className={`font-semibold ${styles.text} truncate block hover:underline ${styles.strikethrough ? "line-through" : ""}`}
           onClick={(e) => e.stopPropagation()}
         >

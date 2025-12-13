@@ -46,11 +46,11 @@ function MeetingPage() {
         </p>
         <Button asChild>
           <Link
-            to="/conference/$conferenceId/agenda"
+            to="/conference/$conferenceId/calendar"
             params={{ conferenceId }}
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Agenda
+            Back to Calendar
           </Link>
         </Button>
       </div>
@@ -62,11 +62,11 @@ function MeetingPage() {
       <div className="mb-6">
         <Button variant="ghost" size="sm" asChild>
           <Link
-            to="/conference/$conferenceId/agenda"
+            to="/conference/$conferenceId/calendar"
             params={{ conferenceId }}
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Agenda
+            Back to Calendar
           </Link>
         </Button>
       </div>
@@ -79,7 +79,7 @@ function MeetingPage() {
         showActions
         onMeetingCanceled={() =>
           void navigate({
-            to: "/conference/$conferenceId/agenda",
+            to: "/conference/$conferenceId/calendar",
             params: { conferenceId },
           })
         }

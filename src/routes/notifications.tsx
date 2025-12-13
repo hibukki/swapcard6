@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
 import { Mail, MailOpen } from "lucide-react";
 import Tippy from "@tippyjs/react";
@@ -186,16 +186,12 @@ function NotificationRow({
         {meeting ? (
           <MeetingName meeting={meeting} className={notification.isRead ? "text-muted-foreground" : undefined} />
         ) : (
-          <Link
-            to="/meeting/$meetingId"
-            params={{ meetingId: notification.meetingId }}
-            className={cn(
-              "font-semibold hover:underline underline-offset-4",
-              notification.isRead ? "text-muted-foreground" : "text-primary"
-            )}
-          >
+          <span className={cn(
+            "font-semibold",
+            notification.isRead ? "text-muted-foreground" : "text-foreground"
+          )}>
             a meeting
-          </Link>
+          </span>
         )}
         <span className="text-muted-foreground text-xs ml-2">
           <ShortDate timestamp={notification._creationTime} />
