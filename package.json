@@ -21,7 +21,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "seed": "pnpx convex run seed:seedNow"
+    "seed": "pnpx convex run seed:seedNow",
+    "seed:prod": "pnpx convex run seed:seedNow --prod"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.45.0",

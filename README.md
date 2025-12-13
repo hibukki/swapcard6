@@ -42,6 +42,13 @@ pnpm run lint
 pnpm run test:e2e
 ```
 
+### Seed Data
+
+```bash
+pnpm run seed              # Seed development database
+pnpm run seed:prod         # Seed production database
+```
+
 ## Deployment
 
 ```bash
