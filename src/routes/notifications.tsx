@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "convex/react";
 import { Mail, MailOpen } from "lucide-react";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -126,11 +126,38 @@ function NotificationRow({
   user?: Doc<"users">;
   onToggleRead: () => void;
 }) {
+  const [isLoading, setIsLoading] = useState(false);
+
   const meeting = useQuery(api.meetings.get, {
     meetingId: notification.meetingId,
   });
 
+  const participation = useQuery(
+    api.meetingParticipants.getCurrentUserParticipation,
+    { meetingId: notification.meetingId }
+  );
+
+  const respond = useMutation(api.meetingParticipants.respond);
+  const markAsRead = useMutation(api.notifications.markAsRead);
+
+  const handleRespond = async (accept: boolean) => {
+    setIsLoading(true);
+    try {
+      await respond({ meetingId: notification.meetingId, accept });
+      // Mark notification as read after responding
+      if (!notification.isRead) {
+        await markAsRead({ notificationId: notification._id });
+      }
+    } catch (error) {
+      handleMutationError(error, "Failed to respond");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const verb = getNotificationVerb(notification.type);
+  const showActions =
+    notification.type === "meeting_request" && participation?.status === "pending";
 
   return (
     <div
@@ -157,6 +184,27 @@ function NotificationRow({
           <ShortDate timestamp={notification._creationTime} />
         </span>
       </div>
+
+      {showActions && (
+        <div className="flex gap-1">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => void handleRespond(false)}
+            disabled={isLoading}
+          >
+            Decline
+          </Button>
+          <Button
+            variant="success"
+            size="sm"
+            onClick={() => void handleRespond(true)}
+            disabled={isLoading}
+          >
+            Accept
+          </Button>
+        </div>
+      )}
 
       <Tippy content={notification.isRead ? "Mark as unread" : "Mark as read"}>
         <Button variant="ghost" size="icon" onClick={onToggleRead}>
