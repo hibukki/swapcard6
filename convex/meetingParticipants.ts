@@ -75,6 +75,7 @@ export const sendRequest = mutation({
     scheduledTime: meetingFields.scheduledTime,
     duration: meetingFields.duration,
     location: meetingFields.location,
+    conferenceId: v.id("conferences"),
   },
   handler: async (ctx, args) => {
     const requester = await getCurrentUserOrCrash(ctx);
@@ -93,6 +94,7 @@ export const sendRequest = mutation({
       duration: args.duration,
       location: args.location,
       isPublic: false,
+      conferenceId: args.conferenceId,
     });
 
     // Add requester as creator

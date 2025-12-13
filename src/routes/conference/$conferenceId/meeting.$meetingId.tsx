@@ -3,12 +3,14 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ArrowLeft } from "lucide-react";
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
-import { MeetingCard } from "../components/MeetingCard";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
+import { MeetingCard } from "../../../components/MeetingCard";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/meeting/$meetingId")({
+export const Route = createFileRoute(
+  "/conference/$conferenceId/meeting/$meetingId"
+)({
   loader: async ({ context: { queryClient }, params }) => {
     const meetingQuery = convexQuery(api.meetings.get, {
       meetingId: params.meetingId as Id<"meetings">,
@@ -21,16 +23,19 @@ export const Route = createFileRoute("/meeting/$meetingId")({
 });
 
 function MeetingPage() {
-  const { meetingId } = Route.useParams();
+  const { meetingId, conferenceId } = Route.useParams();
   const navigate = useNavigate();
 
   const { data: meeting } = useSuspenseQuery(
     convexQuery(api.meetings.get, { meetingId: meetingId as Id<"meetings"> })
   );
 
-  const myParticipation = useQuery(api.meetingParticipants.getCurrentUserParticipation, {
-    meetingId: meetingId as Id<"meetings">,
-  });
+  const myParticipation = useQuery(
+    api.meetingParticipants.getCurrentUserParticipation,
+    {
+      meetingId: meetingId as Id<"meetings">,
+    }
+  );
 
   if (!meeting) {
     return (
@@ -40,9 +45,12 @@ function MeetingPage() {
           This meeting may have been deleted or you don't have access to it.
         </p>
         <Button asChild>
-          <Link to="/">
+          <Link
+            to="/conference/$conferenceId/agenda"
+            params={{ conferenceId }}
+          >
             <ArrowLeft className="w-4 h-4" />
-            Back to Conferences
+            Back to Agenda
           </Link>
         </Button>
       </div>
@@ -53,9 +61,12 @@ function MeetingPage() {
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/">
+          <Link
+            to="/conference/$conferenceId/agenda"
+            params={{ conferenceId }}
+          >
             <ArrowLeft className="w-4 h-4" />
-            Back to Conferences
+            Back to Agenda
           </Link>
         </Button>
       </div>
@@ -66,7 +77,12 @@ function MeetingPage() {
         variant="full"
         showParticipants
         showActions
-        onMeetingCanceled={() => void navigate({ to: "/" })}
+        onMeetingCanceled={() =>
+          void navigate({
+            to: "/conference/$conferenceId/agenda",
+            params: { conferenceId },
+          })
+        }
       />
     </div>
   );

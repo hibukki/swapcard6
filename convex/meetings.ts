@@ -25,6 +25,7 @@ export const create = mutation({
     location: meetingFields.location,
     isPublic: meetingFields.isPublic,
     maxParticipants: meetingFields.maxParticipants,
+    conferenceId: v.id("conferences"),
     addCurrentUserAs: v.optional(v.literal("creator")),
   },
   handler: async (ctx, args) => {
@@ -63,11 +64,15 @@ export const list = query({
 });
 
 export const listPublic = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    conferenceId: v.id("conferences"),
+  },
+  handler: async (ctx, args) => {
     return await ctx.db
       .query("meetings")
-      .withIndex("by_public", (q) => q.eq("isPublic", true))
+      .withIndex("by_conference_public", (q) =>
+        q.eq("conferenceId", args.conferenceId).eq("isPublic", true)
+      )
       .collect();
   },
 });

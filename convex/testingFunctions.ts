@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { customMutation, customQuery } from "convex-helpers/server/customFunctions";
 import { mutation, query } from "./_generated/server";
-import { internal } from "./_generated/api";
 
 function assertTestEnvironment() {
   if (process.env.IS_TEST !== "true") {
@@ -283,8 +282,74 @@ export const seedWithFixedTimestamp = testingMutation({
       }
     }
 
-    // Run base seed data (public meetings) with fixed timestamp
-    await ctx.scheduler.runAfter(0, internal.seed.seedData, { baseTimestamp, testRunId });
+    // Create public meetings for EA Global directly (instead of seedData which uses "Seed Conference")
+    const publicMeetingTemplates = [
+      {
+        title: "Opening Keynote: Future of Tech",
+        description: "Join us for an inspiring keynote about the future of technology and innovation. Perfect for all attendees!",
+        scheduledTime: baseTimestamp + 2 * oneHour,
+        duration: 90,
+        location: "Main Auditorium",
+        maxParticipants: 100,
+      },
+      {
+        title: "Networking Coffee Break",
+        description: "Casual networking session over coffee. Great opportunity to meet fellow attendees and exchange ideas.",
+        scheduledTime: baseTimestamp + 4 * oneHour,
+        duration: 30,
+        location: "Lobby Lounge",
+        maxParticipants: undefined,
+      },
+      {
+        title: "AI & Machine Learning Workshop",
+        description: "Hands-on workshop exploring the latest in AI and ML. Bring your laptop!",
+        scheduledTime: baseTimestamp + oneDay,
+        duration: 120,
+        location: "Workshop Room A",
+        maxParticipants: 25,
+      },
+      {
+        title: "Startup Pitch Session",
+        description: "Watch innovative startups pitch their ideas. Investors and entrepreneurs welcome!",
+        scheduledTime: baseTimestamp + oneDay + 3 * oneHour,
+        duration: 60,
+        location: "Innovation Hub",
+        maxParticipants: 50,
+      },
+    ];
+
+    for (let i = 0; i < publicMeetingTemplates.length; i++) {
+      const template = publicMeetingTemplates[i];
+      // Check for existing meeting with same title in this conference
+      const existingInConference = await ctx.db
+        .query("meetings")
+        .withIndex("by_conference_public", (q) =>
+          q.eq("conferenceId", eaGlobalId).eq("isPublic", true)
+        )
+        .filter((q) => q.eq(q.field("title"), template.title))
+        .first();
+
+      if (!existingInConference) {
+        const creator = seedUserIds[i % seedUserIds.length];
+        const meetingId = await ctx.db.insert("meetings", {
+          creatorId: creator,
+          title: template.title,
+          description: template.description,
+          scheduledTime: template.scheduledTime,
+          duration: template.duration,
+          location: template.location,
+          isPublic: true,
+          maxParticipants: template.maxParticipants,
+          conferenceId: eaGlobalId,
+        });
+
+        await ctx.db.insert("meetingParticipants", {
+          meetingId,
+          userId: creator,
+          status: "creator",
+        });
+      }
+    }
 
     // Create meetings for the test user
     if (seedUserIds[1]) {
@@ -296,6 +361,7 @@ export const seedWithFixedTimestamp = testingMutation({
         duration: 60,
         location: "Virtual - Google Meet",
         isPublic: false,
+        conferenceId: eaGlobalId,
       });
       await ctx.db.insert("meetingParticipants", { meetingId, userId: seedUserIds[1], status: "creator" });
       await ctx.db.insert("meetingParticipants", { meetingId, userId: user._id, status: "pending" });
@@ -310,6 +376,7 @@ export const seedWithFixedTimestamp = testingMutation({
         duration: 30,
         location: "Cafe Lounge",
         isPublic: false,
+        conferenceId: eaGlobalId,
       });
       await ctx.db.insert("meetingParticipants", { meetingId, userId: seedUserIds[2], status: "creator" });
       await ctx.db.insert("meetingParticipants", { meetingId, userId: user._id, status: "pending" });

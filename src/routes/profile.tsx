@@ -1,27 +1,19 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useForm } from "@tanstack/react-form";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import {
-  useAction,
-  useMutation,
-  useQuery as useConvexQuery,
-} from "convex/react";
-import { Sparkles, Users } from "lucide-react";
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMutation } from "convex/react";
+import { useState, useMemo } from "react";
 import { z } from "zod";
 import { api } from "../../convex/_generated/api";
 import { CalendarSubscription } from "../components/CalendarSubscription";
 import { UserProfileCard } from "../components/UserProfileCard";
 import type { Doc } from "../../convex/_generated/dataModel";
-import type { RecommendationsResponse } from "../../convex/llm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
 import { InfoBox } from "@/components/patterns/InfoBox";
 
 const currentUserQuery = convexQuery(api.users.getCurrentUser, {});
@@ -125,28 +117,6 @@ function ProfilePage() {
       needsHelpWith: formValues.needsHelpWith || undefined,
     };
   }, [user, form.state.values]);
-
-  // Compute search params for recommendations based on saved profile
-  // (recommendations show users based on your saved profile, not in-progress edits)
-  const searchParams = useMemo(() => {
-    return {
-      needsHelpWith: user?.needsHelpWith || undefined,
-      canHelpWith: user?.canHelpWith || undefined,
-      interests: user?.interests?.length ? user.interests : undefined,
-      limit: 3,
-    };
-  }, [user?.needsHelpWith, user?.canHelpWith, user?.interests]);
-
-  // Query for recommended users based on saved profile
-  const hasSearchCriteria = !!(
-    searchParams.needsHelpWith ||
-    searchParams.canHelpWith ||
-    (searchParams.interests && searchParams.interests.length > 0)
-  );
-  const { data: recommendedUsers } = useQuery({
-    ...convexQuery(api.users.findRecommendedUsers, searchParams),
-    enabled: hasSearchCriteria,
-  });
 
   if (!user) {
     return <div>Loading...</div>;
@@ -335,85 +305,6 @@ function ProfilePage() {
         </div>
       </div>
 
-      {/* AI Recommendations for new users (based on form input) */}
-      {isNewUser && (
-        <AIRecommendations
-          currentUserProfile={previewUser}
-          currentUserId={user._id}
-        />
-      )}
-
-      {/* Text-based Recommendations for existing users (based on saved profile) */}
-      {!isNewUser && hasSearchCriteria && (
-        <div className="not-prose mt-8 pt-8 border-t border-border">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold">
-              People You Might Want to Meet
-            </h2>
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Based on your interests and what you're looking for
-          </p>
-
-          {recommendedUsers && recommendedUsers.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {recommendedUsers.map((recUser) => (
-                <Link
-                  key={recUser._id}
-                  to="/user/$userId"
-                  params={{ userId: recUser._id }}
-                >
-                  <Card className="hover:bg-muted transition-colors">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        {recUser.imageUrl ? (
-                          <img
-                            src={recUser.imageUrl}
-                            alt={recUser.name}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-lg font-bold text-primary">
-                            {recUser.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold truncate">
-                            {recUser.name}
-                          </h3>
-                          {(recUser.role || recUser.company) && (
-                            <p className="text-sm text-muted-foreground truncate">
-                              {recUser.role}
-                              {recUser.role && recUser.company && " at "}
-                              {recUser.company}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      {recUser.canHelpWith && (
-                        <p className="text-sm text-success mt-2 line-clamp-2">
-                          Can help with: {recUser.canHelpWith}
-                        </p>
-                      )}
-                      {recUser.needsHelpWith && (
-                        <p className="text-sm text-info mt-1 line-clamp-2">
-                          Looking for: {recUser.needsHelpWith}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No matches yet. Keep filling out your profile!
-            </p>
-          )}
-        </div>
-      )}
-
       <div className="not-prose mt-12 pt-8 border-t border-border">
         <CalendarSubscription />
       </div>
@@ -463,195 +354,6 @@ function SeedDataSection() {
           {result}
         </p>
       )}
-    </div>
-  );
-}
-
-interface AIRecommendationsProps {
-  currentUserProfile: {
-    name: string;
-    bio?: string;
-    role?: string;
-    company?: string;
-    interests?: string[];
-    canHelpWith?: string;
-    needsHelpWith?: string;
-  };
-  currentUserId: string;
-}
-
-function AIRecommendations({
-  currentUserProfile,
-  currentUserId,
-}: AIRecommendationsProps) {
-  const getAIRecommendations = useAction(api.llm.getAIRecommendations);
-  const allUsers = useConvexQuery(api.users.listUsers);
-
-  const [recommendations, setRecommendations] = useState<
-    RecommendationsResponse["recommendations"]
-  >([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const lastRequestRef = useRef<string>("");
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const hasProfileContent = !!(
-    currentUserProfile.canHelpWith ||
-    currentUserProfile.needsHelpWith ||
-    (currentUserProfile.interests && currentUserProfile.interests.length > 0)
-  );
-
-  const fetchRecommendations = useCallback(async () => {
-    if (!allUsers || allUsers.length === 0) return;
-    if (!hasProfileContent) return;
-
-    // Create a key to avoid duplicate requests
-    const requestKey = JSON.stringify({
-      canHelpWith: currentUserProfile.canHelpWith,
-      needsHelpWith: currentUserProfile.needsHelpWith,
-      interests: currentUserProfile.interests,
-    });
-
-    if (requestKey === lastRequestRef.current) return;
-    lastRequestRef.current = requestKey;
-
-    // Filter out current user and prepare candidate data
-    const candidates = allUsers
-      .filter((u) => u._id !== currentUserId)
-      .map((u) => ({
-        _id: u._id,
-        name: u.name,
-        bio: u.bio,
-        role: u.role,
-        company: u.company,
-        interests: u.interests,
-        canHelpWith: u.canHelpWith,
-        needsHelpWith: u.needsHelpWith,
-      }));
-
-    if (candidates.length === 0) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await getAIRecommendations({
-        currentUserProfile: {
-          name: currentUserProfile.name,
-          bio: currentUserProfile.bio,
-          role: currentUserProfile.role,
-          company: currentUserProfile.company,
-          interests: currentUserProfile.interests,
-          canHelpWith: currentUserProfile.canHelpWith,
-          needsHelpWith: currentUserProfile.needsHelpWith,
-        },
-        candidateUsers: candidates,
-        limit: 3,
-      });
-      setRecommendations(result.recommendations);
-    } catch (err) {
-      console.error("AI recommendations error:", err);
-      setError("Couldn't get AI recommendations");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [
-    allUsers,
-    currentUserId,
-    currentUserProfile,
-    hasProfileContent,
-    getAIRecommendations,
-  ]);
-
-  // Debounced fetch when profile changes
-  useEffect(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    if (hasProfileContent) {
-      debounceTimerRef.current = setTimeout(() => {
-        void fetchRecommendations();
-      }, 1500); // 1.5 second debounce
-    }
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [fetchRecommendations, hasProfileContent]);
-
-  if (!hasProfileContent) {
-    return null;
-  }
-
-  // Find the full user data for each recommendation
-  const recommendedUsersWithData = recommendations
-    .map((rec) => {
-      const user = allUsers?.find((u) => u._id === rec.userId);
-      if (!user) return null;
-      return { ...rec, user };
-    })
-    .filter((r): r is NonNullable<typeof r> => r !== null);
-
-  return (
-    <div className="not-prose mt-8 pt-8 border-t border-border">
-      <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-secondary" />
-        <h2 className="text-lg font-semibold">AI-Suggested Connections</h2>
-        {isLoading && <Spinner size="sm" />}
-      </div>
-      <p className="text-sm text-muted-foreground mb-4">
-        Based on what you can offer and what you're looking for
-      </p>
-
-      {error && <p className="text-sm text-destructive mb-4">{error}</p>}
-
-      {recommendedUsersWithData.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recommendedUsersWithData.map(({ userId, reason, score, user }) => (
-            <Link key={userId} to="/user/$userId" params={{ userId }}>
-              <Card className="hover:bg-muted transition-colors">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    {user.imageUrl ? (
-                      <img
-                        src={user.imageUrl}
-                        alt={user.name}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center text-lg font-bold text-secondary">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold truncate">{user.name}</h3>
-                      {(user.role || user.company) && (
-                        <p className="text-sm text-muted-foreground truncate">
-                          {user.role}
-                          {user.role && user.company && " at "}
-                          {user.company}
-                        </p>
-                      )}
-                    </div>
-                    <Badge variant="secondary" size="sm">
-                      {score}%
-                    </Badge>
-                  </div>
-                  <p className="text-sm mt-2 text-muted-foreground">{reason}</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      ) : !isLoading ? (
-        <p className="text-sm text-muted-foreground">
-          Fill in what you can help with or what you need to see AI
-          recommendations.
-        </p>
-      ) : null}
     </div>
   );
 }

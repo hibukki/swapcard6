@@ -175,6 +175,37 @@ export const seedData = internalMutation({
       throw new Error("Need at least 2 users. Database may have constraints.");
     }
 
+    // Create or get the seed conference
+    let seedConferenceId;
+    const seedConferenceName = "Seed Conference";
+    const existingSeedConference = await ctx.db
+      .query("conferences")
+      .withIndex("by_name", (q) => q.eq("name", seedConferenceName))
+      .first();
+
+    if (existingSeedConference) {
+      seedConferenceId = existingSeedConference._id;
+    } else {
+      seedConferenceId = await ctx.db.insert("conferences", {
+        name: seedConferenceName,
+        description: "Default conference for seed data",
+        startDate: now,
+        endDate: now + 7 * oneDay,
+        timezone: "America/Los_Angeles",
+        location: "San Francisco",
+        createdBy: seedUserIds[0],
+      });
+
+      // Add seed users as attendees
+      for (const seedUserId of seedUserIds) {
+        await ctx.db.insert("conferenceAttendees", {
+          conferenceId: seedConferenceId,
+          userId: seedUserId,
+          role: "attendee",
+        });
+      }
+    }
+
     // Create public meetings if they don't exist (check by title to avoid duplicates)
     const publicMeetingTemplates = [
       {
@@ -275,6 +306,7 @@ export const seedData = internalMutation({
           location: template.location,
           isPublic: true,
           maxParticipants: template.maxParticipants,
+          conferenceId: seedConferenceId,
         });
 
         publicMeetingIds.push(meetingId);
@@ -351,6 +383,7 @@ export const seedData = internalMutation({
         duration: template.duration,
         location: template.location,
         isPublic: false,
+        conferenceId: seedConferenceId,
       });
 
       await ctx.db.insert("meetingParticipants", {
@@ -401,6 +434,7 @@ export const seedData = internalMutation({
           duration: template.duration,
           location: template.location,
           isPublic: false,
+          conferenceId: seedConferenceId,
         });
 
         await ctx.db.insert("meetingParticipants", {
@@ -414,6 +448,21 @@ export const seedData = internalMutation({
           userId: realUser._id,
           status: "pending",
         });
+
+        // Add real user to seed conference if not already
+        const existingAttendance = await ctx.db
+          .query("conferenceAttendees")
+          .withIndex("by_conference_and_user", (q) =>
+            q.eq("conferenceId", seedConferenceId).eq("userId", realUser._id)
+          )
+          .first();
+        if (!existingAttendance) {
+          await ctx.db.insert("conferenceAttendees", {
+            conferenceId: seedConferenceId,
+            userId: realUser._id,
+            role: "attendee",
+          });
+        }
 
         // Create notification for the meeting request
         await ctx.db.insert("notifications", {
@@ -666,7 +715,7 @@ async function seedDataWithCurrentUserHandler(
     let marketingCollabMeetingId: Id<"meetings"> | undefined;
 
     // 1. Confirmed meeting - current user created and Bob accepted
-    if (seedUserIds[1]) {
+    if (seedUserIds[1] && techConnectId) {
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: currentUser._id,
         title: "Product Roadmap Discussion",
@@ -675,6 +724,7 @@ async function seedDataWithCurrentUserHandler(
         duration: 45,
         location: "Zoom",
         isPublic: false,
+        conferenceId: techConnectId,
       });
 
       await ctx.db.insert("meetingParticipants", {
@@ -692,7 +742,7 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 2. Confirmed meeting - Alice created and current user accepted
-    if (seedUserIds[0]) {
+    if (seedUserIds[0] && techConnectId) {
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: seedUserIds[0],
         title: "User Research Findings Review",
@@ -701,6 +751,7 @@ async function seedDataWithCurrentUserHandler(
         duration: 60,
         location: "Conference Room B",
         isPublic: false,
+        conferenceId: techConnectId,
       });
 
       await ctx.db.insert("meetingParticipants", {
@@ -717,7 +768,7 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 3. Pending incoming request - Bob wants to meet current user
-    if (seedUserIds[1]) {
+    if (seedUserIds[1] && techConnectId) {
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: seedUserIds[1],
         title: "Technical Architecture Review",
@@ -726,6 +777,7 @@ async function seedDataWithCurrentUserHandler(
         duration: 60,
         location: "Virtual - Google Meet",
         isPublic: false,
+        conferenceId: techConnectId,
       });
 
       await ctx.db.insert("meetingParticipants", {
@@ -743,7 +795,7 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 4. Pending incoming request - Carol wants to meet current user
-    if (seedUserIds[2]) {
+    if (seedUserIds[2] && techConnectId) {
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: seedUserIds[2],
         title: "Marketing Collaboration",
@@ -752,6 +804,7 @@ async function seedDataWithCurrentUserHandler(
         duration: 30,
         location: "Cafe Lounge",
         isPublic: false,
+        conferenceId: techConnectId,
       });
 
       await ctx.db.insert("meetingParticipants", {
@@ -769,7 +822,7 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 5. Pending outgoing request - current user wants to meet David
-    if (seedUserIds[3]) {
+    if (seedUserIds[3] && techConnectId) {
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: currentUser._id,
         title: "Design Feedback Session",
@@ -778,6 +831,7 @@ async function seedDataWithCurrentUserHandler(
         duration: 45,
         location: "Design Studio",
         isPublic: false,
+        conferenceId: techConnectId,
       });
 
       await ctx.db.insert("meetingParticipants", {
@@ -794,7 +848,7 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // 6. Declined meeting - Emma declined current user's request
-    if (seedUserIds[4]) {
+    if (seedUserIds[4] && techConnectId) {
       const meetingId = await ctx.db.insert("meetings", {
         creatorId: currentUser._id,
         title: "Data Analysis Review",
@@ -803,6 +857,7 @@ async function seedDataWithCurrentUserHandler(
         duration: 30,
         location: "Data Lab",
         isPublic: false,
+        conferenceId: techConnectId,
       });
 
       await ctx.db.insert("meetingParticipants", {

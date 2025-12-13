@@ -231,11 +231,7 @@ test.describe("E2E User Flow", () => {
     await expect(page.getByLabel("Company / Organization")).toHaveValue(
       "Effective Ventures",
     );
-    // Recommendations should now appear based on saved profile
-    await expect(page.getByText("People You Might Want to Meet")).toBeVisible({
-      timeout: 5000,
-    });
-    await screenshot(page, "profile-with-recommendations");
+    await screenshot(page, "profile-filled");
 
     // Go back to conference to access conference-scoped routes
     await page.goto("/");
@@ -269,15 +265,15 @@ test.describe("E2E User Flow", () => {
       .getByRole("link", { name: "Opening Keynote: Future of Tech" })
       .click();
     await expect(
-      page.getByRole("link", { name: "Back to Conferences" }),
+      page.getByRole("link", { name: "Back to Agenda" }),
     ).toBeVisible();
     await expect(page.getByText(/Participants/)).toBeVisible();
     await screenshot(page, "meeting-detail");
 
-    // Test user profile page - click on the host (Alice Johnson hosts Opening Keynote)
+    // Test attendee profile page - click on the host (Alice Johnson hosts Opening Keynote)
     await page.getByText("Hosted by:").locator("..").getByRole("link").click();
     await expect(
-      page.getByRole("link", { name: "Back to Conferences" }),
+      page.getByRole("link", { name: "Back to Attendees" }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Alice Johnson" }),
@@ -285,11 +281,14 @@ test.describe("E2E User Flow", () => {
     await expect(
       page.getByRole("button", { name: "Request a Meeting" }),
     ).toBeVisible();
-    await screenshot(page, "user-profile");
+    await screenshot(page, "attendee-profile");
 
-    // Clicking "Request a Meeting" navigates to home (conference picker)
+    // Clicking "Request a Meeting" opens meeting request modal on attendees page
     await page.getByRole("button", { name: "Request a Meeting" }).click();
-    await expect(page.getByText("Select a Conference")).toBeVisible();
+    await expect(page.getByText("Request Meeting with Alice Johnson")).toBeVisible();
+
+    // Close the modal before signing out
+    await page.getByRole("button", { name: "Cancel" }).click();
 
     await signOut(page);
   });
@@ -336,7 +335,7 @@ test.describe("E2E User Flow", () => {
       .getByRole("link", { name: "Message" })
       .click();
 
-    // Should navigate to user profile with chat embed
+    // Should navigate to attendee profile with chat embed
     await expect(
       page.getByRole("heading", { name: "Alice Johnson" }),
     ).toBeVisible();
@@ -372,7 +371,7 @@ test.describe("E2E User Flow", () => {
       ),
     ).toBeVisible();
 
-    await screenshot(page, "chat-embed-user-profile");
+    await screenshot(page, "chat-embed-attendee-profile");
 
     // Navigate to chats page
     await page.goto("/chats", { waitUntil: "networkidle" });

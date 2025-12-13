@@ -4,6 +4,7 @@ import "tippy.js/dist/tippy.css";
 import type { Doc } from "../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useConferenceOptional } from "@/contexts/ConferenceContext";
 
 interface UserNameProps {
   user: Doc<"users">;
@@ -43,8 +44,20 @@ function UserPreviewCard({ user }: { user: Doc<"users"> }) {
 /**
  * A clickable user name that links to their profile.
  * Shows a preview card on hover.
+ * Must be used within a conference context.
  */
 export function UserName({ user, className }: UserNameProps) {
+  const conference = useConferenceOptional();
+
+  // If no conference context, just render the name without a link
+  if (!conference) {
+    return (
+      <span className={cn("font-semibold", className)}>
+        {user.name}
+      </span>
+    );
+  }
+
   return (
     <Tippy
       content={<UserPreviewCard user={user} />}
@@ -53,8 +66,8 @@ export function UserName({ user, className }: UserNameProps) {
       appendTo={() => document.body}
     >
       <Link
-        to="/user/$userId"
-        params={{ userId: user._id }}
+        to="/conference/$conferenceId/attendee/$userId"
+        params={{ conferenceId: conference._id, userId: user._id }}
         className={cn(
           "font-semibold text-primary hover:underline underline-offset-4",
           className

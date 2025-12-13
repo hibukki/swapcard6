@@ -73,6 +73,7 @@ export function CreatePublicMeetingModal({
       location: formData.location || undefined,
       isPublic: true,
       maxParticipants: formData.maxParticipants,
+      conferenceId: conference._id,
       addCurrentUserAs: "creator",
     });
 

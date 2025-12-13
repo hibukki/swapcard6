@@ -10,15 +10,17 @@ import { CreatePublicMeetingModal } from "@/components/CreatePublicMeetingModal"
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/patterns/EmptyState";
 
-const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
 const myParticipationsQuery = convexQuery(
   api.meetingParticipants.listMeetingsForCurrentUser,
   {},
 );
 
 export const Route = createFileRoute("/conference/$conferenceId/public-meetings")({
-  loader: async ({ context: { queryClient } }) => {
+  loader: async ({ context: { queryClient }, params }) => {
     if ((window as any).Clerk?.session) {
+      const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {
+        conferenceId: params.conferenceId as Id<"conferences">,
+      });
       await Promise.all([
         queryClient.ensureQueryData(publicMeetingsQuery),
         queryClient.ensureQueryData(myParticipationsQuery),
@@ -29,6 +31,10 @@ export const Route = createFileRoute("/conference/$conferenceId/public-meetings"
 });
 
 function PublicMeetingsPage() {
+  const { conferenceId } = Route.useParams();
+  const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {
+    conferenceId: conferenceId as Id<"conferences">,
+  });
   const { data: meetings } = useSuspenseQuery(publicMeetingsQuery);
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
   const [showCreateModal, setShowCreateModal] = useState(false);

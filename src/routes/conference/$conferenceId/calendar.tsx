@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronDown, ChevronLeft, ChevronRight, CalendarClock } from "lucide-react";
+import type { Id } from "../../../../convex/_generated/dataModel";
 import React, { useState } from "react";
 import { z } from "zod";
 import { CalendarSubscription } from "@/components/CalendarSubscription";
@@ -23,9 +24,9 @@ const calendarSearchSchema = z.object({
 
 export const Route = createFileRoute("/conference/$conferenceId/calendar")({
   validateSearch: calendarSearchSchema,
-  loader: async ({ context: { queryClient } }) => {
+  loader: async ({ context: { queryClient }, params }) => {
     if ((window as any).Clerk?.session) {
-      await preloadCalendarData(queryClient);
+      await preloadCalendarData(queryClient, params.conferenceId as Id<"conferences">);
     }
   },
   component: CalendarPage,

@@ -14,11 +14,12 @@ import {
   toCalendarUsersMap,
   toCalendarParticipantsMap,
 } from "@/types/calendar";
+import { useConference } from "@/contexts/ConferenceContext";
 
 const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
-const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
 
-export async function preloadCalendarData(queryClient: QueryClient): Promise<void> {
+export async function preloadCalendarData(queryClient: QueryClient, conferenceId: Id<"conferences">): Promise<void> {
+  const publicMeetingsQuery = convexQuery(api.meetings.listPublic, { conferenceId });
   await Promise.all([
     queryClient.ensureQueryData(myParticipationsQuery),
     queryClient.ensureQueryData(publicMeetingsQuery),
@@ -37,6 +38,9 @@ export interface UseCalendarDataResult {
 }
 
 export function useCalendarData(): UseCalendarDataResult {
+  const conference = useConference();
+  const publicMeetingsQuery = convexQuery(api.meetings.listPublic, { conferenceId: conference._id });
+
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
   const { data: publicMeetingsData } = useSuspenseQuery(publicMeetingsQuery);
   const allMeetings = useQuery(api.meetings.list, {});
@@ -146,6 +150,7 @@ export function useCalendarData(): UseCalendarDataResult {
       isPublic: false,
       maxParticipants: 1,
       addCurrentUserAs: "creator",
+      conferenceId: conference._id,
     });
   };
 

@@ -4,19 +4,22 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
-import { ChatEmbed } from "../components/chat/ChatEmbed";
-import { SharedMeetingsList } from "../components/SharedMeetingsList";
-import { UserProfileCard } from "../components/UserProfileCard";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
+import { ChatEmbed } from "../../../components/chat/ChatEmbed";
+import { SharedMeetingsList } from "../../../components/SharedMeetingsList";
+import { UserProfileCard } from "../../../components/UserProfileCard";
 import { Button } from "@/components/ui/button";
+import { useConference } from "@/contexts/ConferenceContext";
 
-const userSearchSchema = z.object({
+const attendeeSearchSchema = z.object({
   chat: z.enum(["focus"]).optional(),
 });
 
-export const Route = createFileRoute("/user/$userId")({
-  validateSearch: userSearchSchema,
+export const Route = createFileRoute(
+  "/conference/$conferenceId/attendee/$userId"
+)({
+  validateSearch: attendeeSearchSchema,
   loader: async ({ context: { queryClient }, params }) => {
     const userQuery = convexQuery(api.users.get, {
       userId: params.userId as Id<"users">,
@@ -25,13 +28,14 @@ export const Route = createFileRoute("/user/$userId")({
       await queryClient.ensureQueryData(userQuery);
     }
   },
-  component: UserPage,
+  component: AttendeePage,
 });
 
-function UserPage() {
-  const { userId } = Route.useParams();
+function AttendeePage() {
+  const { userId, conferenceId } = Route.useParams();
   const search = Route.useSearch();
   const navigate = useNavigate();
+  const conference = useConference();
 
   const { data: user } = useSuspenseQuery(
     convexQuery(api.users.get, { userId: userId as Id<"users"> })
@@ -49,9 +53,12 @@ function UserPage() {
           This user profile doesn't exist or has been removed.
         </p>
         <Button asChild>
-          <Link to="/">
+          <Link
+            to="/conference/$conferenceId/attendees"
+            params={{ conferenceId }}
+          >
             <ArrowLeft className="w-4 h-4" />
-            Back to Conferences
+            Back to Attendees
           </Link>
         </Button>
       </div>
@@ -62,9 +69,12 @@ function UserPage() {
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/">
+          <Link
+            to="/conference/$conferenceId/attendees"
+            params={{ conferenceId }}
+          >
             <ArrowLeft className="w-4 h-4" />
-            Back to Conferences
+            Back to Attendees
           </Link>
         </Button>
       </div>
@@ -73,14 +83,21 @@ function UserPage() {
         <UserProfileCard
           user={user}
           onRequestMeeting={() =>
-            void navigate({ to: "/" })
+            void navigate({
+              to: "/conference/$conferenceId/attendees",
+              params: { conferenceId },
+              search: { requestMeeting: userId },
+            })
           }
         />
         {sharedMeetings && (
           <SharedMeetingsList
             meetings={sharedMeetings}
             onMeetingClick={(meetingId) =>
-              void navigate({ to: "/meeting/$meetingId", params: { meetingId } })
+              void navigate({
+                to: "/conference/$conferenceId/meeting/$meetingId",
+                params: { conferenceId, meetingId },
+              })
             }
           />
         )}

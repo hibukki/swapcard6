@@ -1,6 +1,6 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import {
   MessageCircle,
@@ -41,6 +41,7 @@ const usersQuery = convexQuery(api.users.listUsers, {});
 
 const attendeesSearchSchema = z.object({
   q: z.string().optional(),
+  requestMeeting: z.string().optional(), // userId to open meeting request modal for
 });
 
 export const Route = createFileRoute("/conference/$conferenceId/attendees")({
@@ -68,6 +69,8 @@ function AttendeesPage() {
   const { data: users } = useSuspenseQuery(usersQuery);
   const [selectedUser, setSelectedUser] = useState<Id<"users"> | null>(null);
   const search = Route.useSearch();
+  const navigate = useNavigate();
+  const { conferenceId } = Route.useParams();
   const [searchQuery, setSearchQuery] = useState(search.q ?? "");
 
   // Update search query when URL param changes
@@ -76,6 +79,20 @@ function AttendeesPage() {
       setSearchQuery(search.q);
     }
   }, [search.q]);
+
+  // Open meeting request modal if requestMeeting param is set
+  useEffect(() => {
+    if (search.requestMeeting) {
+      setSelectedUser(search.requestMeeting as Id<"users">);
+      // Clear the search param
+      void navigate({
+        to: "/conference/$conferenceId/attendees",
+        params: { conferenceId },
+        search: { q: search.q },
+        replace: true,
+      });
+    }
+  }, [search.requestMeeting, conferenceId, navigate, search.q]);
 
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users;
@@ -135,8 +152,8 @@ function AttendeesPage() {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <Link
-                      to="/user/$userId"
-                      params={{ userId: user._id }}
+                      to="/conference/$conferenceId/attendee/$userId"
+                      params={{ conferenceId, userId: user._id }}
                       className="font-semibold text-base hover:underline"
                     >
                       {user.name}
@@ -201,8 +218,8 @@ function AttendeesPage() {
                   <Tippy content="Message">
                     <Button variant="ghost" size="icon-sm" asChild>
                       <Link
-                        to="/user/$userId"
-                        params={{ userId: user._id }}
+                        to="/conference/$conferenceId/attendee/$userId"
+                        params={{ conferenceId, userId: user._id }}
                         search={{ chat: "focus" }}
                         aria-label="Message"
                       >
@@ -413,6 +430,7 @@ function MeetingRequestModal({
         location: location || undefined,
         scheduledTime: selectedSlot,
         duration,
+        conferenceId: conference._id,
       });
       onClose();
     } catch (error) {

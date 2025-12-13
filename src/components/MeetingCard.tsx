@@ -194,10 +194,10 @@ export function MeetingCard({
                 className={cn(isCompact ? "text-lg" : "text-2xl", "font-semibold h-auto py-1")}
                 autoFocus
               />
-            ) : showMeetingLink ? (
+            ) : showMeetingLink && meeting.conferenceId ? (
               <Link
-                to="/meeting/$meetingId"
-                params={{ meetingId: meeting._id }}
+                to="/conference/$conferenceId/meeting/$meetingId"
+                params={{ conferenceId: meeting.conferenceId, meetingId: meeting._id }}
                 className="hover:underline"
               >
                 <h3
@@ -380,11 +380,11 @@ export function MeetingCard({
                 usersMap={usersMap}
                 maxHeight={isCompact ? "max-h-32" : "max-h-60"}
                 onUserClick={
-                  !isCompact
+                  !isCompact && meeting.conferenceId
                     ? (userId) =>
                         void navigate({
-                          to: "/user/$userId",
-                          params: { userId },
+                          to: "/conference/$conferenceId/attendee/$userId",
+                          params: { conferenceId: meeting.conferenceId!, userId },
                         })
                     : undefined
                 }

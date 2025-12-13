@@ -143,11 +143,14 @@ export default defineSchema({
   meetings: defineTable({
     ...meetingFields,
     creatorId: v.id("users"),
+    conferenceId: v.id("conferences"),
   })
     .index("by_creator", ["creatorId", "scheduledTime"])
     .index("by_time", ["scheduledTime"])
     .index("by_public", ["isPublic", "scheduledTime"])
-    .index("by_title_public", ["title", "isPublic"]),
+    .index("by_title_public", ["title", "isPublic"])
+    .index("by_conference", ["conferenceId", "scheduledTime"])
+    .index("by_conference_public", ["conferenceId", "isPublic", "scheduledTime"]),
 
   meetingParticipants: defineTable({
     meetingId: v.id("meetings"),
