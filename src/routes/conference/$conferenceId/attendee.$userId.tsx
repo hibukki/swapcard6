@@ -10,7 +10,6 @@ import { ChatEmbed } from "../../../components/chat/ChatEmbed";
 import { SharedMeetingsList } from "../../../components/SharedMeetingsList";
 import { UserProfileCard } from "../../../components/UserProfileCard";
 import { Button } from "@/components/ui/button";
-import { useConference } from "@/contexts/ConferenceContext";
 
 const attendeeSearchSchema = z.object({
   chat: z.enum(["focus"]).optional(),
@@ -35,7 +34,6 @@ function AttendeePage() {
   const { userId, conferenceId } = Route.useParams();
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const conference = useConference();
 
   const { data: user } = useSuspenseQuery(
     convexQuery(api.users.get, { userId: userId as Id<"users"> })
@@ -93,7 +91,7 @@ function AttendeePage() {
         />
         {sharedMeetings && (
           <SharedMeetingsList
-            meetings={sharedMeetings}
+            meetings={sharedMeetings.filter((m) => m !== null)}
             onMeetingClick={(meetingId) =>
               void navigate({
                 to: "/conference/$conferenceId/meeting/$meetingId",
