@@ -139,7 +139,6 @@ export const categoryStyles: Record<
     border: string;
     text: string;
     strikethrough?: boolean;
-    borderOnly?: boolean;
     warningIcon?: boolean;
   }
 > = {
@@ -149,29 +148,26 @@ export const categoryStyles: Record<
     text: "text-success",
   },
   "not-responded": {
-    bg: "bg-background",
+    bg: "bg-success/10",
     border: "border-success",
     text: "text-foreground",
-    borderOnly: true,
   },
   declined: {
-    bg: "bg-background",
-    border: "border-success",
+    bg: "bg-muted",
+    border: "border-muted-foreground/30",
     text: "text-muted-foreground",
     strikethrough: true,
-    borderOnly: true,
   },
   "all-rejected": {
-    bg: "bg-background",
+    bg: "bg-warning/10",
     border: "border-warning",
     text: "text-muted-foreground",
     strikethrough: true,
-    borderOnly: true,
     warningIcon: true,
   },
   "public-available": {
-    bg: "bg-secondary/20",
-    border: "border-secondary",
+    bg: "bg-info/20",
+    border: "border-info",
     text: "text-foreground",
   },
   busy: {
