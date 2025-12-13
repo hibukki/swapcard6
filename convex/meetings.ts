@@ -55,18 +55,52 @@ export const get = query({
 });
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db.query("meetings").withIndex("by_time").collect();
+  args: {
+    eventStartsFrom: v.optional(v.number()),
+    eventStartsTo: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { eventStartsFrom, eventStartsTo } = args;
+
+    const query = ctx.db.query("meetings").withIndex("by_time", (q) => {
+      if (eventStartsFrom !== undefined && eventStartsTo !== undefined) {
+        return q.gte("scheduledTime", eventStartsFrom).lt("scheduledTime", eventStartsTo);
+      }
+      if (eventStartsFrom !== undefined) {
+        return q.gte("scheduledTime", eventStartsFrom);
+      }
+      if (eventStartsTo !== undefined) {
+        return q.lt("scheduledTime", eventStartsTo);
+      }
+      return q;
+    });
+    return await query.collect();
   },
 });
 
 export const listPublic = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    eventStartsFrom: v.optional(v.number()),
+    eventStartsTo: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { eventStartsFrom, eventStartsTo } = args;
+
     return await ctx.db
       .query("meetings")
-      .withIndex("by_public", (q) => q.eq("isPublic", true))
+      .withIndex("by_public", (q) => {
+        const base = q.eq("isPublic", true);
+        if (eventStartsFrom !== undefined && eventStartsTo !== undefined) {
+          return base.gte("scheduledTime", eventStartsFrom).lt("scheduledTime", eventStartsTo);
+        }
+        if (eventStartsFrom !== undefined) {
+          return base.gte("scheduledTime", eventStartsFrom);
+        }
+        if (eventStartsTo !== undefined) {
+          return base.lt("scheduledTime", eventStartsTo);
+        }
+        return base;
+      })
       .collect();
   },
 });

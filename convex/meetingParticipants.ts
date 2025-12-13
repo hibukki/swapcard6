@@ -42,15 +42,36 @@ export const listByParticipatingUser = query({
 });
 
 export const listMeetingsForCurrentUser = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    eventStartsFrom: v.optional(v.number()),
+    eventStartsTo: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
     const user = await getCurrentUserOrNull(ctx);
     if (!user) return [];
 
-    return await ctx.db
+    const participations = await ctx.db
       .query("meetingParticipants")
       .withIndex("by_user_only", (q) => q.eq("userId", user._id))
       .collect();
+
+    if (args.eventStartsFrom === undefined && args.eventStartsTo === undefined) {
+      return participations;
+    }
+
+    const filteredParticipations = [];
+    for (const p of participations) {
+      const meeting = await ctx.db.get(p.meetingId);
+      if (!meeting) continue;
+      if (args.eventStartsFrom !== undefined && meeting.scheduledTime < args.eventStartsFrom) {
+        continue;
+      }
+      if (args.eventStartsTo !== undefined && meeting.scheduledTime >= args.eventStartsTo) {
+        continue;
+      }
+      filteredParticipations.push(p);
+    }
+    return filteredParticipations;
   },
 });
 

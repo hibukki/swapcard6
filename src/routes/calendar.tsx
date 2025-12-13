@@ -1,13 +1,17 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronDown, ChevronLeft, ChevronRight, CalendarClock } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { z } from "zod";
 import { CalendarSubscription } from "../components/CalendarSubscription";
 import { MeetingCard as MeetingCardComponent } from "../components/MeetingCard";
 import { DayView } from "@/components/calendar/DayView";
 import { WeekView } from "@/components/calendar/WeekView";
 import { MonthView } from "@/components/calendar/MonthView";
-import { useCalendarData, preloadCalendarData } from "@/hooks/useCalendarData";
+import {
+  useCalendarData,
+  preloadCalendarData,
+  type CalendarTimeRange,
+} from "@/hooks/useCalendarData";
 import type { CalendarMeetingView } from "@/types/calendar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -16,22 +20,84 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { fromDateString, toLocalDateString } from "@/lib/date-format";
 
+function getCalendarTimeRange(
+  view: "day" | "week" | "month",
+  currentDate: Date
+): CalendarTimeRange {
+  const date = new Date(currentDate);
+
+  if (view === "day") {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 1);
+    return {
+      eventStartsFrom: start.getTime(),
+      eventStartsTo: end.getTime(),
+    };
+  }
+
+  if (view === "week") {
+    const dayOfWeek = date.getDay();
+    const start = new Date(date);
+    start.setDate(date.getDate() - dayOfWeek);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 7);
+    return {
+      eventStartsFrom: start.getTime(),
+      eventStartsTo: end.getTime(),
+    };
+  }
+
+  // month view
+  const start = new Date(date.getFullYear(), date.getMonth(), 1);
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+  return {
+    eventStartsFrom: start.getTime(),
+    eventStartsTo: end.getTime(),
+  };
+}
+
 const calendarSearchSchema = z.object({
   view: z.enum(["day", "week", "month"]).optional(),
   date: z.string().optional(),
 });
 
+function getDefaultView() {
+  if (typeof window === "undefined") return "week";
+  const isMobile = window.innerWidth < 768;
+  return isMobile ? "day" : "week";
+}
+
 export const Route = createFileRoute("/calendar")({
   validateSearch: calendarSearchSchema,
-  loader: async ({ context: { queryClient } }) => {
+  loader: async ({ context: { queryClient }, location }) => {
     if ((window as any).Clerk?.session) {
-      await preloadCalendarData(queryClient);
+      const searchParams = location.search as z.infer<typeof calendarSearchSchema>;
+      const view = searchParams.view ?? getDefaultView();
+      const currentDate = searchParams.date ? fromDateString(searchParams.date) : new Date();
+      const timeRange = getCalendarTimeRange(view, currentDate);
+      await preloadCalendarData(queryClient, timeRange);
     }
   },
   component: CalendarPage,
 });
 
 function CalendarPage() {
+  const navigate = useNavigate({ from: "/calendar" });
+  const search = Route.useSearch();
+
+  const view = search.view ?? getDefaultView();
+  const currentDate = search.date ? fromDateString(search.date) : new Date();
+  const currentDateTimestamp = currentDate.getTime();
+
+  const timeRange = useMemo(
+    () => getCalendarTimeRange(view, currentDate),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [view, currentDateTimestamp]
+  );
+
   const {
     meetings,
     usersMap,
@@ -41,19 +107,7 @@ function CalendarPage() {
     createBusy,
     deleteBusy,
     isLoading,
-  } = useCalendarData();
-
-  const navigate = useNavigate({ from: "/calendar" });
-  const search = Route.useSearch();
-
-  const getDefaultView = () => {
-    if (typeof window === "undefined") return "week";
-    const isMobile = window.innerWidth < 768;
-    return isMobile ? "day" : "week";
-  };
-
-  const view = search.view ?? getDefaultView();
-  const currentDate = search.date ? fromDateString(search.date) : new Date();
+  } = useCalendarData(timeRange);
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {

@@ -15,10 +15,21 @@ import {
   toCalendarParticipantsMap,
 } from "@/types/calendar";
 
-const myParticipationsQuery = convexQuery(api.meetingParticipants.listMeetingsForCurrentUser, {});
-const publicMeetingsQuery = convexQuery(api.meetings.listPublic, {});
+export interface CalendarTimeRange {
+  eventStartsFrom: number;
+  eventStartsTo: number;
+}
 
-export async function preloadCalendarData(queryClient: QueryClient): Promise<void> {
+export async function preloadCalendarData(
+  queryClient: QueryClient,
+  timeRange: CalendarTimeRange
+): Promise<void> {
+  const myParticipationsQuery = convexQuery(
+    api.meetingParticipants.listMeetingsForCurrentUser,
+    timeRange
+  );
+  const publicMeetingsQuery = convexQuery(api.meetings.listPublic, timeRange);
+
   await Promise.all([
     queryClient.ensureQueryData(myParticipationsQuery),
     queryClient.ensureQueryData(publicMeetingsQuery),
@@ -36,10 +47,16 @@ export interface UseCalendarDataResult {
   isLoading: boolean;
 }
 
-export function useCalendarData(): UseCalendarDataResult {
+export function useCalendarData(timeRange: CalendarTimeRange): UseCalendarDataResult {
+  const myParticipationsQuery = convexQuery(
+    api.meetingParticipants.listMeetingsForCurrentUser,
+    timeRange
+  );
+  const publicMeetingsQuery = convexQuery(api.meetings.listPublic, timeRange);
+
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
   const { data: publicMeetingsData } = useSuspenseQuery(publicMeetingsQuery);
-  const allMeetings = useQuery(api.meetings.list, {});
+  const allMeetings = useQuery(api.meetings.list, timeRange);
   const allUsers = useQuery(api.users.listUsers, {});
   const currentUser = useQuery(api.users.getCurrentUser, {});
   const setShowPublicEventsMutation = useMutation(api.users.setShowPublicEvents);
