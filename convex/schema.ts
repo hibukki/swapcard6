@@ -1,5 +1,5 @@
 import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { Infer, v } from "convex/values";
 
 /** UTC timestamp in milliseconds since epoch */
 export const utcTimestamp = v.number();
@@ -44,17 +44,49 @@ export const meetingParticipantStatusValidator = v.union(
 );
 export type MeetingParticipantStatus = "creator" | "accepted" | "pending" | "declined";
 
-export const notificationTypeValidator = v.union(
-  v.literal("meeting_request"),
-  v.literal("meeting_accepted"),
-  v.literal("meeting_declined"),
-  v.literal("meeting_cancelled"),
+// Notification discriminated union - each type has required (non-optional) fields
+const notificationBaseFields = {
+  userId: v.id("users"), // recipient
+  isRead: v.boolean(),
+};
+
+export const notificationValidator = v.union(
+  v.object({
+    ...notificationBaseFields,
+    type: v.literal("meeting_request"),
+    meetingId: v.id("meetings"),
+    fromUserId: v.id("users"),
+  }),
+  v.object({
+    ...notificationBaseFields,
+    type: v.literal("meeting_accepted"),
+    meetingId: v.id("meetings"),
+    fromUserId: v.id("users"),
+  }),
+  v.object({
+    ...notificationBaseFields,
+    type: v.literal("meeting_declined"),
+    meetingId: v.id("meetings"),
+    fromUserId: v.id("users"),
+  }),
+  v.object({
+    ...notificationBaseFields,
+    type: v.literal("meeting_cancelled"),
+    meetingId: v.id("meetings"),
+    fromUserId: v.id("users"),
+  }),
 );
-export type NotificationType =
-  | "meeting_request"
-  | "meeting_accepted"
-  | "meeting_declined"
-  | "meeting_cancelled";
+
+// Derived from validator - stays in sync automatically
+export type Notification = Infer<typeof notificationValidator>;
+export type NotificationType = Notification["type"];
+
+// Args for createNotification helper - enforces correct fields per type
+export type CreateNotificationArgs =
+  | { userId: Notification["userId"]; type: "meeting_request"; meetingId: Notification["meetingId"]; fromUserId: Notification["fromUserId"] }
+  | { userId: Notification["userId"]; type: "meeting_accepted"; meetingId: Notification["meetingId"]; fromUserId: Notification["fromUserId"] }
+  | { userId: Notification["userId"]; type: "meeting_declined"; meetingId: Notification["meetingId"]; fromUserId: Notification["fromUserId"] }
+  | { userId: Notification["userId"]; type: "meeting_cancelled"; meetingId: Notification["meetingId"]; fromUserId: Notification["fromUserId"] };
 
 export const llmRateLimitWindowValidator = v.union(
   v.literal("minute"),
@@ -127,14 +159,7 @@ export default defineSchema({
     .index("by_user_only", ["userId"])
     .index("by_user_and_status", ["userId", "status"]),
 
-  notifications: defineTable({
-    userId: v.id("users"),
-    type: notificationTypeValidator,
-    relatedMeetingId: v.optional(v.id("meetings")),
-    relatedConferenceId: v.optional(v.id("conferences")),
-    relatedUserId: v.optional(v.id("users")),
-    isRead: v.boolean(),
-  })
+  notifications: defineTable(notificationValidator)
     .index("by_user", ["userId"])
     .index("by_user_and_read", ["userId", "isRead"]),
 

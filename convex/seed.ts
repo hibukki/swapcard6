@@ -345,6 +345,66 @@ export const seedData = internalMutation({
       });
     }
 
+    // Create meeting requests from bots to real users (~4 per user)
+    const meetingRequestTemplates = [
+      { title: "Let's Connect!", description: "I'd love to chat and learn more about what you're working on.", duration: 30, location: "Lobby Lounge" },
+      { title: "Quick Sync", description: "Would be great to discuss potential collaboration opportunities.", duration: 30, location: "Cafe Corner" },
+      { title: "Introduction Meeting", description: "I saw your profile and think we could have an interesting conversation.", duration: 45, location: "Garden Terrace" },
+      { title: "Coffee Chat", description: "Let's grab a virtual coffee and get to know each other.", duration: 30, location: "Cafe" },
+      { title: "Networking Session", description: "I think we have some shared interests - would love to connect!", duration: 30, location: "Innovation Hub" },
+    ];
+
+    const realUsers = allUsers.filter((u) => !u.isDemoBot);
+    const targetRequestsPerUser = 4;
+
+    for (const realUser of realUsers) {
+      // Count existing pending meeting invites for this user
+      const existingPendingInvites = await ctx.db
+        .query("meetingParticipants")
+        .withIndex("by_user_and_status", (q) => q.eq("userId", realUser._id).eq("status", "pending"))
+        .collect();
+
+      const requestsToCreate = Math.max(0, targetRequestsPerUser - existingPendingInvites.length);
+
+      for (let i = 0; i < requestsToCreate && seedUserIds.length > 0; i++) {
+        // Pick a different bot for each invite (cycle through them)
+        const botUserId = seedUserIds[i % seedUserIds.length];
+        const template = meetingRequestTemplates[i % meetingRequestTemplates.length];
+        const scheduledTime = now + (2 + i) * oneDay + (10 + i) * oneHour;
+
+        const meetingId = await ctx.db.insert("meetings", {
+          creatorId: botUserId,
+          title: template.title,
+          description: template.description,
+          scheduledTime,
+          duration: template.duration,
+          location: template.location,
+          isPublic: false,
+        });
+
+        await ctx.db.insert("meetingParticipants", {
+          meetingId,
+          userId: botUserId,
+          status: "creator",
+        });
+
+        await ctx.db.insert("meetingParticipants", {
+          meetingId,
+          userId: realUser._id,
+          status: "pending",
+        });
+
+        // Create notification for the meeting request
+        await ctx.db.insert("notifications", {
+          userId: realUser._id,
+          type: "meeting_request",
+          fromUserId: botUserId,
+          meetingId,
+          isRead: false,
+        });
+      }
+    }
+
     const totalMeetings = await ctx.db.query("meetings").collect();
     const totalParticipations = await ctx.db.query("meetingParticipants").collect();
 
@@ -738,35 +798,43 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // === NOTIFICATIONS FOR CURRENT USER ===
+    // Check existing notifications to avoid duplicates
+    const existingNotifications = await ctx.db
+      .query("notifications")
+      .withIndex("by_user", (q) => q.eq("userId", currentUser._id))
+      .collect();
+    const hasNotification = (type: string, meetingId: Id<"meetings">) =>
+      existingNotifications.some((n) => n.type === type && n.meetingId === meetingId);
+
     // Meeting request notification from Bob (Technical Architecture Review)
-    if (seedUserIds[1] && techArchMeetingId) {
+    if (seedUserIds[1] && techArchMeetingId && !hasNotification("meeting_request", techArchMeetingId)) {
       await ctx.db.insert("notifications", {
         userId: currentUser._id,
         type: "meeting_request",
-        relatedUserId: seedUserIds[1],
-        relatedMeetingId: techArchMeetingId,
+        fromUserId: seedUserIds[1],
+        meetingId: techArchMeetingId,
         isRead: false,
       });
     }
 
     // Meeting accepted notification (Bob accepted Product Roadmap)
-    if (seedUserIds[1] && productRoadmapMeetingId) {
+    if (seedUserIds[1] && productRoadmapMeetingId && !hasNotification("meeting_accepted", productRoadmapMeetingId)) {
       await ctx.db.insert("notifications", {
         userId: currentUser._id,
         type: "meeting_accepted",
-        relatedUserId: seedUserIds[1],
-        relatedMeetingId: productRoadmapMeetingId,
+        fromUserId: seedUserIds[1],
+        meetingId: productRoadmapMeetingId,
         isRead: false,
       });
     }
 
     // Another meeting request (from Carol - Marketing Collaboration)
-    if (seedUserIds[2] && marketingCollabMeetingId) {
+    if (seedUserIds[2] && marketingCollabMeetingId && !hasNotification("meeting_request", marketingCollabMeetingId)) {
       await ctx.db.insert("notifications", {
         userId: currentUser._id,
         type: "meeting_request",
-        relatedUserId: seedUserIds[2],
-        relatedMeetingId: marketingCollabMeetingId,
+        fromUserId: seedUserIds[2],
+        meetingId: marketingCollabMeetingId,
         isRead: false,
       });
     }

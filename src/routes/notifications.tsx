@@ -43,7 +43,7 @@ function NotificationsPage() {
     if (!notifications) return [];
     const ids = new Set<Id<"users">>();
     for (const n of notifications) {
-      if (n.relatedUserId) ids.add(n.relatedUserId);
+      ids.add(n.fromUserId);
     }
     return Array.from(ids);
   }, [notifications]);
@@ -107,11 +107,7 @@ function NotificationsPage() {
             <NotificationRow
               key={notification._id}
               notification={notification}
-              user={
-                notification.relatedUserId
-                  ? usersMap.get(notification.relatedUserId)
-                  : undefined
-              }
+              user={usersMap.get(notification.fromUserId)}
               onToggleRead={() => void handleToggleRead(notification)}
             />
           ))}
@@ -130,12 +126,9 @@ function NotificationRow({
   user?: Doc<"users">;
   onToggleRead: () => void;
 }) {
-  const meeting = useQuery(
-    api.meetings.get,
-    notification.relatedMeetingId
-      ? { meetingId: notification.relatedMeetingId }
-      : "skip"
-  );
+  const meeting = useQuery(api.meetings.get, {
+    meetingId: notification.meetingId,
+  });
 
   const verb = getNotificationVerb(notification.type);
 
@@ -151,16 +144,14 @@ function NotificationRow({
         <span className="text-muted-foreground"> {verb} </span>
         {meeting ? (
           <MeetingName meeting={meeting} />
-        ) : notification.relatedMeetingId ? (
+        ) : (
           <Link
             to="/meeting/$meetingId"
-            params={{ meetingId: notification.relatedMeetingId }}
+            params={{ meetingId: notification.meetingId }}
             className="font-semibold text-primary hover:underline underline-offset-4"
           >
             a meeting
           </Link>
-        ) : (
-          <span className="text-muted-foreground">a meeting</span>
         )}
         <span className="text-muted-foreground text-xs ml-2">
           <ShortDate timestamp={notification._creationTime} />

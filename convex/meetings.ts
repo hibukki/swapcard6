@@ -175,8 +175,8 @@ export const remove = mutation({
         await createNotification(ctx, {
           userId: p.userId,
           type: "meeting_cancelled",
-          relatedMeetingId: args.meetingId,
-          relatedUserId: user._id,
+          meetingId: args.meetingId,
+          fromUserId: user._id,
         });
       }
       await ctx.db.delete(p._id);

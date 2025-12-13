@@ -113,8 +113,8 @@ export const sendRequest = mutation({
     await createNotification(ctx, {
       userId: args.recipientId,
       type: "meeting_request",
-      relatedMeetingId: meetingId,
-      relatedUserId: requester._id,
+      meetingId,
+      fromUserId: requester._id,
     });
 
     return { meetingId, participationId };
@@ -153,8 +153,8 @@ export const respond = mutation({
     await createNotification(ctx, {
       userId: meeting.creatorId,
       type: args.accept ? "meeting_accepted" : "meeting_declined",
-      relatedMeetingId: args.meetingId,
-      relatedUserId: user._id,
+      meetingId: args.meetingId,
+      fromUserId: user._id,
     });
   },
 });
@@ -271,8 +271,8 @@ export const invite = mutation({
     await createNotification(ctx, {
       userId: args.userId,
       type: "meeting_request",
-      relatedMeetingId: args.meetingId,
-      relatedUserId: currentUser._id,
+      meetingId: args.meetingId,
+      fromUserId: currentUser._id,
     });
 
     return participationId;

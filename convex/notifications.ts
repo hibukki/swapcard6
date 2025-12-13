@@ -1,8 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query, MutationCtx } from "./_generated/server";
 import { getCurrentUserOrCrash, getCurrentUserOrNull } from "./users";
-import { Id } from "./_generated/dataModel";
-import { NotificationType } from "./schema";
+import { CreateNotificationArgs } from "./schema";
 
 export const list = query({
   // TODO: Replace limit with proper cursor-based pagination
@@ -106,20 +105,10 @@ export const remove = mutation({
 
 export async function createNotification(
   ctx: MutationCtx,
-  args: {
-    userId: Id<"users">;
-    type: NotificationType;
-    relatedMeetingId?: Id<"meetings">;
-    relatedConferenceId?: Id<"conferences">;
-    relatedUserId?: Id<"users">;
-  },
+  args: CreateNotificationArgs,
 ) {
   return await ctx.db.insert("notifications", {
-    userId: args.userId,
-    type: args.type,
-    relatedMeetingId: args.relatedMeetingId,
-    relatedConferenceId: args.relatedConferenceId,
-    relatedUserId: args.relatedUserId,
+    ...args,
     isRead: false,
   });
 }
