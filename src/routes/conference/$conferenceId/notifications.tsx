@@ -4,8 +4,8 @@ import { Mail, MailOpen } from "lucide-react";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import { useMemo, useState } from "react";
-import { api } from "../../convex/_generated/api";
-import type { Doc, Id } from "../../convex/_generated/dataModel";
+import { api } from "../../../../convex/_generated/api";
+import type { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/patterns/EmptyState";
 import { UserName } from "@/components/patterns/UserName";
@@ -14,7 +14,7 @@ import { ShortDate } from "@/components/patterns/ShortDate";
 import { cn } from "@/lib/utils";
 import { handleMutationError } from "@/lib/error-handling";
 
-export const Route = createFileRoute("/notifications")({
+export const Route = createFileRoute("/conference/$conferenceId/notifications")({
   component: NotificationsPage,
 });
 

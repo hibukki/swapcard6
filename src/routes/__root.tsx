@@ -95,6 +95,14 @@ function RootComponent() {
 function AuthenticatedLayout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navLinks = useNavLinks();
+  const matchRoute = useMatchRoute();
+
+  // Get conferenceId if we're in a conference context
+  const conferenceMatch = matchRoute({
+    to: "/conference/$conferenceId",
+    fuzzy: true,
+  }) as { conferenceId?: string } | false;
+  const conferenceId = conferenceMatch ? conferenceMatch.conferenceId : undefined;
 
   return (
     <div className="container mx-auto flex flex-col min-h-screen">
@@ -144,7 +152,7 @@ function AuthenticatedLayout() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <NotificationBadge />
+          <NotificationBadge conferenceId={conferenceId} />
           <UserButton />
         </div>
       </header>

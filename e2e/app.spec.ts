@@ -175,6 +175,10 @@ test.describe("E2E User Flow", () => {
 
     await signIn(page);
 
+    // Wait for user to be fully created (ensureUser mutation to complete)
+    // The authenticated home shows "Conferences" or "No conferences" when user is ready
+    await page.waitForTimeout(1000);
+
     // Seed data now that the user is created - this creates conferences and sample users
     await convex.mutation(api.testingFunctions.seedWithFixedTimestamp, {
       baseTimestamp: SEED_BASE_TIMESTAMP,
@@ -298,8 +302,8 @@ test.describe("E2E User Flow", () => {
     // Modal should close after sending
     await expect(page.getByText("Request Meeting with Alice Johnson")).not.toBeVisible();
 
-    // Visit Notifications page
-    await page.goto("/notifications");
+    // Visit Notifications page by clicking the notification badge in header
+    await page.getByRole("button", { name: "Notifications" }).click();
     await expect(page.getByRole("heading", { name: "Notifications" })).toBeVisible();
     await screenshot(page, "notifications");
 
@@ -310,12 +314,8 @@ test.describe("E2E User Flow", () => {
     await page.goto("/");
     await signIn(page);
 
-    // If redirected to profile for onboarding, fill out quick profile
-    const welcomeVisible = await page.getByText("Welcome!").isVisible().catch(() => false);
-    if (welcomeVisible) {
-      await page.getByLabel("Role / Title").fill("Test User");
-      await page.getByRole("button", { name: "Save & Find Connections" }).click();
-    }
+    // Wait for user to be fully created (ensureUser mutation to complete)
+    await page.waitForTimeout(1000);
 
     // Seed data for chat test - creates conferences and sample users
     await convex.mutation(api.testingFunctions.seedWithFixedTimestamp, {
@@ -334,6 +334,13 @@ test.describe("E2E User Flow", () => {
       timeout: AUTH_TIMEOUT,
     });
     await page.getByText("EA Global").click();
+
+    // If redirected to profile for onboarding, fill out quick profile
+    const welcomeVisible = await page.getByText("Welcome!").isVisible().catch(() => false);
+    if (welcomeVisible) {
+      await page.getByLabel("Role / Title").fill("Test User");
+      await page.getByRole("button", { name: "Save & Find Connections" }).click();
+    }
 
     // Should see attendees page
     await expect(page.getByText("Alice Johnson").first()).toBeVisible({
