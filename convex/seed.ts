@@ -245,7 +245,8 @@ export const seedData = internalMutation({
 
     const publicMeetingIds: Id<"meetings">[] = [];
 
-    for (const template of publicMeetingTemplates) {
+    for (let i = 0; i < publicMeetingTemplates.length; i++) {
+      const template = publicMeetingTemplates[i];
       // Check if this public meeting already exists
       const existing = await ctx.db
         .query("meetings")
@@ -255,8 +256,8 @@ export const seedData = internalMutation({
         .first();
 
       if (!existing) {
-        // Create the public meeting with a random seed user as creator
-        const creator = seedUserIds[Math.floor(Math.random() * seedUserIds.length)];
+        // Create the public meeting with a deterministic seed user as creator (round-robin)
+        const creator = seedUserIds[i % seedUserIds.length];
 
         // Move past meetings forward by 7 days until they're in the future
         let scheduledTime = template.scheduledTime;
@@ -298,12 +299,14 @@ export const seedData = internalMutation({
       }
     }
 
-    // Add seed users to some public meetings
-    for (const userId of seedUserIds) {
-      const shuffledPublic = [...publicMeetingIds].sort(() => Math.random() - 0.5);
+    // Add seed users to some public meetings (deterministic assignment)
+    for (let userIdx = 0; userIdx < seedUserIds.length; userIdx++) {
+      const userId = seedUserIds[userIdx];
+      // Deterministic selection: each user joins meetings starting from their index
+      const meetingsToJoin = publicMeetingIds.slice(userIdx, userIdx + 4);
       let added = 0;
 
-      for (const meetingId of shuffledPublic) {
+      for (const meetingId of meetingsToJoin) {
         if (added >= 4) break;
 
         const existing = await ctx.db

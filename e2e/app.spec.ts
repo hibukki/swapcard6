@@ -209,7 +209,16 @@ test.describe("E2E User Flow", () => {
     // Save the profile
     await page.getByRole("button", { name: "Save & Find Connections" }).click();
 
-    // Should redirect to attendees page after save
+    // Should redirect to home (conference picker) after save
+    await expect(page.getByText("Select a Conference")).toBeVisible({
+      timeout: AUTH_TIMEOUT,
+    });
+    await screenshot(page, "conference-picker");
+
+    // Click on the first conference to enter it
+    await page.getByText("EA Global").click();
+
+    // Should see attendees page
     await expect(page.getByText("Alice Johnson").first()).toBeVisible({
       timeout: AUTH_TIMEOUT,
     });
@@ -228,49 +237,59 @@ test.describe("E2E User Flow", () => {
     });
     await screenshot(page, "profile-with-recommendations");
 
-    // Browse other pages
-    await page.goto("/public-meetings", { waitUntil: "networkidle" });
+    // Go back to conference to access conference-scoped routes
+    await page.goto("/");
+    await expect(page.getByText("Select a Conference")).toBeVisible({
+      timeout: AUTH_TIMEOUT,
+    });
+    await page.getByText("EA Global").click();
+    await expect(page.getByText("Alice Johnson").first()).toBeVisible({
+      timeout: AUTH_TIMEOUT,
+    });
+
+    // Browse other pages using nav links (conference-scoped routes)
+    await page.getByRole("link", { name: "Public Meetings" }).click();
     await expect(page.getByText(/Upcoming Meetings/)).toBeVisible();
     await expect(
       page.getByText("Opening Keynote: Future of Tech"),
     ).toBeVisible();
     await screenshot(page, "public-meetings");
 
-    await page.goto("/calendar", { waitUntil: "networkidle" });
+    await page.getByRole("link", { name: "Calendar" }).click();
     await expect(page.getByRole("button", { name: "Today" })).toBeVisible();
     await screenshot(page, "calendar");
 
     // Test meeting detail page - use specific meeting for determinism
-    await page.goto("/public-meetings", { waitUntil: "networkidle" });
-    // Click on "Opening Keynote" specifically (not .first() which may vary)
+    await page.getByRole("link", { name: "Public Meetings" }).click();
+    await expect(
+      page.getByText("Opening Keynote: Future of Tech"),
+    ).toBeVisible();
+    // Click on "Opening Keynote" specifically (the meeting title is a link)
     await page
-      .getByRole("heading", { name: "Opening Keynote: Future of Tech" })
-      .locator("..")
-      .getByRole("link", { name: "Open meeting page" })
+      .getByRole("link", { name: "Opening Keynote: Future of Tech" })
       .click();
     await expect(
-      page.getByRole("link", { name: "Back to Calendar" }),
+      page.getByRole("link", { name: "Back to Conferences" }),
     ).toBeVisible();
     await expect(page.getByText(/Participants/)).toBeVisible();
     await screenshot(page, "meeting-detail");
 
-    // Test user profile page - click on the host (David Chen for Opening Keynote)
+    // Test user profile page - click on the host (Alice Johnson hosts Opening Keynote)
     await page.getByText("Hosted by:").locator("..").getByRole("link").click();
     await expect(
-      page.getByRole("link", { name: "Back to Attendees" }),
+      page.getByRole("link", { name: "Back to Conferences" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "David Chen" }),
+      page.getByRole("heading", { name: "Alice Johnson" }),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Request a Meeting" }),
     ).toBeVisible();
     await screenshot(page, "user-profile");
 
-    // Clicking "Request a Meeting" navigates to attendees page with user pre-filled
+    // Clicking "Request a Meeting" navigates to home (conference picker)
     await page.getByRole("button", { name: "Request a Meeting" }).click();
-    // The search should be pre-filled with the user's name
-    await expect(page.getByRole("textbox")).toHaveValue("David Chen");
+    await expect(page.getByText("Select a Conference")).toBeVisible();
 
     await signOut(page);
   });
@@ -279,9 +298,35 @@ test.describe("E2E User Flow", () => {
     await page.goto("/");
     await signIn(page);
 
-    // Go to attendees and find someone to chat with
-    await page.goto("/attendees", { waitUntil: "networkidle" });
-    await expect(page.getByText("Alice Johnson").first()).toBeVisible();
+    // If redirected to profile for onboarding, fill out quick profile
+    const welcomeVisible = await page.getByText("Welcome!").isVisible().catch(() => false);
+    if (welcomeVisible) {
+      await page.getByLabel("Role / Title").fill("Test User");
+      await page.getByRole("button", { name: "Save & Find Connections" }).click();
+    }
+
+    // Seed data for chat test - creates conferences and sample users
+    await convex.mutation(api.testingFunctions.seedWithFixedTimestamp, {
+      baseTimestamp: SEED_BASE_TIMESTAMP,
+      userName: TEST_USER_NAME,
+      testRunId: TEST_RUN_ID,
+    });
+    // Wait for scheduled seed data to complete
+    await page.waitForTimeout(2000);
+
+    // Refresh to see seeded conferences
+    await page.goto("/");
+
+    // Should be on conference picker, click on conference to enter
+    await expect(page.getByText("Select a Conference")).toBeVisible({
+      timeout: AUTH_TIMEOUT,
+    });
+    await page.getByText("EA Global").click();
+
+    // Should see attendees page
+    await expect(page.getByText("Alice Johnson").first()).toBeVisible({
+      timeout: AUTH_TIMEOUT,
+    });
 
     // Click the message icon on Alice's card
     await page

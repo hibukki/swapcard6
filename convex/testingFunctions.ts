@@ -210,7 +210,80 @@ export const seedWithFixedTimestamp = testingMutation({
       }
     }
 
-    // Run base seed data (public meetings, conferences) with fixed timestamp
+    // Create EA Global conference for e2e tests
+    const eaGlobalName = "EA Global";
+
+    let eaGlobalId;
+    const existingEaGlobal = await ctx.db
+      .query("conferences")
+      .withIndex("by_name", (q) => q.eq("name", eaGlobalName))
+      .first();
+
+    if (existingEaGlobal) {
+      eaGlobalId = existingEaGlobal._id;
+    } else {
+      eaGlobalId = await ctx.db.insert("conferences", {
+        name: eaGlobalName,
+        description: "Effective Altruism Global conference - connecting people to do the most good",
+        startDate: baseTimestamp,
+        endDate: baseTimestamp + 3 * oneDay,
+        timezone: "America/Los_Angeles",
+        location: "San Francisco",
+        createdBy: user._id,
+      });
+    }
+
+    // Add test user to EA Global conference
+    const existingTestUserAttendance = await ctx.db
+      .query("conferenceAttendees")
+      .withIndex("by_conference_and_user", (q) =>
+        q.eq("conferenceId", eaGlobalId).eq("userId", user._id)
+      )
+      .first();
+
+    if (!existingTestUserAttendance) {
+      await ctx.db.insert("conferenceAttendees", {
+        conferenceId: eaGlobalId,
+        userId: user._id,
+        role: "attendee",
+      });
+    }
+
+    // Add seed users to EA Global conference
+    for (const seedUserId of seedUserIds) {
+      const existingAttendance = await ctx.db
+        .query("conferenceAttendees")
+        .withIndex("by_conference_and_user", (q) =>
+          q.eq("conferenceId", eaGlobalId).eq("userId", seedUserId)
+        )
+        .first();
+
+      if (!existingAttendance) {
+        await ctx.db.insert("conferenceAttendees", {
+          conferenceId: eaGlobalId,
+          userId: seedUserId,
+          role: "attendee",
+        });
+      }
+    }
+
+    // Create meeting spots for EA Global
+    const existingSpots = await ctx.db
+      .query("conferenceMeetingSpots")
+      .withIndex("by_conference", (q) => q.eq("conferenceId", eaGlobalId))
+      .collect();
+
+    if (existingSpots.length === 0) {
+      const spotNames = ["Lobby Lounge", "Cafe Corner", "Garden Terrace", "Innovation Hub"];
+      for (const name of spotNames) {
+        await ctx.db.insert("conferenceMeetingSpots", {
+          conferenceId: eaGlobalId,
+          name,
+        });
+      }
+    }
+
+    // Run base seed data (public meetings) with fixed timestamp
     await ctx.scheduler.runAfter(0, internal.seed.seedData, { baseTimestamp, testRunId });
 
     // Create meetings for the test user

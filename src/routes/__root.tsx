@@ -12,6 +12,7 @@ import {
   Link,
   Outlet,
   createRootRouteWithContext,
+  useMatchRoute,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import {
@@ -33,7 +34,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
   convexClient: ConvexReactClient;
@@ -41,18 +41,35 @@ export const Route = createRootRouteWithContext<{
   component: RootComponent,
 });
 
-const navLinks = [
-  { to: "/attendees", label: "Attendees" },
-  { to: "/public-meetings", label: "Public Meetings" },
-  { to: "/rooms", label: "Rooms" },
-  { to: "/calendar", label: "Calendar" },
-  { to: "/chats", label: "Chat" },
-  { to: "/profile", label: "Profile" },
-] as const;
+function useNavLinks() {
+  const matchRoute = useMatchRoute();
+
+  // Check if we're in any conference route
+  const conferenceMatch = matchRoute({
+    to: "/conference/$conferenceId",
+    fuzzy: true,
+  }) as { conferenceId?: string } | false;
+
+  if (conferenceMatch && conferenceMatch.conferenceId) {
+    const conferenceId = conferenceMatch.conferenceId;
+    return [
+      { to: "/conference/$conferenceId/attendees" as const, params: { conferenceId }, label: "Attendees" },
+      { to: "/conference/$conferenceId/public-meetings" as const, params: { conferenceId }, label: "Public Meetings" },
+      { to: "/conference/$conferenceId/rooms" as const, params: { conferenceId }, label: "Rooms" },
+      { to: "/conference/$conferenceId/calendar" as const, params: { conferenceId }, label: "Calendar" },
+      { to: "/chats" as const, params: undefined, label: "Chat" },
+      { to: "/profile" as const, params: undefined, label: "Profile" },
+    ];
+  }
+
+  return [
+    { to: "/chats" as const, params: undefined, label: "Chat" },
+    { to: "/profile" as const, params: undefined, label: "Profile" },
+  ];
+}
 
 function RootComponent() {
   const { queryClient, convexClient: convex } = Route.useRouteContext();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <ClerkProvider
@@ -64,66 +81,7 @@ function RootComponent() {
           <div className="min-h-screen flex flex-col">
             <Authenticated>
               <EnsureUser />
-              <div className="container mx-auto flex flex-col min-h-screen">
-                {/* Navbar */}
-                <header className="flex items-center justify-between py-4 px-4 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    {/* Mobile menu */}
-                    <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-                      <DropdownMenuTrigger asChild className="lg:hidden">
-                        <Button variant="ghost" size="icon">
-                          <Menu className="w-5 h-5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-56">
-                        {navLinks.map((link) => (
-                          <DropdownMenuItem key={link.to} asChild>
-                            <Link
-                              to={link.to}
-                              onClick={() => setIsMenuOpen(false)}
-                              className="w-full"
-                            >
-                              {link.label}
-                            </Link>
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <Link to="/">
-                      <Button variant="ghost" className="text-xl font-semibold">
-                        OpenCon
-                      </Button>
-                    </Link>
-                  </div>
-
-                  {/* Desktop nav */}
-                  <nav className="hidden lg:flex items-center">
-                    {navLinks.map((link) => (
-                      <Link key={link.to} to={link.to}>
-                        {({ isActive }) => (
-                          <Button variant="ghost" active={isActive}>
-                            {link.label}
-                          </Button>
-                        )}
-                      </Link>
-                    ))}
-                  </nav>
-
-                  <div className="flex items-center gap-2">
-                    <NotificationBadge />
-                    <UserButton />
-                  </div>
-                </header>
-
-                {/* Main content */}
-                <main className="flex-1 p-4 prose dark:prose-invert max-w-none">
-                  <Outlet />
-                </main>
-
-                <footer className="text-center p-4 text-muted-foreground">
-                  <p>© {new Date().getFullYear()} OpenCon</p>
-                </footer>
-              </div>
+              <AuthenticatedLayout />
             </Authenticated>
             <Unauthenticated>
               <UnauthenticatedView />
@@ -133,6 +91,75 @@ function RootComponent() {
         </QueryClientProvider>
       </ConvexProviderWithClerk>
     </ClerkProvider>
+  );
+}
+
+function AuthenticatedLayout() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navLinks = useNavLinks();
+
+  return (
+    <div className="container mx-auto flex flex-col min-h-screen">
+      {/* Navbar */}
+      <header className="flex items-center justify-between py-4 px-4 border-b border-border">
+        <div className="flex items-center gap-2">
+          {/* Mobile menu */}
+          <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+            <DropdownMenuTrigger asChild className="lg:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {navLinks.map((link) => (
+                <DropdownMenuItem key={link.to} asChild>
+                  <Link
+                    to={link.to}
+                    params={link.params}
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full"
+                  >
+                    {link.label}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Link to="/">
+            <Button variant="ghost" className="text-xl font-semibold">
+              OpenCon
+            </Button>
+          </Link>
+        </div>
+
+        {/* Desktop nav */}
+        <nav className="hidden lg:flex items-center">
+          {navLinks.map((link) => (
+            <Link key={link.to} to={link.to} params={link.params}>
+              {({ isActive }) => (
+                <Button variant="ghost" active={isActive}>
+                  {link.label}
+                </Button>
+              )}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <NotificationBadge />
+          <UserButton />
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="flex-1 p-4 prose dark:prose-invert max-w-none">
+        <Outlet />
+      </main>
+
+      <footer className="text-center p-4 text-muted-foreground">
+        <p>© {new Date().getFullYear()} OpenCon</p>
+      </footer>
+    </div>
   );
 }
 

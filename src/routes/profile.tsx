@@ -100,7 +100,7 @@ function ProfilePage() {
           needsHelpWith: value.needsHelpWith || undefined,
         });
 
-        void navigate({ to: "/attendees" });
+        void navigate({ to: "/" });
       } finally {
         setIsSubmitting(false);
       }
@@ -312,7 +312,7 @@ function ProfilePage() {
                     type="button"
                     variant="ghost"
                     onClick={() => {
-                      void navigate({ to: "/attendees" });
+                      void navigate({ to: "/" });
                     }}
                   >
                     Cancel

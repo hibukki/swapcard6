@@ -17,6 +17,7 @@ import { ShortDate, ShortTimeRange } from "@/components/patterns/ShortDate";
 import { cn } from "@/lib/utils";
 import { handleMutationError } from "@/lib/error-handling";
 import { formatDateTimeLocal } from "@/lib/date-format";
+import { useConferenceOptional } from "@/contexts/ConferenceContext";
 
 type ParticipantStatus =
   | "creator"
@@ -70,8 +71,7 @@ export function MeetingCard({
   const remove = useMutation(api.meetings.remove);
   const update = useMutation(api.meetings.update);
 
-  const conferences = useQuery(api.conferences.list);
-  const conference = conferences?.[0];
+  const conference = useConferenceOptional();
 
   const participants = useQuery(
     api.meetingParticipants.listByMeeting,

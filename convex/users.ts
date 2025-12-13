@@ -13,12 +13,7 @@ export async function getCurrentUserOrNull(ctx: QueryCtx | MutationCtx) {
     .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
     .unique();
 
-  if (!user) {
-    throw new ConvexError(
-      "Bug: User is authenticated with convex but is missing a record in the DB",
-    );
-  }
-
+  // Return null if user doesn't exist yet (race condition with EnsureUser)
   return user;
 }
 

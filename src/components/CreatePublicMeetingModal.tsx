@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { useState, useEffect } from "react";
 import { api } from "../../convex/_generated/api";
 import { formatDateTimeLocal } from "@/lib/date-format";
@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useConference } from "@/contexts/ConferenceContext";
 
 interface CreatePublicMeetingModalProps {
   open: boolean;
@@ -31,8 +32,7 @@ export function CreatePublicMeetingModal({
   defaultDuration = 60,
 }: CreatePublicMeetingModalProps) {
   const create = useMutation(api.meetings.create);
-  const conferences = useQuery(api.conferences.list);
-  const conference = conferences?.[0];
+  const conference = useConference();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -147,7 +147,7 @@ export function CreatePublicMeetingModal({
           <div className="space-y-2">
             <Label>Location</Label>
             <LocationPicker
-              conferenceId={conference?._id}
+              conferenceId={conference._id}
               value={formData.location}
               onChange={(location) => setFormData({ ...formData, location })}
               placeholder="Room name, Zoom link, or meeting point"

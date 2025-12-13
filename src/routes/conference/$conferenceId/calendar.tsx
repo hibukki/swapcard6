@@ -2,8 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronDown, ChevronLeft, ChevronRight, CalendarClock } from "lucide-react";
 import React, { useState } from "react";
 import { z } from "zod";
-import { CalendarSubscription } from "../components/CalendarSubscription";
-import { MeetingCard as MeetingCardComponent } from "../components/MeetingCard";
+import { CalendarSubscription } from "@/components/CalendarSubscription";
+import { MeetingCard as MeetingCardComponent } from "@/components/MeetingCard";
 import { DayView } from "@/components/calendar/DayView";
 import { WeekView } from "@/components/calendar/WeekView";
 import { MonthView } from "@/components/calendar/MonthView";
@@ -21,7 +21,7 @@ const calendarSearchSchema = z.object({
   date: z.string().optional(),
 });
 
-export const Route = createFileRoute("/calendar")({
+export const Route = createFileRoute("/conference/$conferenceId/calendar")({
   validateSearch: calendarSearchSchema,
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session) {
@@ -43,7 +43,7 @@ function CalendarPage() {
     isLoading,
   } = useCalendarData();
 
-  const navigate = useNavigate({ from: "/calendar" });
+  const navigate = useNavigate({ from: "/conference/$conferenceId/calendar" });
   const search = Route.useSearch();
 
   const getDefaultView = () => {

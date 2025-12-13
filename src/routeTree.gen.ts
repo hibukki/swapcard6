@@ -9,29 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RoomsRouteImport } from './routes/rooms'
-import { Route as PublicMeetingsRouteImport } from './routes/public-meetings'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NotificationsRouteImport } from './routes/notifications'
-import { Route as ConfigRouteImport } from './routes/config'
 import { Route as ChatsRouteImport } from './routes/chats'
-import { Route as CalendarRouteImport } from './routes/calendar'
-import { Route as AttendeesRouteImport } from './routes/attendees'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserUserIdRouteImport } from './routes/user.$userId'
 import { Route as MeetingMeetingIdRouteImport } from './routes/meeting.$meetingId'
 import { Route as ChatChatRoomIdRouteImport } from './routes/chat.$chatRoomId'
+import { Route as ConferenceConferenceIdRouteRouteImport } from './routes/conference/$conferenceId/route'
+import { Route as ConferenceConferenceIdRoomsRouteImport } from './routes/conference/$conferenceId/rooms'
+import { Route as ConferenceConferenceIdPublicMeetingsRouteImport } from './routes/conference/$conferenceId/public-meetings'
+import { Route as ConferenceConferenceIdConfigRouteImport } from './routes/conference/$conferenceId/config'
+import { Route as ConferenceConferenceIdCalendarRouteImport } from './routes/conference/$conferenceId/calendar'
+import { Route as ConferenceConferenceIdAttendeesRouteImport } from './routes/conference/$conferenceId/attendees'
 
-const RoomsRoute = RoomsRouteImport.update({
-  id: '/rooms',
-  path: '/rooms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PublicMeetingsRoute = PublicMeetingsRouteImport.update({
-  id: '/public-meetings',
-  path: '/public-meetings',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -42,24 +33,9 @@ const NotificationsRoute = NotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ConfigRoute = ConfigRouteImport.update({
-  id: '/config',
-  path: '/config',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ChatsRoute = ChatsRouteImport.update({
   id: '/chats',
   path: '/chats',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CalendarRoute = CalendarRouteImport.update({
-  id: '/calendar',
-  path: '/calendar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AttendeesRoute = AttendeesRouteImport.update({
-  id: '/attendees',
-  path: '/attendees',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -82,105 +58,143 @@ const ChatChatRoomIdRoute = ChatChatRoomIdRouteImport.update({
   path: '/chat/$chatRoomId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConferenceConferenceIdRouteRoute =
+  ConferenceConferenceIdRouteRouteImport.update({
+    id: '/conference/$conferenceId',
+    path: '/conference/$conferenceId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ConferenceConferenceIdRoomsRoute =
+  ConferenceConferenceIdRoomsRouteImport.update({
+    id: '/rooms',
+    path: '/rooms',
+    getParentRoute: () => ConferenceConferenceIdRouteRoute,
+  } as any)
+const ConferenceConferenceIdPublicMeetingsRoute =
+  ConferenceConferenceIdPublicMeetingsRouteImport.update({
+    id: '/public-meetings',
+    path: '/public-meetings',
+    getParentRoute: () => ConferenceConferenceIdRouteRoute,
+  } as any)
+const ConferenceConferenceIdConfigRoute =
+  ConferenceConferenceIdConfigRouteImport.update({
+    id: '/config',
+    path: '/config',
+    getParentRoute: () => ConferenceConferenceIdRouteRoute,
+  } as any)
+const ConferenceConferenceIdCalendarRoute =
+  ConferenceConferenceIdCalendarRouteImport.update({
+    id: '/calendar',
+    path: '/calendar',
+    getParentRoute: () => ConferenceConferenceIdRouteRoute,
+  } as any)
+const ConferenceConferenceIdAttendeesRoute =
+  ConferenceConferenceIdAttendeesRouteImport.update({
+    id: '/attendees',
+    path: '/attendees',
+    getParentRoute: () => ConferenceConferenceIdRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/attendees': typeof AttendeesRoute
-  '/calendar': typeof CalendarRoute
   '/chats': typeof ChatsRoute
-  '/config': typeof ConfigRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
-  '/public-meetings': typeof PublicMeetingsRoute
-  '/rooms': typeof RoomsRoute
+  '/conference/$conferenceId': typeof ConferenceConferenceIdRouteRouteWithChildren
   '/chat/$chatRoomId': typeof ChatChatRoomIdRoute
   '/meeting/$meetingId': typeof MeetingMeetingIdRoute
   '/user/$userId': typeof UserUserIdRoute
+  '/conference/$conferenceId/attendees': typeof ConferenceConferenceIdAttendeesRoute
+  '/conference/$conferenceId/calendar': typeof ConferenceConferenceIdCalendarRoute
+  '/conference/$conferenceId/config': typeof ConferenceConferenceIdConfigRoute
+  '/conference/$conferenceId/public-meetings': typeof ConferenceConferenceIdPublicMeetingsRoute
+  '/conference/$conferenceId/rooms': typeof ConferenceConferenceIdRoomsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/attendees': typeof AttendeesRoute
-  '/calendar': typeof CalendarRoute
   '/chats': typeof ChatsRoute
-  '/config': typeof ConfigRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
-  '/public-meetings': typeof PublicMeetingsRoute
-  '/rooms': typeof RoomsRoute
+  '/conference/$conferenceId': typeof ConferenceConferenceIdRouteRouteWithChildren
   '/chat/$chatRoomId': typeof ChatChatRoomIdRoute
   '/meeting/$meetingId': typeof MeetingMeetingIdRoute
   '/user/$userId': typeof UserUserIdRoute
+  '/conference/$conferenceId/attendees': typeof ConferenceConferenceIdAttendeesRoute
+  '/conference/$conferenceId/calendar': typeof ConferenceConferenceIdCalendarRoute
+  '/conference/$conferenceId/config': typeof ConferenceConferenceIdConfigRoute
+  '/conference/$conferenceId/public-meetings': typeof ConferenceConferenceIdPublicMeetingsRoute
+  '/conference/$conferenceId/rooms': typeof ConferenceConferenceIdRoomsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/attendees': typeof AttendeesRoute
-  '/calendar': typeof CalendarRoute
   '/chats': typeof ChatsRoute
-  '/config': typeof ConfigRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
-  '/public-meetings': typeof PublicMeetingsRoute
-  '/rooms': typeof RoomsRoute
+  '/conference/$conferenceId': typeof ConferenceConferenceIdRouteRouteWithChildren
   '/chat/$chatRoomId': typeof ChatChatRoomIdRoute
   '/meeting/$meetingId': typeof MeetingMeetingIdRoute
   '/user/$userId': typeof UserUserIdRoute
+  '/conference/$conferenceId/attendees': typeof ConferenceConferenceIdAttendeesRoute
+  '/conference/$conferenceId/calendar': typeof ConferenceConferenceIdCalendarRoute
+  '/conference/$conferenceId/config': typeof ConferenceConferenceIdConfigRoute
+  '/conference/$conferenceId/public-meetings': typeof ConferenceConferenceIdPublicMeetingsRoute
+  '/conference/$conferenceId/rooms': typeof ConferenceConferenceIdRoomsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/attendees'
-    | '/calendar'
     | '/chats'
-    | '/config'
     | '/notifications'
     | '/profile'
-    | '/public-meetings'
-    | '/rooms'
+    | '/conference/$conferenceId'
     | '/chat/$chatRoomId'
     | '/meeting/$meetingId'
     | '/user/$userId'
+    | '/conference/$conferenceId/attendees'
+    | '/conference/$conferenceId/calendar'
+    | '/conference/$conferenceId/config'
+    | '/conference/$conferenceId/public-meetings'
+    | '/conference/$conferenceId/rooms'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/attendees'
-    | '/calendar'
     | '/chats'
-    | '/config'
     | '/notifications'
     | '/profile'
-    | '/public-meetings'
-    | '/rooms'
+    | '/conference/$conferenceId'
     | '/chat/$chatRoomId'
     | '/meeting/$meetingId'
     | '/user/$userId'
+    | '/conference/$conferenceId/attendees'
+    | '/conference/$conferenceId/calendar'
+    | '/conference/$conferenceId/config'
+    | '/conference/$conferenceId/public-meetings'
+    | '/conference/$conferenceId/rooms'
   id:
     | '__root__'
     | '/'
-    | '/attendees'
-    | '/calendar'
     | '/chats'
-    | '/config'
     | '/notifications'
     | '/profile'
-    | '/public-meetings'
-    | '/rooms'
+    | '/conference/$conferenceId'
     | '/chat/$chatRoomId'
     | '/meeting/$meetingId'
     | '/user/$userId'
+    | '/conference/$conferenceId/attendees'
+    | '/conference/$conferenceId/calendar'
+    | '/conference/$conferenceId/config'
+    | '/conference/$conferenceId/public-meetings'
+    | '/conference/$conferenceId/rooms'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AttendeesRoute: typeof AttendeesRoute
-  CalendarRoute: typeof CalendarRoute
   ChatsRoute: typeof ChatsRoute
-  ConfigRoute: typeof ConfigRoute
   NotificationsRoute: typeof NotificationsRoute
   ProfileRoute: typeof ProfileRoute
-  PublicMeetingsRoute: typeof PublicMeetingsRoute
-  RoomsRoute: typeof RoomsRoute
+  ConferenceConferenceIdRouteRoute: typeof ConferenceConferenceIdRouteRouteWithChildren
   ChatChatRoomIdRoute: typeof ChatChatRoomIdRoute
   MeetingMeetingIdRoute: typeof MeetingMeetingIdRoute
   UserUserIdRoute: typeof UserUserIdRoute
@@ -188,20 +202,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/rooms': {
-      id: '/rooms'
-      path: '/rooms'
-      fullPath: '/rooms'
-      preLoaderRoute: typeof RoomsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/public-meetings': {
-      id: '/public-meetings'
-      path: '/public-meetings'
-      fullPath: '/public-meetings'
-      preLoaderRoute: typeof PublicMeetingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -216,32 +216,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/config': {
-      id: '/config'
-      path: '/config'
-      fullPath: '/config'
-      preLoaderRoute: typeof ConfigRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/chats': {
       id: '/chats'
       path: '/chats'
       fullPath: '/chats'
       preLoaderRoute: typeof ChatsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/calendar': {
-      id: '/calendar'
-      path: '/calendar'
-      fullPath: '/calendar'
-      preLoaderRoute: typeof CalendarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/attendees': {
-      id: '/attendees'
-      path: '/attendees'
-      fullPath: '/attendees'
-      preLoaderRoute: typeof AttendeesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -272,19 +251,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatChatRoomIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/conference/$conferenceId': {
+      id: '/conference/$conferenceId'
+      path: '/conference/$conferenceId'
+      fullPath: '/conference/$conferenceId'
+      preLoaderRoute: typeof ConferenceConferenceIdRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conference/$conferenceId/rooms': {
+      id: '/conference/$conferenceId/rooms'
+      path: '/rooms'
+      fullPath: '/conference/$conferenceId/rooms'
+      preLoaderRoute: typeof ConferenceConferenceIdRoomsRouteImport
+      parentRoute: typeof ConferenceConferenceIdRouteRoute
+    }
+    '/conference/$conferenceId/public-meetings': {
+      id: '/conference/$conferenceId/public-meetings'
+      path: '/public-meetings'
+      fullPath: '/conference/$conferenceId/public-meetings'
+      preLoaderRoute: typeof ConferenceConferenceIdPublicMeetingsRouteImport
+      parentRoute: typeof ConferenceConferenceIdRouteRoute
+    }
+    '/conference/$conferenceId/config': {
+      id: '/conference/$conferenceId/config'
+      path: '/config'
+      fullPath: '/conference/$conferenceId/config'
+      preLoaderRoute: typeof ConferenceConferenceIdConfigRouteImport
+      parentRoute: typeof ConferenceConferenceIdRouteRoute
+    }
+    '/conference/$conferenceId/calendar': {
+      id: '/conference/$conferenceId/calendar'
+      path: '/calendar'
+      fullPath: '/conference/$conferenceId/calendar'
+      preLoaderRoute: typeof ConferenceConferenceIdCalendarRouteImport
+      parentRoute: typeof ConferenceConferenceIdRouteRoute
+    }
+    '/conference/$conferenceId/attendees': {
+      id: '/conference/$conferenceId/attendees'
+      path: '/attendees'
+      fullPath: '/conference/$conferenceId/attendees'
+      preLoaderRoute: typeof ConferenceConferenceIdAttendeesRouteImport
+      parentRoute: typeof ConferenceConferenceIdRouteRoute
+    }
   }
 }
 
+interface ConferenceConferenceIdRouteRouteChildren {
+  ConferenceConferenceIdAttendeesRoute: typeof ConferenceConferenceIdAttendeesRoute
+  ConferenceConferenceIdCalendarRoute: typeof ConferenceConferenceIdCalendarRoute
+  ConferenceConferenceIdConfigRoute: typeof ConferenceConferenceIdConfigRoute
+  ConferenceConferenceIdPublicMeetingsRoute: typeof ConferenceConferenceIdPublicMeetingsRoute
+  ConferenceConferenceIdRoomsRoute: typeof ConferenceConferenceIdRoomsRoute
+}
+
+const ConferenceConferenceIdRouteRouteChildren: ConferenceConferenceIdRouteRouteChildren =
+  {
+    ConferenceConferenceIdAttendeesRoute: ConferenceConferenceIdAttendeesRoute,
+    ConferenceConferenceIdCalendarRoute: ConferenceConferenceIdCalendarRoute,
+    ConferenceConferenceIdConfigRoute: ConferenceConferenceIdConfigRoute,
+    ConferenceConferenceIdPublicMeetingsRoute:
+      ConferenceConferenceIdPublicMeetingsRoute,
+    ConferenceConferenceIdRoomsRoute: ConferenceConferenceIdRoomsRoute,
+  }
+
+const ConferenceConferenceIdRouteRouteWithChildren =
+  ConferenceConferenceIdRouteRoute._addFileChildren(
+    ConferenceConferenceIdRouteRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AttendeesRoute: AttendeesRoute,
-  CalendarRoute: CalendarRoute,
   ChatsRoute: ChatsRoute,
-  ConfigRoute: ConfigRoute,
   NotificationsRoute: NotificationsRoute,
   ProfileRoute: ProfileRoute,
-  PublicMeetingsRoute: PublicMeetingsRoute,
-  RoomsRoute: RoomsRoute,
+  ConferenceConferenceIdRouteRoute:
+    ConferenceConferenceIdRouteRouteWithChildren,
   ChatChatRoomIdRoute: ChatChatRoomIdRoute,
   MeetingMeetingIdRoute: MeetingMeetingIdRoute,
   UserUserIdRoute: UserUserIdRoute,

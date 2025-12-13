@@ -40,9 +40,9 @@ function MeetingPage() {
           This meeting may have been deleted or you don't have access to it.
         </p>
         <Button asChild>
-          <Link to="/calendar">
+          <Link to="/">
             <ArrowLeft className="w-4 h-4" />
-            Back to Calendar
+            Back to Conferences
           </Link>
         </Button>
       </div>
@@ -53,9 +53,9 @@ function MeetingPage() {
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/calendar">
+          <Link to="/">
             <ArrowLeft className="w-4 h-4" />
-            Back to Calendar
+            Back to Conferences
           </Link>
         </Button>
       </div>
@@ -66,7 +66,7 @@ function MeetingPage() {
         variant="full"
         showParticipants
         showActions
-        onMeetingCanceled={() => void navigate({ to: "/calendar" })}
+        onMeetingCanceled={() => void navigate({ to: "/" })}
       />
     </div>
   );

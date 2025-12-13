@@ -3,10 +3,10 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Calendar, Plus } from "lucide-react";
 import { useState, useMemo } from "react";
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
-import { MeetingCard } from "../components/MeetingCard";
-import { CreatePublicMeetingModal } from "../components/CreatePublicMeetingModal";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
+import { MeetingCard } from "@/components/MeetingCard";
+import { CreatePublicMeetingModal } from "@/components/CreatePublicMeetingModal";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/patterns/EmptyState";
 
@@ -16,7 +16,7 @@ const myParticipationsQuery = convexQuery(
   {},
 );
 
-export const Route = createFileRoute("/public-meetings")({
+export const Route = createFileRoute("/conference/$conferenceId/public-meetings")({
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session) {
       await Promise.all([
@@ -114,4 +114,3 @@ function PublicMeetingsPage() {
     </div>
   );
 }
-

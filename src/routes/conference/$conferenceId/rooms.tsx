@@ -5,8 +5,8 @@ import { useQuery } from "convex/react";
 import { ChevronLeft, ChevronRight, Plus, Settings } from "lucide-react";
 import { useState, useMemo, Fragment } from "react";
 import { z } from "zod";
-import { api } from "../../convex/_generated/api";
-import type { Id, Doc } from "../../convex/_generated/dataModel";
+import { api } from "../../../../convex/_generated/api";
+import type { Id, Doc } from "../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { CreatePublicMeetingModal } from "@/components/CreatePublicMeetingModal";
 import {
@@ -23,6 +23,7 @@ import {
   addDaysToDateString,
   formatDateForNav,
 } from "@/lib/date-format";
+import { useConference } from "@/contexts/ConferenceContext";
 
 const searchParamsSchema = z.object({
   date: z.string().optional(),
@@ -34,7 +35,7 @@ const myParticipationsQuery = convexQuery(
   {}
 );
 
-export const Route = createFileRoute("/rooms")({
+export const Route = createFileRoute("/conference/$conferenceId/rooms")({
   validateSearch: searchParamsSchema,
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session) {
@@ -48,7 +49,8 @@ export const Route = createFileRoute("/rooms")({
 });
 
 function RoomsPage() {
-  const navigate = useNavigate({ from: "/rooms" });
+  const { conferenceId } = Route.useParams();
+  const navigate = useNavigate({ from: "/conference/$conferenceId/rooms" });
   const search = Route.useSearch();
 
   const currentDateStr = search.date || toLocalDateString();
@@ -57,12 +59,11 @@ function RoomsPage() {
   const { data: meetings } = useSuspenseQuery(publicMeetingsQuery);
   const { data: myParticipations } = useSuspenseQuery(myParticipationsQuery);
 
-  const conferences = useQuery(api.conferences.list);
-  const conference = conferences?.[0];
+  const conference = useConference();
 
   const meetingSpots = useQuery(
     api.conferenceMeetingSpots.listByConference,
-    conference?._id ? { conferenceId: conference._id } : "skip"
+    { conferenceId: conference._id }
   );
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -264,7 +265,7 @@ function RoomsPage() {
 
       <div className="flex justify-end not-prose">
         <Button variant="outline" asChild>
-          <Link to="/config">
+          <Link to="/conference/$conferenceId/config" params={{ conferenceId }}>
             <Settings className="w-4 h-4 mr-2" />
             Configure rooms
           </Link>

@@ -16,9 +16,9 @@ import { useState, useMemo, useEffect } from "react";
 import { z } from "zod";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
-import { api } from "../../convex/_generated/api";
-import type { Id, Doc } from "../../convex/_generated/dataModel";
-import { LocationPicker } from "../components/LocationPicker";
+import { api } from "../../../../convex/_generated/api";
+import type { Id, Doc } from "../../../../convex/_generated/dataModel";
+import { LocationPicker } from "@/components/LocationPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/patterns/EmptyState";
+import { useConference } from "@/contexts/ConferenceContext";
 
 const usersQuery = convexQuery(api.users.listUsers, {});
 
@@ -42,7 +43,7 @@ const attendeesSearchSchema = z.object({
   q: z.string().optional(),
 });
 
-export const Route = createFileRoute("/attendees")({
+export const Route = createFileRoute("/conference/$conferenceId/attendees")({
   validateSearch: attendeesSearchSchema,
   loader: async ({ context: { queryClient } }) => {
     if ((window as any).Clerk?.session)
@@ -203,6 +204,7 @@ function AttendeesPage() {
                         to="/user/$userId"
                         params={{ userId: user._id }}
                         search={{ chat: "focus" }}
+                        aria-label="Message"
                       >
                         <MessageCircle className="w-4 h-4" />
                       </Link>
@@ -299,7 +301,7 @@ function MeetingRequestModal({
 }) {
   const sendRequest = useMutation(api.meetingParticipants.sendRequest);
   const currentUser = useQuery(api.users.getCurrentUser);
-  const conferences = useQuery(api.conferences.list);
+  const conference = useConference();
 
   const [location, setLocation] = useState("");
   const [duration, setDuration] = useState<20 | 30>(30);
@@ -308,11 +310,8 @@ function MeetingRequestModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get conference date bounds
-  const conference = conferences?.[0];
-  const minDate = conference ? new Date(conference.startDate) : new Date();
-  const maxDate = conference
-    ? new Date(conference.endDate)
-    : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const minDate = new Date(conference.startDate);
+  const maxDate = new Date(conference.endDate);
 
   // Initialize selected date to conference start (or today if within range)
   useEffect(() => {
@@ -321,24 +320,19 @@ function MeetingRequestModal({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    if (conference) {
-      const confStart = new Date(conference.startDate);
-      confStart.setHours(0, 0, 0, 0);
-      const confEnd = new Date(conference.endDate);
-      confEnd.setHours(23, 59, 59, 999);
+    const confStart = new Date(conference.startDate);
+    confStart.setHours(0, 0, 0, 0);
+    const confEnd = new Date(conference.endDate);
+    confEnd.setHours(23, 59, 59, 999);
 
-      if (today >= confStart && today <= confEnd) {
-        setSelectedDate(today);
-      } else if (today < confStart) {
-        setSelectedDate(confStart);
-      } else {
-        setSelectedDate(confStart);
-      }
-    } else if (conferences !== undefined) {
-      // No conference exists, fall back to today
+    if (today >= confStart && today <= confEnd) {
       setSelectedDate(today);
+    } else if (today < confStart) {
+      setSelectedDate(confStart);
+    } else {
+      setSelectedDate(confStart);
     }
-  }, [conference, conferences, selectedDate]);
+  }, [conference, selectedDate]);
 
   // Fetch busy slots for both users
   const dayStart = selectedDate
@@ -430,7 +424,6 @@ function MeetingRequestModal({
 
   const isLoading =
     !currentUser ||
-    !conferences ||
     myBusySlots === undefined ||
     theirBusySlots === undefined;
 
@@ -543,7 +536,7 @@ function MeetingRequestModal({
           <div className="space-y-2">
             <Label>Location (optional)</Label>
             <LocationPicker
-              conferenceId={conference?._id}
+              conferenceId={conference._id}
               value={location}
               onChange={setLocation}
               placeholder="Coffee shop, booth #5, etc."

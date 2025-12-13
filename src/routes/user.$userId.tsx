@@ -49,9 +49,9 @@ function UserPage() {
           This user profile doesn't exist or has been removed.
         </p>
         <Button asChild>
-          <Link to="/attendees">
+          <Link to="/">
             <ArrowLeft className="w-4 h-4" />
-            Back to Attendees
+            Back to Conferences
           </Link>
         </Button>
       </div>
@@ -62,9 +62,9 @@ function UserPage() {
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/attendees">
+          <Link to="/">
             <ArrowLeft className="w-4 h-4" />
-            Back to Attendees
+            Back to Conferences
           </Link>
         </Button>
       </div>
@@ -73,7 +73,7 @@ function UserPage() {
         <UserProfileCard
           user={user}
           onRequestMeeting={() =>
-            void navigate({ to: "/attendees", search: { q: user.name } })
+            void navigate({ to: "/" })
           }
         />
         {sharedMeetings && (
