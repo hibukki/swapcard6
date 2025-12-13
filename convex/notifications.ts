@@ -1,14 +1,17 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query, internalMutation, MutationCtx } from "./_generated/server";
+import { mutation, query, MutationCtx } from "./_generated/server";
 import { getCurrentUserOrCrash, getCurrentUserOrNull } from "./users";
 import { Id } from "./_generated/dataModel";
-import { notificationTypeValidator, NotificationType } from "./schema";
+import { NotificationType } from "./schema";
 
 export const list = query({
-  args: { unreadOnly: v.optional(v.boolean()) },
+  // TODO: Replace limit with proper cursor-based pagination
+  args: { unreadOnly: v.optional(v.boolean()), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrNull(ctx);
     if (!user) return [];
+
+    const takeLimit = args.limit ?? 20;
 
     if (args.unreadOnly) {
       return await ctx.db
@@ -17,14 +20,14 @@ export const list = query({
           q.eq("userId", user._id).eq("isRead", false)
         )
         .order("desc")
-        .collect();
+        .take(takeLimit);
     }
 
     return await ctx.db
       .query("notifications")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .order("desc")
-      .collect();
+      .take(takeLimit);
   },
 });
 
@@ -120,22 +123,6 @@ export async function createNotification(
     isRead: false,
   });
 }
-
-export const createInternal = internalMutation({
-  args: {
-    userId: v.id("users"),
-    type: notificationTypeValidator,
-    relatedMeetingId: v.optional(v.id("meetings")),
-    relatedConferenceId: v.optional(v.id("conferences")),
-    relatedUserId: v.optional(v.id("users")),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("notifications", {
-      ...args,
-      isRead: false,
-    });
-  },
-});
 
 export const markAsUnread = mutation({
   args: { notificationId: v.id("notifications") },

@@ -30,8 +30,10 @@ function getNotificationVerb(type: NotificationType): string {
       return "declined";
     case "meeting_cancelled":
       return "cancelled";
-    default:
-      return "updated";
+    case "meeting_reminder":
+      return "reminder for";
+    case "conference_announcement":
+      return "announcement about";
   }
 }
 
@@ -41,12 +43,24 @@ function NotificationsPage() {
   const markAsUnread = useMutation(api.notifications.markAsUnread);
   const markAllAsRead = useMutation(api.notifications.markAllAsRead);
 
-  const allUsers = useQuery(api.users.listUsers, {});
+  const relatedUserIds = useMemo(() => {
+    if (!notifications) return [];
+    const ids = new Set<Id<"users">>();
+    for (const n of notifications) {
+      if (n.relatedUserId) ids.add(n.relatedUserId);
+    }
+    return Array.from(ids);
+  }, [notifications]);
+
+  const relatedUsers = useQuery(
+    api.users.getMany,
+    relatedUserIds.length > 0 ? { userIds: relatedUserIds } : "skip"
+  );
 
   const usersMap = useMemo(() => {
-    if (!allUsers) return new Map<Id<"users">, Doc<"users">>();
-    return new Map(allUsers.map((u) => [u._id, u]));
-  }, [allUsers]);
+    if (!relatedUsers) return new Map<Id<"users">, Doc<"users">>();
+    return new Map(relatedUsers.map((u) => [u._id, u]));
+  }, [relatedUsers]);
 
   const handleToggleRead = async (notification: Doc<"notifications">) => {
     try {

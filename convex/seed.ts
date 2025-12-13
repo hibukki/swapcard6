@@ -579,6 +579,10 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // === MEETINGS INVOLVING CURRENT USER ===
+    // Store some meeting IDs for notifications
+    let productRoadmapMeetingId: Id<"meetings"> | undefined;
+    let techArchMeetingId: Id<"meetings"> | undefined;
+    let marketingCollabMeetingId: Id<"meetings"> | undefined;
 
     // 1. Confirmed meeting - current user created and Bob accepted
     if (seedUserIds[1]) {
@@ -603,6 +607,7 @@ async function seedDataWithCurrentUserHandler(
         userId: seedUserIds[1],
         status: "accepted",
       });
+      productRoadmapMeetingId = meetingId;
     }
 
     // 2. Confirmed meeting - Alice created and current user accepted
@@ -653,6 +658,7 @@ async function seedDataWithCurrentUserHandler(
         userId: currentUser._id,
         status: "pending",
       });
+      techArchMeetingId = meetingId;
     }
 
     // 4. Pending incoming request - Carol wants to meet current user
@@ -678,6 +684,7 @@ async function seedDataWithCurrentUserHandler(
         userId: currentUser._id,
         status: "pending",
       });
+      marketingCollabMeetingId = meetingId;
     }
 
     // 5. Pending outgoing request - current user wants to meet David
@@ -731,22 +738,24 @@ async function seedDataWithCurrentUserHandler(
     }
 
     // === NOTIFICATIONS FOR CURRENT USER ===
-    // Meeting request notification
-    if (seedUserIds[1]) {
+    // Meeting request notification from Bob (Technical Architecture Review)
+    if (seedUserIds[1] && techArchMeetingId) {
       await ctx.db.insert("notifications", {
         userId: currentUser._id,
         type: "meeting_request",
         relatedUserId: seedUserIds[1],
+        relatedMeetingId: techArchMeetingId,
         isRead: false,
       });
     }
 
-    // Meeting accepted notification
-    if (seedUserIds[0]) {
+    // Meeting accepted notification (Bob accepted Product Roadmap)
+    if (seedUserIds[1] && productRoadmapMeetingId) {
       await ctx.db.insert("notifications", {
         userId: currentUser._id,
         type: "meeting_accepted",
-        relatedUserId: seedUserIds[0],
+        relatedUserId: seedUserIds[1],
+        relatedMeetingId: productRoadmapMeetingId,
         isRead: false,
       });
     }
@@ -761,19 +770,23 @@ async function seedDataWithCurrentUserHandler(
       });
     }
 
-    // Meeting reminder
-    await ctx.db.insert("notifications", {
-      userId: currentUser._id,
-      type: "meeting_reminder",
-      isRead: true,
-    });
+    // Meeting reminder (Product Roadmap)
+    if (productRoadmapMeetingId) {
+      await ctx.db.insert("notifications", {
+        userId: currentUser._id,
+        type: "meeting_reminder",
+        relatedMeetingId: productRoadmapMeetingId,
+        isRead: true,
+      });
+    }
 
-    // Another meeting request (from Carol)
-    if (seedUserIds[2]) {
+    // Another meeting request (from Carol - Marketing Collaboration)
+    if (seedUserIds[2] && marketingCollabMeetingId) {
       await ctx.db.insert("notifications", {
         userId: currentUser._id,
         type: "meeting_request",
         relatedUserId: seedUserIds[2],
+        relatedMeetingId: marketingCollabMeetingId,
         isRead: false,
       });
     }
